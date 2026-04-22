@@ -12,7 +12,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, it, expect } from "vitest";
-import { ALL_STAGE_IDS, type ClarityBurstStageId } from "./stages";
 import {
   getPackForStage,
   getAvailableStageIds,
@@ -20,12 +19,13 @@ import {
   PackPolicyIncompleteError,
   PACK_POLICY_INCOMPLETE,
 } from "./pack-registry";
+import { ALL_STAGE_IDS, type ClarityBurstStageId } from "./stages";
 
 // ESM-compatible way to get __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const ONTOLOGY_PACKS_DIR = path.resolve(__dirname, "../../ontology-packs");
+const ONTOLOGY_PACKS_DIR = path.resolve(__dirname, "../ontology-packs");
 
 describe("Stage ID ↔ Ontology Pack Consistency", () => {
   describe("ALL_STAGE_IDS completeness", () => {
@@ -46,7 +46,7 @@ describe("Stage ID ↔ Ontology Pack Consistency", () => {
           fileExists,
           `Missing ontology pack file: ${expectedPackPath}\n` +
             `Stage "${stageId}" is declared in ALL_STAGE_IDS but has no corresponding pack file.\n` +
-            `To fix: Create the file at ontology-packs/${stageId}.json`
+            `To fix: Create the file at ontology-packs/${stageId}.json`,
         ).toBe(true);
       });
     }
@@ -79,7 +79,7 @@ describe("Stage ID ↔ Ontology Pack Consistency", () => {
         expect(
           (ALL_STAGE_IDS as readonly string[]).includes(registryStageId),
           `Stage "${registryStageId}" is in the registry but NOT in ALL_STAGE_IDS.\n` +
-            `To fix: Add "${registryStageId}" to ALL_STAGE_IDS in stages.ts`
+            `To fix: Add "${registryStageId}" to ALL_STAGE_IDS in stages.ts`,
         ).toBe(true);
       }
     });
@@ -92,7 +92,7 @@ describe("Stage ID ↔ Ontology Pack Consistency", () => {
           registryStageIds.includes(stageId),
           `Stage "${stageId}" is in ALL_STAGE_IDS but NOT in the registry.\n` +
             `The pack file might be missing or invalid.\n` +
-            `To fix: Create/fix ontology-packs/${stageId}.json`
+            `To fix: Create/fix ontology-packs/${stageId}.json`,
         ).toBe(true);
       }
     });
@@ -116,7 +116,7 @@ describe("Stage ID ↔ Ontology Pack Consistency", () => {
           throw new Error(
             `Failed to read pack file for stage "${stageId}": ${
               err instanceof Error ? err.message : String(err)
-            }`
+            }`,
           );
         }
 
@@ -128,7 +128,7 @@ describe("Stage ID ↔ Ontology Pack Consistency", () => {
           throw new Error(
             `Invalid JSON in pack file for stage "${stageId}": ${
               err instanceof Error ? err.message : String(err)
-            }`
+            }`,
           );
         }
 
@@ -138,7 +138,7 @@ describe("Stage ID ↔ Ontology Pack Consistency", () => {
         const packObj = parsed as Record<string, unknown>;
         expect(
           packObj.stage_id,
-          `Pack file ${stageId}.json has stage_id="${packObj.stage_id}" but filename suggests "${stageId}"`
+          `Pack file ${stageId}.json has stage_id="${packObj.stage_id}" but filename suggests "${stageId}"`,
         ).toBe(stageId);
       });
     }
@@ -158,16 +158,25 @@ describe("Stage ID snapshot", () => {
       [
         "BROWSER_AUTOMATE",
         "CANVAS_UI",
+        "CRON_PREFLIGHT_GATE",
         "CRON_SCHEDULE",
         "FILE_SYSTEM_OPS",
+        "LONG_TERM_MEMORY",
         "MEDIA_GENERATE",
         "MEMORY_MODIFY",
         "MESSAGE_EMIT",
         "NETWORK_IO",
         "NODE_INVOKE",
+        "NO_MEMORY",
+        "SESSION_MEMORY",
+        "SESSION_MEMORY_LONG_TERM_MEMORY",
         "SHELL_EXEC",
         "SUBAGENT_SPAWN",
         "TOOL_DISPATCH_GATE",
+        "WORKING_MEMORY",
+        "WORKING_MEMORY_LONG_TERM_MEMORY",
+        "WORKING_MEMORY_SESSION_MEMORY",
+        "WORKING_MEMORY_SESSION_MEMORY_LONG_TERM_MEMORY",
       ]
     `);
   });
@@ -193,7 +202,7 @@ describe("PACK_POLICY_INCOMPLETE fail-closed validation", () => {
 
       // Attempt to validate - should throw deterministic error
       expect(() => validatePackObject(malformedPack, malformedPackPath)).toThrow(
-        PackPolicyIncompleteError
+        PackPolicyIncompleteError,
       );
 
       // Verify the error is deterministic and contains expected information
@@ -216,12 +225,12 @@ describe("PACK_POLICY_INCOMPLETE fail-closed validation", () => {
         expect(policyError.missingFields.length).toBeGreaterThan(0);
 
         // Verify the specific issue is identified (missing capability_requirements)
-        const hasCapabilityRequirementsIssue = policyError.missingFields.some(
-          (field) => field.includes("capability_requirements")
+        const hasCapabilityRequirementsIssue = policyError.missingFields.some((field) =>
+          field.includes("capability_requirements"),
         );
         expect(
           hasCapabilityRequirementsIssue,
-          `Expected error to identify missing capability_requirements. Got: ${policyError.missingFields.join(", ")}`
+          `Expected error to identify missing capability_requirements. Got: ${policyError.missingFields.join(", ")}`,
         ).toBe(true);
       }
     });
@@ -255,9 +264,9 @@ describe("PACK_POLICY_INCOMPLETE fail-closed validation", () => {
         // Missing: pack_version, stage_id, contracts
       };
 
-      expect(() =>
-        validatePackObject(incompleteTopLevel, "<test-incomplete>")
-      ).toThrow(PackPolicyIncompleteError);
+      expect(() => validatePackObject(incompleteTopLevel, "<test-incomplete>")).toThrow(
+        PackPolicyIncompleteError,
+      );
 
       try {
         validatePackObject(incompleteTopLevel, "<test-incomplete>");
@@ -283,9 +292,9 @@ describe("PACK_POLICY_INCOMPLETE fail-closed validation", () => {
         ],
       };
 
-      expect(() =>
-        validatePackObject(invalidContract, "<test-invalid-contract>")
-      ).toThrow(PackPolicyIncompleteError);
+      expect(() => validatePackObject(invalidContract, "<test-invalid-contract>")).toThrow(
+        PackPolicyIncompleteError,
+      );
 
       try {
         validatePackObject(invalidContract, "<test-invalid-contract>");
@@ -319,9 +328,9 @@ describe("PACK_POLICY_INCOMPLETE fail-closed validation", () => {
       };
 
       // Should throw because capability_requirements is missing
-      expect(() =>
-        validatePackObject(packWithMissingCapReqs, "<test-no-silent-defaults>")
-      ).toThrow(PackPolicyIncompleteError);
+      expect(() => validatePackObject(packWithMissingCapReqs, "<test-no-silent-defaults>")).toThrow(
+        PackPolicyIncompleteError,
+      );
     });
   });
 });

@@ -44,6 +44,10 @@
   "scoring": {
     "enableSemantic": false
   },
+  "thresholds": {
+    "min_confidence_T": 0,
+    "dominance_margin_Delta": 0
+  },
   "contracts": [
     {
       "contract_id": "CRON_PREFLIGHT_VALIDATE",

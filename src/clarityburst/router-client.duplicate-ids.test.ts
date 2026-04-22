@@ -9,11 +9,20 @@
  * when allowedContractIds contains duplicate entries.
  */
 
-import { describe, it, expect } from "vitest";
-import { routeClarityBurst, type RouterInput } from "./router-client";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { ClarityBurstAbstainError } from "./errors";
+import { routeClarityBurst, type RouterInput } from "./router-client";
 
 describe("routeClarityBurst allowedContractIds validation", () => {
+  beforeEach(() => {
+    process.env.CLARITYBURST_ROUTER_URL = "http://localhost:3001";
+    process.env.CLARITYBURST_ENABLED = "true";
+  });
+
+  afterEach(() => {
+    delete process.env.CLARITYBURST_ROUTER_URL;
+    delete process.env.CLARITYBURST_ENABLED;
+  });
   describe("duplicate ID detection", () => {
     /**
      * Regression test: Duplicate contract IDs in allowedContractIds
