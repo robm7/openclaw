@@ -1,7 +1,7 @@
 /**
  * FILE_SYSTEM_OPS saveSessionStore() Pack Incomplete → Fail-Closed at Commit Point Tripwire Test
  *
- * Verifies that the session store commit point (saveSessionStoreUnlocked in
+ * Verifies that the session store commit point (saveSessionStore in
  * openclaw/src/config/sessions/store.ts) fails closed when loadPackOrAbstain("FILE_SYSTEM_OPS")
  * throws ClarityBurstAbstainError due to a malformed/incomplete pack.
  *
@@ -24,15 +24,14 @@
  * - fs.promises.writeFile was NOT called (fail-closed, no disk write)
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "node:path";
-import {
-  ClarityBurstAbstainError,
-} from "../errors";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import type { SessionEntry } from "../../config/sessions/types.js";
 import {
   convertAbstainToBlockedResponse,
   type BlockedResponsePayload,
 } from "../../agents/pi-tool-definition-adapter.js";
+import { ClarityBurstAbstainError } from "../errors";
 import * as packLoadModule from "../pack-load";
 
 /**
@@ -40,6 +39,7 @@ import * as packLoadModule from "../pack-load";
  */
 function createMockSessionEntry() {
   return {
+    sessionId: "session_123",
     channel: "slack",
     lastChannel: "slack",
     lastTo: "@user",
@@ -60,16 +60,21 @@ function createMockSessionEntry() {
  */
 function createMockSessionStore() {
   return {
-    "session_123": createMockSessionEntry(),
+    session_123: createMockSessionEntry(),
   };
 }
 
 describe("FILE_SYSTEM_OPS saveSessionStore() pack_incomplete → fail-closed at commit point tripwire", () => {
   let loadPackOrAbstainSpy: ReturnType<typeof vi.spyOn>;
   let writeFileSpy: ReturnType<typeof vi.spyOn>;
-  const testStorePath = path.join(__dirname, "test_session_store_file_system_ops_incomplete_pack.json5");
+  const testStorePath = path.join(
+    __dirname,
+    "test_session_store_file_system_ops_incomplete_pack.json5",
+  );
 
   beforeEach(() => {
+    process.env.CLARITYBURST_ROUTER_URL = "http://localhost:3001";
+    process.env.CLARITYBURST_ENABLED = "true";
     // Clear session store cache before each test via dynamic import
     const clearCacheFn = async () => {
       const mod = await import("../../config/sessions/store.js");
@@ -80,18 +85,20 @@ describe("FILE_SYSTEM_OPS saveSessionStore() pack_incomplete → fail-closed at 
   });
 
   afterEach(() => {
+    delete process.env.CLARITYBURST_ROUTER_URL;
+    delete process.env.CLARITYBURST_ENABLED;
     // Clean up all spies
     vi.restoreAllMocks();
   });
 
   /**
-   * Helper to call saveSessionStoreUnlocked via the store module's internal mechanism
-   * Since saveSessionStoreUnlocked is private, we test it by mocking dependencies
+   * Helper to call saveSessionStore via the store module's internal mechanism
+   * Since saveSessionStore is the public API, we test it by mocking dependencies
    * and testing that the gating logic properly blocks writes
    */
   async function callSaveSessionStoreWithMocks(
     store: Record<string, unknown>,
-    shouldThrowIncompletePackError: boolean = true
+    shouldThrowIncompletePackError: boolean = true,
   ): Promise<void | BlockedResponsePayload> {
     // Mock loadPackOrAbstain to throw ClarityBurstAbstainError for incomplete pack
     const incompletePackError = new ClarityBurstAbstainError({
@@ -99,7 +106,8 @@ describe("FILE_SYSTEM_OPS saveSessionStore() pack_incomplete → fail-closed at 
       outcome: "ABSTAIN_CLARIFY",
       reason: "PACK_POLICY_INCOMPLETE",
       contractId: null,
-      instructions: "Pack validation failed for stage \"FILE_SYSTEM_OPS\"",
+      instructions: 'Pack validation failed for stage "FILE_SYSTEM_OPS"',
+      nonRetryable: true,
     });
 
     loadPackOrAbstainSpy = vi.spyOn(packLoadModule, "loadPackOrAbstain").mockImplementation(() => {
@@ -136,12 +144,20 @@ describe("FILE_SYSTEM_OPS saveSessionStore() pack_incomplete → fail-closed at 
     vi.spyOn(fsModule.promises, "rename").mockResolvedValue(undefined);
     vi.spyOn(fsModule.promises, "chmod").mockResolvedValue(undefined);
 
-    // Get the store module and call saveSessionStore which internally calls saveSessionStoreUnlocked
+    // Get the store module and call saveSessionStore
     const storeModule = await import("../../config/sessions/store.js");
-    return (storeModule as any).saveSessionStoreUnlocked(testStorePath, store);
+    try {
+      await storeModule.saveSessionStore(testStorePath, store as Record<string, SessionEntry>);
+      return; // void
+    } catch (err) {
+      if (err instanceof ClarityBurstAbstainError) {
+        return convertAbstainToBlockedResponse(err as ClarityBurstAbstainError);
+      }
+      throw err;
+    }
   }
 
-  describe("pack incomplete blocking at saveSessionStoreUnlocked commit point", () => {
+  describe("pack incomplete blocking at saveSessionStore commit point", () => {
     it("should return BlockedResponsePayload when FILE_SYSTEM_OPS pack is incomplete", async () => {
       // Arrange
       const mockStore = createMockSessionStore();
@@ -199,16 +215,19 @@ describe("FILE_SYSTEM_OPS saveSessionStore() pack_incomplete → fail-closed at 
       let loadPackCalled = false;
       const mockStore = createMockSessionStore();
 
-      loadPackOrAbstainSpy = vi.spyOn(packLoadModule, "loadPackOrAbstain").mockImplementation(() => {
-        loadPackCalled = true;
-        throw new ClarityBurstAbstainError({
-          stageId: "FILE_SYSTEM_OPS",
-          outcome: "ABSTAIN_CLARIFY",
-          reason: "PACK_POLICY_INCOMPLETE",
-          contractId: null,
-          instructions: "Pack incomplete",
+      loadPackOrAbstainSpy = vi
+        .spyOn(packLoadModule, "loadPackOrAbstain")
+        .mockImplementation(() => {
+          loadPackCalled = true;
+          throw new ClarityBurstAbstainError({
+            stageId: "FILE_SYSTEM_OPS",
+            outcome: "ABSTAIN_CLARIFY",
+            reason: "PACK_POLICY_INCOMPLETE",
+            contractId: null,
+            instructions: "Pack incomplete",
+            nonRetryable: true,
+          });
         });
-      });
 
       const fsModule = await import("node:fs");
       writeFileSpy = vi.fn().mockResolvedValue(undefined);
@@ -219,8 +238,10 @@ describe("FILE_SYSTEM_OPS saveSessionStore() pack_incomplete → fail-closed at 
 
       const storeModule = await import("../../config/sessions/store.js");
 
-      // Act
-      await (storeModule as any).saveSessionStoreUnlocked(testStorePath, mockStore);
+      // Act & Assert: saveSessionStore should throw ClarityBurstAbstainError
+      await expect(
+        storeModule.saveSessionStore(testStorePath, mockStore as Record<string, SessionEntry>),
+      ).rejects.toThrow(ClarityBurstAbstainError);
 
       // Assert: loadPackOrAbstain was called first (gating is checked early)
       expect(loadPackCalled).toBe(true);
@@ -236,12 +257,15 @@ describe("FILE_SYSTEM_OPS saveSessionStore() pack_incomplete → fail-closed at 
         outcome: "ABSTAIN_CLARIFY",
         reason: "PACK_POLICY_INCOMPLETE",
         contractId: null,
-        instructions: "Pack validation failed for stage \"FILE_SYSTEM_OPS\"",
+        instructions: 'Pack validation failed for stage "FILE_SYSTEM_OPS"',
+        nonRetryable: true,
       });
 
-      loadPackOrAbstainSpy = vi.spyOn(packLoadModule, "loadPackOrAbstain").mockImplementation(() => {
-        throw abstractionError;
-      });
+      loadPackOrAbstainSpy = vi
+        .spyOn(packLoadModule, "loadPackOrAbstain")
+        .mockImplementation(() => {
+          throw abstractionError;
+        });
 
       const fsModule = await import("node:fs");
       vi.spyOn(fsModule.promises, "writeFile").mockResolvedValue(undefined);
@@ -252,12 +276,25 @@ describe("FILE_SYSTEM_OPS saveSessionStore() pack_incomplete → fail-closed at 
       const mockStore = createMockSessionStore();
       const storeModule = await import("../../config/sessions/store.js");
 
-      // Act
-      const result = await (storeModule as any).saveSessionStoreUnlocked(testStorePath, mockStore);
+      // Act & Assert: saveSessionStore should throw ClarityBurstAbstainError
+      let caughtError: ClarityBurstAbstainError | undefined;
+      try {
+        await storeModule.saveSessionStore(
+          testStorePath,
+          mockStore as Record<string, SessionEntry>,
+        );
+      } catch (err) {
+        caughtError = err as ClarityBurstAbstainError;
+      }
 
-      // Assert: Result matches convertAbstainToBlockedResponse output structure
+      // Verify we caught the expected error
+      expect(caughtError).toBeDefined();
+      expect(caughtError).toBeInstanceOf(ClarityBurstAbstainError);
+
+      // Convert the caught error to BlockedResponsePayload and compare
+      const converted = convertAbstainToBlockedResponse(caughtError!);
       const expectedBlocked = convertAbstainToBlockedResponse(abstractionError);
-      expect(result).toEqual(expectedBlocked);
+      expect(converted).toEqual(expectedBlocked);
     });
   });
 

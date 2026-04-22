@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import configManager from "./clarityburst/config.js";
+import { loadPackOrAbstain } from "./clarityburst/pack-load";
 import { resolveOAuthDir } from "./config/paths.js";
 import { logVerbose, shouldLogVerbose } from "./globals.js";
 import {
@@ -11,6 +13,9 @@ import {
 import { isPlainObject } from "./infra/plain-object.js";
 
 export async function ensureDir(dir: string) {
+  if (configManager.isEnabled()) {
+    loadPackOrAbstain("FILE_SYSTEM_OPS");
+  }
   await fs.promises.mkdir(dir, { recursive: true });
 }
 

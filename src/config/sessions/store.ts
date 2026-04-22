@@ -1,8 +1,15 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { acquireSessionWriteLock } from "../../agents/session-write-lock.js";
 import type { MsgContext } from "../../auto-reply/templating.js";
+import type { SessionMaintenanceConfig, SessionMaintenanceMode } from "../types.base.js";
+import { acquireSessionWriteLock } from "../../agents/session-write-lock.js";
+import configManager from "../../clarityburst/config.js";
+import {
+  applyFileSystemOpsGateAndWrite,
+  applyFileSystemOpsGateAndRename,
+} from "../../clarityburst/file-system-ops-gating.js";
+import { loadPackOrAbstain } from "../../clarityburst/pack-load.js";
 import { parseByteSize } from "../../cli/parse-bytes.js";
 import { parseDurationMs } from "../../cli/parse-duration.js";
 import {
@@ -10,10 +17,6 @@ import {
   cleanupArchivedSessionTranscripts,
 } from "../../gateway/session-utils.fs.js";
 import { createSubsystemLogger } from "../../logging/subsystem.js";
-import {
-  applyFileSystemOpsGateAndWrite,
-  applyFileSystemOpsGateAndRename,
-} from "../../clarityburst/file-system-ops-gating.js";
 import {
   deliveryContextFromSession,
   mergeDeliveryContext,
@@ -23,7 +26,6 @@ import {
 } from "../../utils/delivery-context.js";
 import { getFileMtimeMs, isCacheEnabled, resolveCacheTtlMs } from "../cache-utils.js";
 import { loadConfig } from "../config.js";
-import type { SessionMaintenanceConfig, SessionMaintenanceMode } from "../types.base.js";
 import { enforceSessionDiskBudget, type SessionDiskBudgetSweepResult } from "./disk-budget.js";
 import { deriveSessionMetaPatch } from "./metadata.js";
 import {
@@ -648,6 +650,9 @@ async function saveSessionStoreUnlocked(
   store: Record<string, SessionEntry>,
   opts?: SaveSessionStoreOptions,
 ): Promise<void> {
+  if (configManager.isEnabled()) {
+    loadPackOrAbstain("FILE_SYSTEM_OPS");
+  }
   // Invalidate cache on write to ensure consistency
   invalidateSessionStoreCache(storePath);
 

@@ -23,11 +23,9 @@
  * - fs.promises.mkdir was NOT called (fail-closed, no directory created)
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "node:path";
-import {
-  ClarityBurstAbstainError,
-} from "../errors";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { ClarityBurstAbstainError } from "../errors";
 import * as packLoadModule from "../pack-load";
 
 describe("FILE_SYSTEM_OPS ensureDir() pack_incomplete → fail-closed tripwire", () => {
@@ -36,10 +34,14 @@ describe("FILE_SYSTEM_OPS ensureDir() pack_incomplete → fail-closed tripwire",
   const testDir = path.join(__dirname, "test_ensure_dir_file_system_ops_incomplete_pack");
 
   beforeEach(() => {
+    process.env.CLARITYBURST_ROUTER_URL = "http://localhost:3001";
+    process.env.CLARITYBURST_ENABLED = "true";
     vi.resetAllMocks();
   });
 
   afterEach(() => {
+    delete process.env.CLARITYBURST_ROUTER_URL;
+    delete process.env.CLARITYBURST_ENABLED;
     vi.restoreAllMocks();
   });
 
@@ -48,7 +50,7 @@ describe("FILE_SYSTEM_OPS ensureDir() pack_incomplete → fail-closed tripwire",
    */
   async function callEnsureDirWithMocks(
     dir: string,
-    shouldThrowIncompletePackError: boolean = true
+    shouldThrowIncompletePackError: boolean = true,
   ): Promise<void | Error> {
     // Mock loadPackOrAbstain to throw ClarityBurstAbstainError for incomplete pack
     const incompletePackError = new ClarityBurstAbstainError({
@@ -56,7 +58,7 @@ describe("FILE_SYSTEM_OPS ensureDir() pack_incomplete → fail-closed tripwire",
       outcome: "ABSTAIN_CLARIFY",
       reason: "PACK_POLICY_INCOMPLETE",
       contractId: null,
-      instructions: "Pack validation failed for stage \"FILE_SYSTEM_OPS\"",
+      instructions: 'Pack validation failed for stage "FILE_SYSTEM_OPS"',
     });
 
     loadPackOrAbstainSpy = vi.spyOn(packLoadModule, "loadPackOrAbstain").mockImplementation(() => {
@@ -132,16 +134,18 @@ describe("FILE_SYSTEM_OPS ensureDir() pack_incomplete → fail-closed tripwire",
       let loadPackCalled = false;
       const testDir = path.join(__dirname, "test_dir");
 
-      loadPackOrAbstainSpy = vi.spyOn(packLoadModule, "loadPackOrAbstain").mockImplementation(() => {
-        loadPackCalled = true;
-        throw new ClarityBurstAbstainError({
-          stageId: "FILE_SYSTEM_OPS",
-          outcome: "ABSTAIN_CLARIFY",
-          reason: "PACK_POLICY_INCOMPLETE",
-          contractId: null,
-          instructions: "Pack incomplete",
+      loadPackOrAbstainSpy = vi
+        .spyOn(packLoadModule, "loadPackOrAbstain")
+        .mockImplementation(() => {
+          loadPackCalled = true;
+          throw new ClarityBurstAbstainError({
+            stageId: "FILE_SYSTEM_OPS",
+            outcome: "ABSTAIN_CLARIFY",
+            reason: "PACK_POLICY_INCOMPLETE",
+            contractId: null,
+            instructions: "Pack incomplete",
+          });
         });
-      });
 
       const fsModule = await import("node:fs");
       mkdirSpy = vi.fn().mockResolvedValue(undefined);
@@ -207,19 +211,7 @@ describe("FILE_SYSTEM_OPS ensureDir() pack_incomplete → fail-closed tripwire",
 
     it("should never attempt mkdir regardless of directory depth", async () => {
       // Arrange: Test with deeply nested path
-      const deepPath = path.join(
-        __dirname,
-        "a",
-        "b",
-        "c",
-        "d",
-        "e",
-        "f",
-        "g",
-        "h",
-        "i",
-        "j"
-      );
+      const deepPath = path.join(__dirname, "a", "b", "c", "d", "e", "f", "g", "h", "i", "j");
 
       // Act
       await callEnsureDirWithMocks(deepPath, true);

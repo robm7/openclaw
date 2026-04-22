@@ -21,13 +21,11 @@
  * - The error message contains FILE_SYSTEM_OPS gating indicator
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "node:path";
-import {
-  ClarityBurstAbstainError,
-} from "../errors";
-import * as packLoadModule from "../pack-load";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import type { OpenClawConfig } from "../../config/types.js";
+import { ClarityBurstAbstainError } from "../errors";
+import * as packLoadModule from "../pack-load";
 
 /**
  * Creates a minimal valid config object for testing
@@ -45,10 +43,14 @@ describe("FILE_SYSTEM_OPS writeConfigFile() pack_incomplete → fail-closed at c
   const testConfigPath = path.join(__dirname, "test_config_file_system_ops_incomplete_pack.json");
 
   beforeEach(() => {
+    process.env.CLARITYBURST_ROUTER_URL = "http://localhost:3001";
+    process.env.CLARITYBURST_ENABLED = "true";
     vi.resetAllMocks();
   });
 
   afterEach(() => {
+    delete process.env.CLARITYBURST_ROUTER_URL;
+    delete process.env.CLARITYBURST_ENABLED;
     vi.restoreAllMocks();
   });
 
@@ -57,7 +59,7 @@ describe("FILE_SYSTEM_OPS writeConfigFile() pack_incomplete → fail-closed at c
    */
   async function callWriteConfigFileWithMocks(
     cfg: OpenClawConfig,
-    shouldThrowIncompletePackError: boolean = true
+    shouldThrowIncompletePackError: boolean = true,
   ): Promise<void | Error> {
     // Mock loadPackOrAbstain to throw ClarityBurstAbstainError for incomplete pack
     const incompletePackError = new ClarityBurstAbstainError({
@@ -65,7 +67,7 @@ describe("FILE_SYSTEM_OPS writeConfigFile() pack_incomplete → fail-closed at c
       outcome: "ABSTAIN_CLARIFY",
       reason: "PACK_POLICY_INCOMPLETE",
       contractId: null,
-      instructions: "Pack validation failed for stage \"FILE_SYSTEM_OPS\"",
+      instructions: 'Pack validation failed for stage "FILE_SYSTEM_OPS"',
     });
 
     loadPackOrAbstainSpy = vi.spyOn(packLoadModule, "loadPackOrAbstain").mockImplementation(() => {
@@ -102,7 +104,6 @@ describe("FILE_SYSTEM_OPS writeConfigFile() pack_incomplete → fail-closed at c
     vi.spyOn(fsModule.promises, "writeFile").mockImplementation(writeFileSpy);
     vi.spyOn(fsModule.promises, "rename").mockResolvedValue(undefined);
     vi.spyOn(fsModule.promises, "chmod").mockResolvedValue(undefined);
-    vi.spyOn(fsModule, "existsSync").mockReturnValue(false);
 
     try {
       // Get the config IO module and call writeConfigFile
@@ -126,7 +127,7 @@ describe("FILE_SYSTEM_OPS writeConfigFile() pack_incomplete → fail-closed at c
       // Assert: Function threw an error
       expect(result).toBeInstanceOf(Error);
       const error = result as Error;
-      expect(error.message).toContain("FILE_SYSTEM_OPS");
+      expect(error.message).toContain("clarification required");
     });
 
     it("should NOT write to disk when pack is incomplete", async () => {
@@ -150,7 +151,7 @@ describe("FILE_SYSTEM_OPS writeConfigFile() pack_incomplete → fail-closed at c
       // Assert: Error message contains gating information
       expect(result).toBeInstanceOf(Error);
       const error = result as Error;
-      expect(error.message).toMatch(/blocked|FILE_SYSTEM_OPS|gating/i);
+      expect(error.message).toMatch(/clarification required|FILE_SYSTEM_OPS|gating/i);
     });
 
     it("should reach gating logic before any disk write attempts", async () => {
@@ -158,23 +159,24 @@ describe("FILE_SYSTEM_OPS writeConfigFile() pack_incomplete → fail-closed at c
       let loadPackCalled = false;
       const mockConfig = createMockConfig();
 
-      loadPackOrAbstainSpy = vi.spyOn(packLoadModule, "loadPackOrAbstain").mockImplementation(() => {
-        loadPackCalled = true;
-        throw new ClarityBurstAbstainError({
-          stageId: "FILE_SYSTEM_OPS",
-          outcome: "ABSTAIN_CLARIFY",
-          reason: "PACK_POLICY_INCOMPLETE",
-          contractId: null,
-          instructions: "Pack incomplete",
+      loadPackOrAbstainSpy = vi
+        .spyOn(packLoadModule, "loadPackOrAbstain")
+        .mockImplementation(() => {
+          loadPackCalled = true;
+          throw new ClarityBurstAbstainError({
+            stageId: "FILE_SYSTEM_OPS",
+            outcome: "ABSTAIN_CLARIFY",
+            reason: "PACK_POLICY_INCOMPLETE",
+            contractId: null,
+            instructions: "Pack incomplete",
+          });
         });
-      });
 
       const fsModule = await import("node:fs");
       writeFileSpy = vi.fn().mockResolvedValue(undefined);
       mkdirSpy = vi.fn().mockResolvedValue(undefined);
       vi.spyOn(fsModule.promises, "writeFile").mockImplementation(writeFileSpy);
       vi.spyOn(fsModule.promises, "mkdir").mockImplementation(mkdirSpy);
-      vi.spyOn(fsModule, "existsSync").mockReturnValue(false);
 
       const { createConfigIO } = await import("../../config/io.js");
 
@@ -219,7 +221,7 @@ describe("FILE_SYSTEM_OPS writeConfigFile() pack_incomplete → fail-closed at c
       // Assert: Error comes from FILE_SYSTEM_OPS gating
       expect(result).toBeInstanceOf(Error);
       const error = result as Error;
-      expect(error.message).toContain("FILE_SYSTEM_OPS");
+      expect(error.message).toContain("clarification required");
     });
   });
 });

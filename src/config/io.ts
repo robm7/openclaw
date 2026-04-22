@@ -1,11 +1,14 @@
+import JSON5 from "json5";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { isDeepStrictEqual } from "node:util";
-import JSON5 from "json5";
+import type { OpenClawConfig, ConfigFileSnapshot, LegacyConfigIssue } from "./types.js";
 import { ensureOwnerDisplaySecret } from "../agents/owner-display.js";
+import configManager from "../clarityburst/config.js";
 import { applyFileSystemOpsGateAndWrite } from "../clarityburst/file-system-ops-gating.js";
+import { loadPackOrAbstain } from "../clarityburst/pack-load.js";
 import { loadDotEnv } from "../infra/dotenv.js";
 import { resolveRequiredHomeDir } from "../infra/home-dir.js";
 import {
@@ -47,7 +50,6 @@ import { normalizeConfigPaths } from "./normalize-paths.js";
 import { resolveConfigPath, resolveDefaultConfigCandidates, resolveStateDir } from "./paths.js";
 import { isBlockedObjectKey } from "./prototype-keys.js";
 import { applyConfigOverrides } from "./runtime-overrides.js";
-import type { OpenClawConfig, ConfigFileSnapshot, LegacyConfigIssue } from "./types.js";
 import {
   validateConfigObjectRawWithPlugins,
   validateConfigObjectWithPlugins,
@@ -1385,6 +1387,9 @@ export async function writeConfigFile(
   cfg: OpenClawConfig,
   options: ConfigWriteOptions = {},
 ): Promise<void> {
+  if (configManager.isEnabled()) {
+    loadPackOrAbstain("FILE_SYSTEM_OPS");
+  }
   const io = createConfigIO();
   let nextCfg = cfg;
   if (runtimeConfigSnapshot && runtimeConfigSourceSnapshot) {

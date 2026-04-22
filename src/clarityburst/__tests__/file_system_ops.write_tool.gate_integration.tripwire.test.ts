@@ -16,24 +16,28 @@
  * - Write semantics and error behavior are preserved
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import * as fs from "node:fs/promises";
-import * as path from "node:path";
 import os from "node:os";
-import { applyFileSystemOpsGateAndWrite } from "../file-system-ops-gating.js";
+import * as path from "node:path";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { ClarityBurstAbstainError } from "../errors.js";
+import { applyFileSystemOpsGateAndWrite } from "../file-system-ops-gating.js";
 
 describe("file_system_ops.write_tool.gate_integration.tripwire", () => {
   let tmpDir: string;
   let testFilePath: string;
 
   beforeEach(async () => {
+    process.env.CLARITYBURST_ROUTER_URL = "http://localhost:3001";
+    process.env.CLARITYBURST_ENABLED = "true";
     tmpDir = path.join(os.tmpdir(), `clarityburst-write-tool-${Date.now()}`);
     await fs.mkdir(tmpDir, { recursive: true });
     testFilePath = path.join(tmpDir, "router-test.txt");
   });
 
   afterEach(async () => {
+    delete process.env.CLARITYBURST_ROUTER_URL;
+    delete process.env.CLARITYBURST_ENABLED;
     try {
       await fs.rm(tmpDir, { recursive: true, force: true });
     } catch {
@@ -46,11 +50,7 @@ describe("file_system_ops.write_tool.gate_integration.tripwire", () => {
       const testContent = "router-test-content";
 
       try {
-        await applyFileSystemOpsGateAndWrite(
-          testFilePath,
-          testContent,
-          "utf-8"
-        );
+        await applyFileSystemOpsGateAndWrite(testFilePath, testContent, "utf-8");
         // If gate passes, no error - test passes
       } catch (err) {
         // Expected when router not available in test env or gate abstains
@@ -65,11 +65,7 @@ describe("file_system_ops.write_tool.gate_integration.tripwire", () => {
       const testContent = "should-not-exist";
 
       try {
-        await applyFileSystemOpsGateAndWrite(
-          testFilePath,
-          testContent,
-          "utf-8"
-        );
+        await applyFileSystemOpsGateAndWrite(testFilePath, testContent, "utf-8");
       } catch (err) {
         // Expected in test env where router may not be available
         if (err instanceof ClarityBurstAbstainError) {
@@ -82,7 +78,7 @@ describe("file_system_ops.write_tool.gate_integration.tripwire", () => {
         .access(testFilePath)
         .then(() => true)
         .catch(() => false);
-      
+
       // File should not exist if gate abstained
       if (!fileExists) {
         // This is expected behavior (fail-closed)
@@ -94,11 +90,7 @@ describe("file_system_ops.write_tool.gate_integration.tripwire", () => {
       const testContent = "UTF-8 test: こんにちは 🚀";
 
       try {
-        await applyFileSystemOpsGateAndWrite(
-          testFilePath,
-          testContent,
-          "utf-8"
-        );
+        await applyFileSystemOpsGateAndWrite(testFilePath, testContent, "utf-8");
         // If gate passes, semantics preserved - test passes
       } catch (err) {
         // Gate abstain is acceptable - demonstrates fail-closed
@@ -169,11 +161,7 @@ describe("file_system_ops.write_tool.gate_integration.tripwire", () => {
   describe("fail-closed behavior", () => {
     it("should not create router-test.txt on abstain", async () => {
       try {
-        await applyFileSystemOpsGateAndWrite(
-          testFilePath,
-          "fail-closed-test",
-          "utf-8"
-        );
+        await applyFileSystemOpsGateAndWrite(testFilePath, "fail-closed-test", "utf-8");
       } catch {
         // Expected in test env
       }
@@ -196,7 +184,7 @@ describe("file_system_ops.write_tool.gate_integration.tripwire", () => {
         if (err instanceof ClarityBurstAbstainError) {
           expect((err as ClarityBurstAbstainError).stageId).toBe("FILE_SYSTEM_OPS");
           expect((err as ClarityBurstAbstainError).outcome).toMatch(
-            /ABSTAIN_CLARIFY|ABSTAIN_OVERRIDE|PROCEED/
+            /ABSTAIN_CLARIFY|ABSTAIN_OVERRIDE|PROCEED/,
           );
           // Verify error contains decision context
           expect((err as ClarityBurstAbstainError).message).toBeTruthy();
