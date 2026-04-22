@@ -1,0 +1,61 @@
+﻿
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mC:/Users/rob_m/openclaw[39m
+
+ [31mΓ¥»[39m src/clarityburst/__tests__/file_system_ops.router_outage.fail_closed.tripwire.test.ts [2m([22m[2m11 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 18[2mms[22m[39m
+       [32mΓ£ô[39m should return blocked response with nonRetryable=true when router is unavailable[32m 3[2mms[22m[39m
+       [32mΓ£ô[39m should NOT execute saveSessionStore when router is unavailable[32m 0[2mms[22m[39m
+       [32mΓ£ô[39m should block writeConfigFile when router is unavailable[32m 0[2mms[22m[39m
+       [32mΓ£ô[39m should NOT execute writeConfigFile when router unavailable[32m 0[2mms[22m[39m
+       [32mΓ£ô[39m should block ensureDir when router is unavailable[32m 0[2mms[22m[39m
+       [32mΓ£ô[39m should NOT execute ensureDir when router unavailable[32m 0[2mms[22m[39m
+       [32mΓ£ô[39m should ensure nonRetryable=true prevents client retry on router outage[32m 1[2mms[22m[39m
+       [32mΓ£ô[39m should propagate router_outage reason through all three commit points[32m 1[2mms[22m[39m
+       [32mΓ£ô[39m should block even if operation data looks valid[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should confirm that applyFileSystemOverrides is exported and wired[39m[32m 5[2mms[22m[39m
+[31m       [31m├ù[31m should confirm that FILE_SYSTEM_OPS gating is wired into commit points[39m[32m 2[2mms[22m[39m
+node.exe : 
+At C:\Users\rob_m\AppData\Roaming\npm\pnpm.ps1:24 char:5
++     & "node$exe"  "$basedir/node_modules/pnpm/bin/pnpm.cjs" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m[1m[41m Failed Tests 2 [49m[22m[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m
+
+[41m[1m FAIL [22m[49m src/clarityburst/__tests__/file_system_ops.router_outage.fail_closed.tripwire.test.ts[2m > 
+[22mFILE_SYSTEM_OPS router_outage ΓåÆ fail-closed tripwire[2m > [22mGATING WIRING VERIFICATION[2m > [22mshould confirm 
+that applyFileSystemOverrides is exported and wired
+[31m[1mAssertionError[22m: applyFileSystemOverrides not found in decision-override.ts. Phase 3 integration should have added 
+this function.[39m
+[36m [2mΓ¥»[22m src/clarityburst/__tests__/file_system_ops.router_outage.fail_closed.tripwire.test.ts:[2m486:16[22m[39m
+    [90m484| [39m      } [35mcatch[39m (e) {
+    [90m485| [39m        [90m// Module exists but export doesn't - fail with guidance[39m
+    [90m486| [39m        expect[33m.[39m[34mfail[39m(
+    [90m   | [39m               [31m^[39m
+    [90m487| [39m          "applyFileSystemOverrides not found in decision-override.ts.ΓÇª
+    [90m488| [39m          [32m"Phase 3 integration should have added this function."[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/2]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m src/clarityburst/__tests__/file_system_ops.router_outage.fail_closed.tripwire.test.ts[2m > 
+[22mFILE_SYSTEM_OPS router_outage ΓåÆ fail-closed tripwire[2m > [22mGATING WIRING VERIFICATION[2m > [22mshould confirm 
+that FILE_SYSTEM_OPS gating is wired into commit points
+[31m[1mError[22m: Cannot find module '../decision-override.js'
+Require stack:
+- C:\Users\rob_m\openclaw\src\clarityburst\__tests__\file_system_ops.router_outage.fail_closed.tripwire.test.ts[39m
+[36m [2mΓ¥»[22m src/clarityburst/__tests__/file_system_ops.router_outage.fail_closed.tripwire.test.ts:[2m504:44[22m[39m
+    [90m502| [39m      [90m// Verify that the gating function exists[39m
+    [90m503| [39m      [90m// eslint-disable-next-line @typescript-eslint/no-require-imports[39m
+    [90m504| [39m      const { applyFileSystemOverrides } = require("../decision-overriΓÇª
+    [90m   | [39m                                           [31m^[39m
+    [90m505| [39m      
+    [90m506| [39m      [34mexpect[39m(applyFileSystemOverrides)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[2/2]ΓÄ»[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m9 passed[39m[22m[90m (11)[39m
+[2m   Start at [22m 10:44:14
+[2m   Duration [22m 1.11s[2m (transform 592ms, setup 487ms, import 318ms, tests 18ms, environment 0ms)[22m
+

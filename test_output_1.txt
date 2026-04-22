@@ -1,0 +1,265 @@
+﻿
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mC:/Users/rob_m/openclaw[39m
+
+ [31mΓ¥»[39m src/clarityburst/__tests__/contract_lookup.not_found.fail_open_only.tripwire.test.ts [2m([22m[2m11 tests[22m[2m | [22m[31m9 failed[39m[2m)[22m[32m 23[2mms[22m[39m
+[31m       [31m├ù[31m should ABSTAIN_CLARIFY when contract_id does not exist in pack (fail-open)[39m[32m 10[2mms[22m[39m
+[31m       [31m├ù[31m should ABSTAIN_CLARIFY when contract_id is empty string (not in pack)[39m[32m 2[2mms[22m[39m
+[31m       [31m├ù[31m should ABSTAIN_CLARIFY when contract_id has different case (case-sensitive lookup)[39m[32m 2[2mms[22m[39m
+[31m       [31m├ù[31m should ABSTAIN_CLARIFY when contract_id contains typo[39m[32m 1[2mms[22m[39m
+       [32mΓ£ô[39m should PROCEED when contract_id exists and contract lookup succeeds[32m 1[2mms[22m[39m
+       [32mΓ£ô[39m should ABSTAIN_CONFIRM when contract_id exists and contract needs confirmation[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should ABSTAIN_CLARIFY when contract not found regardless of high confidence[39m[32m 1[2mms[22m[39m
+[31m       [31m├ù[31m should ABSTAIN_CLARIFY when contract not found with high dominance margin[39m[32m 1[2mms[22m[39m
+[31m       [31m├ù[31m should ABSTAIN_CLARIFY when contract_id is null (not in pack)[39m[32m 1[2mms[22m[39m
+[31m       [31m├ù[31m should ABSTAIN_CLARIFY when contract_id contains special characters (not in pack)[39m[32m 1[2mms[22m[39m
+[31m       [31m├ù[31m should ABSTAIN_CLARIFY when pack has empty contracts array and router returns any contract[39m[32m 1[2mms[22m[39m
+node.exe : 
+At C:\Users\rob_m\AppData\Roaming\npm\pnpm.ps1:24 char:5
++     & "node$exe"  "$basedir/node_modules/pnpm/bin/pnpm.cjs" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m[1m[41m Failed Tests 9 [49m[22m[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m
+
+[41m[1m FAIL [22m[49m src/clarityburst/__tests__/contract_lookup.not_found.fail_open_only.tripwire.test.ts[2m > 
+[22mcontract_lookup.not_found ΓåÆ fail-open tripwire[2m > [22mrouter returns contract_id not in pack[2m > [22mshould 
+ABSTAIN_CLARIFY when contract_id does not exist in pack (fail-open)
+[31m[1mAssertionError[22m: expected { nonRetryable: false, ΓÇª(5) } to match object { nonRetryable: false, ΓÇª(2) }
+(3 matching properties omitted from actual)[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "nonRetryable": false,[22m
+[2m    "outcome": "ABSTAIN_CLARIFY",[22m
+[32m-   "reason": "router_mismatch",[39m
+[31m+   "reason": "ROUTER_MISMATCH",[39m
+[2m  }[22m
+
+[36m [2mΓ¥»[22m src/clarityburst/__tests__/contract_lookup.not_found.fail_open_only.tripwire.test.ts:[2m170:22[22m[39m
+    [90m168| [39m
+    [90m169| [39m      // Assert: Should ABSTAIN_CLARIFY with router_mismatch (fail-opeΓÇª
+    [90m170| [39m      [34mexpect[39m(result)[33m.[39m[34mtoMatchObject[39m({
+    [90m   | [39m                     [31m^[39m
+    [90m171| [39m        nonRetryable[33m:[39m [35mfalse[39m[33m,[39m
+    [90m172| [39m        outcome[33m:[39m [32m"ABSTAIN_CLARIFY"[39m[33m,[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/9]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m src/clarityburst/__tests__/contract_lookup.not_found.fail_open_only.tripwire.test.ts[2m > 
+[22mcontract_lookup.not_found ΓåÆ fail-open tripwire[2m > [22mrouter returns contract_id not in pack[2m > [22mshould 
+ABSTAIN_CLARIFY when contract_id is empty string (not in pack)
+[31m[1mAssertionError[22m: expected { Object (success, result) } to match object { nonRetryable: false, ΓÇª(2) }
+(2 matching properties omitted from actual)[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "nonRetryable": false,[39m
+[32m-   "outcome": "ABSTAIN_CLARIFY",[39m
+[32m-   "reason": "router_mismatch",[39m
+[31m+   "result": "mock_result",[39m
+[31m+   "success": true,[39m
+[2m  }[22m
+
+[36m [2mΓ¥»[22m src/clarityburst/__tests__/contract_lookup.not_found.fail_open_only.tripwire.test.ts:[2m204:22[22m[39m
+    [90m202| [39m
+    [90m203| [39m      [90m// Assert: Should ABSTAIN_CLARIFY[39m
+    [90m204| [39m      [34mexpect[39m(result)[33m.[39m[34mtoMatchObject[39m({
+    [90m   | [39m                     [31m^[39m
+    [90m205| [39m        nonRetryable[33m:[39m [35mfalse[39m[33m,[39m
+    [90m206| [39m        outcome[33m:[39m [32m"ABSTAIN_CLARIFY"[39m[33m,[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[2/9]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m src/clarityburst/__tests__/contract_lookup.not_found.fail_open_only.tripwire.test.ts[2m > 
+[22mcontract_lookup.not_found ΓåÆ fail-open tripwire[2m > [22mrouter returns contract_id not in pack[2m > [22mshould 
+ABSTAIN_CLARIFY when contract_id has different case (case-sensitive lookup)
+[31m[1mAssertionError[22m: expected { nonRetryable: false, ΓÇª(5) } to match object { nonRetryable: false, ΓÇª(2) }
+(3 matching properties omitted from actual)[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "nonRetryable": false,[22m
+[2m    "outcome": "ABSTAIN_CLARIFY",[22m
+[32m-   "reason": "router_mismatch",[39m
+[31m+   "reason": "ROUTER_MISMATCH",[39m
+[2m  }[22m
+
+[36m [2mΓ¥»[22m src/clarityburst/__tests__/contract_lookup.not_found.fail_open_only.tripwire.test.ts:[2m237:22[22m[39m
+    [90m235| [39m
+    [90m236| [39m      [90m// Assert: Should ABSTAIN_CLARIFY (case-sensitive mismatch)[39m
+    [90m237| [39m      [34mexpect[39m(result)[33m.[39m[34mtoMatchObject[39m({
+    [90m   | [39m                     [31m^[39m
+    [90m238| [39m        nonRetryable[33m:[39m [35mfalse[39m[33m,[39m
+    [90m239| [39m        outcome[33m:[39m [32m"ABSTAIN_CLARIFY"[39m[33m,[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[3/9]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m src/clarityburst/__tests__/contract_lookup.not_found.fail_open_only.tripwire.test.ts[2m > 
+[22mcontract_lookup.not_found ΓåÆ fail-open tripwire[2m > [22mrouter returns contract_id not in pack[2m > [22mshould 
+ABSTAIN_CLARIFY when contract_id contains typo
+[31m[1mAssertionError[22m: expected { nonRetryable: false, ΓÇª(5) } to match object { nonRetryable: false, ΓÇª(2) }
+(3 matching properties omitted from actual)[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "nonRetryable": false,[22m
+[2m    "outcome": "ABSTAIN_CLARIFY",[22m
+[32m-   "reason": "router_mismatch",[39m
+[31m+   "reason": "ROUTER_MISMATCH",[39m
+[2m  }[22m
+
+[36m [2mΓ¥»[22m src/clarityburst/__tests__/contract_lookup.not_found.fail_open_only.tripwire.test.ts:[2m269:22[22m[39m
+    [90m267| [39m
+    [90m268| [39m      [90m// Assert: Should ABSTAIN_CLARIFY[39m
+    [90m269| [39m      [34mexpect[39m(result)[33m.[39m[34mtoMatchObject[39m({
+    [90m   | [39m                     [31m^[39m
+    [90m270| [39m        nonRetryable[33m:[39m [35mfalse[39m[33m,[39m
+    [90m271| [39m        outcome[33m:[39m [32m"ABSTAIN_CLARIFY"[39m[33m,[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[4/9]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m src/clarityburst/__tests__/contract_lookup.not_found.fail_open_only.tripwire.test.ts[2m > 
+[22mcontract_lookup.not_found ΓåÆ fail-open tripwire[2m > [22mcontract not found with various score scenarios[2m > 
+[22mshould ABSTAIN_CLARIFY when contract not found regardless of high confidence
+[31m[1mAssertionError[22m: expected { nonRetryable: false, ΓÇª(5) } to match object { nonRetryable: false, ΓÇª(2) }
+(3 matching properties omitted from actual)[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "nonRetryable": false,[22m
+[2m    "outcome": "ABSTAIN_CLARIFY",[22m
+[32m-   "reason": "router_mismatch",[39m
+[31m+   "reason": "ROUTER_MISMATCH",[39m
+[2m  }[22m
+
+[36m [2mΓ¥»[22m src/clarityburst/__tests__/contract_lookup.not_found.fail_open_only.tripwire.test.ts:[2m388:22[22m[39m
+    [90m386| [39m
+    [90m387| [39m      // Assert: Should still ABSTAIN_CLARIFY (contract lookup failureΓÇª
+    [90m388| [39m      [34mexpect[39m(result)[33m.[39m[34mtoMatchObject[39m({
+    [90m   | [39m                     [31m^[39m
+    [90m389| [39m        nonRetryable[33m:[39m [35mfalse[39m[33m,[39m
+    [90m390| [39m        outcome[33m:[39m [32m"ABSTAIN_CLARIFY"[39m[33m,[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[5/9]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m src/clarityburst/__tests__/contract_lookup.not_found.fail_open_only.tripwire.test.ts[2m > 
+[22mcontract_lookup.not_found ΓåÆ fail-open tripwire[2m > [22mcontract not found with various score scenarios[2m > 
+[22mshould ABSTAIN_CLARIFY when contract not found with high dominance margin
+[31m[1mAssertionError[22m: expected { nonRetryable: false, ΓÇª(5) } to match object { nonRetryable: false, ΓÇª(2) }
+(3 matching properties omitted from actual)[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "nonRetryable": false,[22m
+[2m    "outcome": "ABSTAIN_CLARIFY",[22m
+[32m-   "reason": "router_mismatch",[39m
+[31m+   "reason": "ROUTER_MISMATCH",[39m
+[2m  }[22m
+
+[36m [2mΓ¥»[22m src/clarityburst/__tests__/contract_lookup.not_found.fail_open_only.tripwire.test.ts:[2m420:22[22m[39m
+    [90m418| [39m
+    [90m419| [39m      // Assert: Should ABSTAIN_CLARIFY (contract lookup is gating facΓÇª
+    [90m420| [39m      [34mexpect[39m(result)[33m.[39m[34mtoMatchObject[39m({
+    [90m   | [39m                     [31m^[39m
+    [90m421| [39m        nonRetryable[33m:[39m [35mfalse[39m[33m,[39m
+    [90m422| [39m        outcome[33m:[39m [32m"ABSTAIN_CLARIFY"[39m[33m,[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[6/9]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m src/clarityburst/__tests__/contract_lookup.not_found.fail_open_only.tripwire.test.ts[2m > 
+[22mcontract_lookup.not_found ΓåÆ fail-open tripwire[2m > [22medge cases in contract lookup[2m > [22mshould 
+ABSTAIN_CLARIFY when contract_id is null (not in pack)
+[31m[1mAssertionError[22m: expected { Object (success, result) } to match object { nonRetryable: false, ΓÇª(1) }
+(2 matching properties omitted from actual)[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "nonRetryable": false,[39m
+[32m-   "outcome": "ABSTAIN_CLARIFY",[39m
+[31m+   "result": "mock_result",[39m
+[31m+   "success": true,[39m
+[2m  }[22m
+
+
+[36m [2mΓ¥»[22m src/clarityburst/__tests__/contract_lookup.not_found.fail_open_only.tripwire.test.ts:[2m454:22[22m[39m
+    [90m452| [39m
+    [90m453| [39m      [90m// Assert: Should ABSTAIN_CLARIFY[39m
+    [90m454| [39m      [34mexpect[39m(result)[33m.[39m[34mtoMatchObject[39m({
+    [90m   | [39m                     [31m^[39m
+    [90m455| [39m        nonRetryable[33m:[39m [35mfalse[39m[33m,[39m
+    [90m456| [39m        outcome[33m:[39m [32m"ABSTAIN_CLARIFY"[39m[33m,[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[7/9]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m src/clarityburst/__tests__/contract_lookup.not_found.fail_open_only.tripwire.test.ts[2m > 
+[22mcontract_lookup.not_found ΓåÆ fail-open tripwire[2m > [22medge cases in contract lookup[2m > [22mshould 
+ABSTAIN_CLARIFY when contract_id contains special characters (not in pack)
+[31m[1mAssertionError[22m: expected { nonRetryable: false, ΓÇª(5) } to match object { nonRetryable: false, ΓÇª(2) }
+(3 matching properties omitted from actual)[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "nonRetryable": false,[22m
+[2m    "outcome": "ABSTAIN_CLARIFY",[22m
+[32m-   "reason": "router_mismatch",[39m
+[31m+   "reason": "ROUTER_MISMATCH",[39m
+[2m  }[22m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m9 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (11)[39m
+[2m   Start at [22m 10:31:14
+[2m   Duration [22m 1.45s[2m (transform 801ms, setup 481ms, import 662ms, tests 23ms, environment 0ms)[22m
+
+[36m [2mΓ¥»[22m src/clarityburst/__tests__/contract_lookup.not_found.fail_open_only.tripwire.test.ts:[2m485:22[22m[39m
+    [90m483| [39m
+    [90m484| [39m      [90m// Assert: Should ABSTAIN_CLARIFY[39m
+    [90m485| [39m      [34mexpect[39m(result)[33m.[39m[34mtoMatchObject[39m({
+    [90m   | [39m                     [31m^[39m
+    [90m486| [39m        nonRetryable[33m:[39m [35mfalse[39m[33m,[39m
+    [90m487| [39m        outcome[33m:[39m [32m"ABSTAIN_CLARIFY"[39m[33m,[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[8/9]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m src/clarityburst/__tests__/contract_lookup.not_found.fail_open_only.tripwire.test.ts[2m > 
+[22mcontract_lookup.not_found ΓåÆ fail-open tripwire[2m > [22medge cases in contract lookup[2m > [22mshould 
+ABSTAIN_CLARIFY when pack has empty contracts array and router returns any contract
+[31m[1mAssertionError[22m: expected { nonRetryable: false, ΓÇª(5) } to match object { nonRetryable: false, ΓÇª(2) }
+(3 matching properties omitted from actual)[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "nonRetryable": false,[22m
+[2m    "outcome": "ABSTAIN_CLARIFY",[22m
+[32m-   "reason": "router_mismatch",[39m
+[31m+   "reason": "ROUTER_MISMATCH",[39m
+[2m  }[22m
+
+[36m [2mΓ¥»[22m src/clarityburst/__tests__/contract_lookup.not_found.fail_open_only.tripwire.test.ts:[2m523:22[22m[39m
+    [90m521| [39m
+    [90m522| [39m      [90m// Assert: Should ABSTAIN_CLARIFY (no contracts to look up)[39m
+    [90m523| [39m      [34mexpect[39m(result)[33m.[39m[34mtoMatchObject[39m({
+    [90m   | [39m                     [31m^[39m
+    [90m524| [39m        nonRetryable[33m:[39m [35mfalse[39m[33m,[39m
+    [90m525| [39m        outcome[33m:[39m [32m"ABSTAIN_CLARIFY"[39m[33m,[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[9/9]ΓÄ»[22m[39m
+

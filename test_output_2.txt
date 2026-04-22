@@ -1,0 +1,71 @@
+﻿
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mC:/Users/rob_m/openclaw[39m
+
+ [31mΓ¥»[39m src/clarityburst/__tests__/tool_dispatch_gate.router_mismatch.fail_open_only.tripwire.test.ts [2m([22m[2m4 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 30[2mms[22m[39m
+[31m       [31m├ù[31m should fail-open when router returns contractId NOT in pack (mismatch only)[39m[32m 13[2mms[22m[39m
+       [32mΓ£ô[39m should proceed when router returns valid contractId in pack[32m 6[2mms[22m[39m
+       [32mΓ£ô[39m should NOT throw ClarityBurstAbstainError on mismatch[32m 4[2mms[22m[39m
+[31m       [31m├ù[31m should call tool executor exactly once on mismatch (fail-open)[39m[32m 5[2mms[22m[39m
+node.exe : 
+At C:\Users\rob_m\AppData\Roaming\npm\pnpm.ps1:24 char:5
++     & "node$exe"  "$basedir/node_modules/pnpm/bin/pnpm.cjs" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m[1m[41m Failed Tests 2 [49m[22m[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m
+
+[41m[1m FAIL [22m[49m src/clarityburst/__tests__/tool_dispatch_gate.router_mismatch.fail_open_only.tripwire.test.ts[2m > 
+[22mTOOL_DISPATCH_GATE router_mismatch ΓåÆ FAIL-OPEN tripwire[2m > [22mrouter mismatch fail-open behavior[2m > [22mshould 
+fail-open when router returns contractId NOT in pack (mismatch only)
+[31m[1mAssertionError[22m: expected { nonRetryable: false, ΓÇª(5) } to not have property "nonRetryable"[39m
+
+[32m- Expected:[39m 
+undefined
+
+[31m+ Received:[39m 
+false
+
+[36m [2mΓ¥»[22m 
+src/clarityburst/__tests__/tool_dispatch_gate.router_mismatch.fail_open_only.tripwire.test.ts:[2m188:26[22m[39m
+    [90m186| [39m      [90m// Assert: System FAIL-OPENS and proceeds[39m
+    [90m187| [39m      [90m// - No blocked response returned[39m
+    [90m188| [39m      
+[34mexpect[39m(result)[33m.[39mnot[33m.[39m[34mtoHaveProperty[39m([32m"nonRetryable"[39m)[33m;[39m
+    [90m   | [39m                         [31m^[39m
+    [90m189| [39m      
+[34mexpect[39m(result)[33m.[39mnot[33m.[39m[34mtoHaveProperty[39m([32m"outcome"[39m)[33m;[39m
+    [90m190| [39m      
+[34mexpect[39m(result)[33m.[39mnot[33m.[39m[34mtoHaveProperty[39m([32m"reason"[39m)[33m;[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/2]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m src/clarityburst/__tests__/tool_dispatch_gate.router_mismatch.fail_open_only.tripwire.test.ts[2m > 
+[22mTOOL_DISPATCH_GATE router_mismatch ΓåÆ FAIL-OPEN tripwire[2m > [22mrouter mismatch fail-open behavior[2m > [22mshould 
+call tool executor exactly once on mismatch (fail-open)
+[31m[1mAssertionError[22m: expected +0 to be 1 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 0[39m
+
+[36m [2mΓ¥»[22m 
+src/clarityburst/__tests__/tool_dispatch_gate.router_mismatch.fail_open_only.tripwire.test.ts:[2m288:47[22m[39m
+    [90m286| [39m
+    [90m287| [39m      [90m// Assert: Executor called exactly once[39m
+    [90m288| [39m      
+[34mexpect[39m(mockToolExecutor[33m.[39m[34mgetCallCount[39m())[33m.[39m[34mtoBe[39m([34m1[39m)[33m;[39m
+    [90m   | [39m                                              [31m^[39m
+    [90m289| [39m    })[33m;[39m
+    [90m290| [39m  })[33m;[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[2/2]ΓÄ»[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (4)[39m
+[2m   Start at [22m 10:32:23
+[2m   Duration [22m 1.50s[2m (transform 800ms, setup 494ms, import 690ms, tests 30ms, environment 0ms)[22m
+

@@ -1,0 +1,168 @@
+﻿
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mC:/Users/rob_m/openclaw[39m
+
+node.exe : [90mstderr[2m | src/clarityburst/__tests__/file_system_ops.write_tool.gate_integration.tripwire.test.ts[2m > 
+[22m[2mfile_system_ops.write_tool.gate_integration.tripwire[2m > [22m[2mbasic write tool gating[2m > [22m[2mshould 
+invoke FILE_SYSTEM_OPS gate before writeFile
+At C:\Users\rob_m\AppData\Roaming\npm\pnpm.ps1:24 char:5
++     & "node$exe"  "$basedir/node_modules/pnpm/bin/pnpm.cjs" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([90mstderr[2m...efore writeFile:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[22m[39m[ClarityBurst Config] Initialization failed: Error: CLARITYBURST_ROUTER_URL is required when ClarityBurst is enabled. 
+Set it to the router URL (e.g., https://clarityburst-router.fly.dev).
+    at ClarityBurstConfigManager.parseRouterUrl (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:97:13)
+    at ClarityBurstConfigManager.initialize (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:46:30)
+    at ClarityBurstConfigManager.getConfig (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:236:12)
+    at ClarityBurstConfigManager.isEnabled (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:246:17)
+    at applyFileSystemOverrides (C:/Users/rob_m/openclaw/src/clarityburst/decision-override.ts:1008:22)
+    at applyFileSystemOpsGateAndWrite (C:/Users/rob_m/openclaw/src/clarityburst/file-system-ops-gating.ts:73:28)
+    at C:/Users/rob_m/openclaw/src/clarityburst/__tests__/file_system_ops.write_tool.gate_integration.tripwire.test.ts:49:15
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:145:11
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:915:26
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:1243:20
+
+[90mstderr[2m | src/clarityburst/__tests__/file_system_ops.write_tool.gate_integration.tripwire.test.ts[2m > 
+[22m[2mfile_system_ops.write_tool.gate_integration.tripwire[2m > [22m[2mbasic write tool gating[2m > [22m[2mshould fail 
+closed (not write file) when gate abstains
+[22m[39m[ClarityBurst Config] Initialization failed: Error: CLARITYBURST_ROUTER_URL is required when ClarityBurst is enabled. 
+Set it to the router URL (e.g., https://clarityburst-router.fly.dev).
+    at ClarityBurstConfigManager.parseRouterUrl (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:97:13)
+    at ClarityBurstConfigManager.initialize (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:46:30)
+    at ClarityBurstConfigManager.getConfig (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:236:12)
+    at ClarityBurstConfigManager.isEnabled (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:246:17)
+    at applyFileSystemOverrides (C:/Users/rob_m/openclaw/src/clarityburst/decision-override.ts:1008:22)
+    at applyFileSystemOpsGateAndWrite (C:/Users/rob_m/openclaw/src/clarityburst/file-system-ops-gating.ts:73:28)
+    at C:/Users/rob_m/openclaw/src/clarityburst/__tests__/file_system_ops.write_tool.gate_integration.tripwire.test.ts:68:15
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:145:11
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:915:26
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:1243:20
+
+[90mstderr[2m | src/clarityburst/__tests__/file_system_ops.write_tool.gate_integration.tripwire.test.ts[2m > 
+[22m[2mfile_system_ops.write_tool.gate_integration.tripwire[2m > [22m[2mbasic write tool gating[2m > [22m[2mshould 
+preserve write semantics (UTF-8 encoding)
+[22m[39m[ClarityBurst Config] Initialization failed: Error: CLARITYBURST_ROUTER_URL is required when ClarityBurst is enabled. 
+Set it to the router URL (e.g., https://clarityburst-router.fly.dev).
+    at ClarityBurstConfigManager.parseRouterUrl (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:97:13)
+    at ClarityBurstConfigManager.initialize (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:46:30)
+    at ClarityBurstConfigManager.getConfig (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:236:12)
+    at ClarityBurstConfigManager.isEnabled (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:246:17)
+    at applyFileSystemOverrides (C:/Users/rob_m/openclaw/src/clarityburst/decision-override.ts:1008:22)
+    at applyFileSystemOpsGateAndWrite (C:/Users/rob_m/openclaw/src/clarityburst/file-system-ops-gating.ts:73:28)
+    at C:/Users/rob_m/openclaw/src/clarityburst/__tests__/file_system_ops.write_tool.gate_integration.tripwire.test.ts:97:15
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:145:11
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:915:26
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:1243:20
+
+[90mstderr[2m | src/clarityburst/__tests__/file_system_ops.write_tool.gate_integration.tripwire.test.ts[2m > 
+[22m[2mfile_system_ops.write_tool.gate_integration.tripwire[2m > [22m[2mbasic write tool gating[2m > [22m[2mshould 
+throw on ABSTAIN outcome with FILE_SYSTEM_OPS stageId
+[22m[39m[ClarityBurst Config] Initialization failed: Error: CLARITYBURST_ROUTER_URL is required when ClarityBurst is enabled. 
+Set it to the router URL (e.g., https://clarityburst-router.fly.dev).
+    at ClarityBurstConfigManager.parseRouterUrl (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:97:13)
+    at ClarityBurstConfigManager.initialize (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:46:30)
+    at ClarityBurstConfigManager.getConfig (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:236:12)
+    at ClarityBurstConfigManager.isEnabled (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:246:17)
+    at applyFileSystemOverrides (C:/Users/rob_m/openclaw/src/clarityburst/decision-override.ts:1008:22)
+    at applyFileSystemOpsGateAndWrite (C:/Users/rob_m/openclaw/src/clarityburst/file-system-ops-gating.ts:73:28)
+    at C:/Users/rob_m/openclaw/src/clarityburst/__tests__/file_system_ops.write_tool.gate_integration.tripwire.test.ts:114:15
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:145:11
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:915:26
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:1243:20
+
+[90mstderr[2m | src/clarityburst/__tests__/file_system_ops.write_tool.gate_integration.tripwire.test.ts[2m > 
+[22m[2mfile_system_ops.write_tool.gate_integration.tripwire[2m > [22m[2mbasic write tool gating[2m > [22m[2mshould 
+support buffer content writing
+[22m[39m[ClarityBurst Config] Initialization failed: Error: CLARITYBURST_ROUTER_URL is required when ClarityBurst is enabled. 
+Set it to the router URL (e.g., https://clarityburst-router.fly.dev).
+    at ClarityBurstConfigManager.parseRouterUrl (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:97:13)
+    at ClarityBurstConfigManager.initialize (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:46:30)
+    at ClarityBurstConfigManager.getConfig (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:236:12)
+    at ClarityBurstConfigManager.isEnabled (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:246:17)
+    at applyFileSystemOverrides (C:/Users/rob_m/openclaw/src/clarityburst/decision-override.ts:1008:22)
+    at applyFileSystemOpsGateAndWrite (C:/Users/rob_m/openclaw/src/clarityburst/file-system-ops-gating.ts:73:28)
+    at C:/Users/rob_m/openclaw/src/clarityburst/__tests__/file_system_ops.write_tool.gate_integration.tripwire.test.ts:134:15
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:145:11
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:915:26
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:1243:20
+
+[90mstderr[2m | src/clarityburst/__tests__/file_system_ops.write_tool.gate_integration.tripwire.test.ts[2m > 
+[22m[2mfile_system_ops.write_tool.gate_integration.tripwire[2m > [22m[2mrouter invocation verification[2m > 
+[22m[2mshould attempt router invocation for FILE_SYSTEM_OPS stage
+[22m[39m[ClarityBurst Config] Initialization failed: Error: CLARITYBURST_ROUTER_URL is required when ClarityBurst is enabled. 
+Set it to the router URL (e.g., https://clarityburst-router.fly.dev).
+    at ClarityBurstConfigManager.parseRouterUrl (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:97:13)
+    at ClarityBurstConfigManager.initialize (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:46:30)
+    at ClarityBurstConfigManager.getConfig (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:236:12)
+    at ClarityBurstConfigManager.isEnabled (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:246:17)
+    at applyFileSystemOverrides (C:/Users/rob_m/openclaw/src/clarityburst/decision-override.ts:1008:22)
+    at applyFileSystemOpsGateAndWrite (C:/Users/rob_m/openclaw/src/clarityburst/file-system-ops-gating.ts:73:28)
+    at C:/Users/rob_m/openclaw/src/clarityburst/__tests__/file_system_ops.write_tool.gate_integration.tripwire.test.ts:156:15
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:145:11
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:915:26
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:1243:20
+
+[90mstderr[2m | src/clarityburst/__tests__/file_system_ops.write_tool.gate_integration.tripwire.test.ts[2m > 
+[22m[2mfile_system_ops.write_tool.gate_integration.tripwire[2m > [22m[2mfail-closed behavior[2m > [22m[2mshould not 
+create router-test.txt on abstain
+[22m[39m[ClarityBurst Config] Initialization failed: Error: CLARITYBURST_ROUTER_URL is required when ClarityBurst is enabled. 
+Set it to the router URL (e.g., https://clarityburst-router.fly.dev).
+    at ClarityBurstConfigManager.parseRouterUrl (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:97:13)
+    at ClarityBurstConfigManager.initialize (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:46:30)
+    at ClarityBurstConfigManager.getConfig (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:236:12)
+    at ClarityBurstConfigManager.isEnabled (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:246:17)
+    at applyFileSystemOverrides (C:/Users/rob_m/openclaw/src/clarityburst/decision-override.ts:1008:22)
+    at applyFileSystemOpsGateAndWrite (C:/Users/rob_m/openclaw/src/clarityburst/file-system-ops-gating.ts:73:28)
+    at C:/Users/rob_m/openclaw/src/clarityburst/__tests__/file_system_ops.write_tool.gate_integration.tripwire.test.ts:172:15
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:145:11
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:915:26
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:1243:20
+
+[90mstderr[2m | src/clarityburst/__tests__/file_system_ops.write_tool.gate_integration.tripwire.test.ts[2m > 
+[22m[2mfile_system_ops.write_tool.gate_integration.tripwire[2m > [22m[2mfail-closed behavior[2m > [22m[2mshould 
+propagate ClarityBurstAbstainError with correct context
+[22m[39m[ClarityBurst Config] Initialization failed: Error: CLARITYBURST_ROUTER_URL is required when ClarityBurst is enabled. 
+Set it to the router URL (e.g., https://clarityburst-router.fly.dev).
+    at ClarityBurstConfigManager.parseRouterUrl (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:97:13)
+    at ClarityBurstConfigManager.initialize (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:46:30)
+    at ClarityBurstConfigManager.getConfig (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:236:12)
+    at ClarityBurstConfigManager.isEnabled (C:/Users/rob_m/openclaw/src/clarityburst/config.ts:246:17)
+    at applyFileSystemOverrides (C:/Users/rob_m/openclaw/src/clarityburst/decision-override.ts:1008:22)
+    at applyFileSystemOpsGateAndWrite (C:/Users/rob_m/openclaw/src/clarityburst/file-system-ops-gating.ts:73:28)
+    at C:/Users/rob_m/openclaw/src/clarityburst/__tests__/file_system_ops.write_tool.gate_integration.tripwire.test.ts:194:15
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:145:11
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:915:26
+    at [90mfile:///C:/Users/rob_m/openclaw/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@4.0.18/node_modules/[4m@vitest[24m
+/runner/dist/index.js:1243:20
+
+ [32mΓ£ô[39m src/clarityburst/__tests__/file_system_ops.write_tool.gate_integration.tripwire.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 44[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m8 passed[39m[22m[90m (8)[39m
+[2m   Start at [22m 10:47:00
+[2m   Duration [22m 1.20s[2m (transform 629ms, setup 510ms, import 370ms, tests 44ms, environment 0ms)[22m
+

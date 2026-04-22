@@ -21,12 +21,11 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { OntologyPack, RouteResult } from "../decision-override";
 import {
-  ClarityBurstAbstainError,
-} from "../errors";
-import {
   convertAbstainToBlockedResponse,
   type BlockedResponsePayload,
 } from "../../agents/pi-tool-definition-adapter.js";
+import { applyFileSystemOverrides } from "../decision-override";
+import { ClarityBurstAbstainError } from "../errors";
 
 /**
  * Mock file system operation executor - tracks call count
@@ -54,7 +53,7 @@ function createMockFileSystemOpsPack(): OntologyPack {
     description: "Test pack for FILE_SYSTEM_OPS",
     thresholds: {
       min_confidence_T: 0.55,
-      dominance_margin_Delta: 0.10,
+      dominance_margin_Delta: 0.1,
     },
     contracts: [
       {
@@ -136,7 +135,7 @@ function executeFileSystemOpWithGating(
   pack: OntologyPack,
   routeResult: RouteResult,
   context: FileSystemContext,
-  fsExecutor: ReturnType<typeof createMockFileSystemExecutor>
+  fsExecutor: ReturnType<typeof createMockFileSystemExecutor>,
 ): { success: true; result: unknown } | BlockedResponsePayload {
   // Fail-closed for router outage: if router is unavailable, block immediately
   if (!routeResult.ok) {
@@ -145,7 +144,8 @@ function executeFileSystemOpWithGating(
       outcome: "ABSTAIN_CLARIFY",
       reason: "router_outage",
       contractId: null,
-      instructions: "The router is unavailable and file system operations cannot proceed. Retry when the router service is restored.",
+      instructions:
+        "The router is unavailable and file system operations cannot proceed. Retry when the router service is restored.",
       nonRetryable: true,
     });
     return convertAbstainToBlockedResponse(error);
@@ -181,12 +181,7 @@ describe("FILE_SYSTEM_OPS router_outage → fail-closed tripwire", () => {
       };
 
       // Act: Execute through fail-closed wrapper
-      const result = executeFileSystemOpWithGating(
-        mockPack,
-        routeResult,
-        context,
-        mockFsExecutor
-      );
+      const result = executeFileSystemOpWithGating(mockPack, routeResult, context, mockFsExecutor);
 
       // Assert: Blocked response payload structure with fail-closed properties
       expect(result).toMatchObject({
@@ -212,12 +207,7 @@ describe("FILE_SYSTEM_OPS router_outage → fail-closed tripwire", () => {
       };
 
       // Act: Execute wrapper with router outage
-      const result = executeFileSystemOpWithGating(
-        mockPack,
-        routeResult,
-        context,
-        mockFsExecutor
-      );
+      const result = executeFileSystemOpWithGating(mockPack, routeResult, context, mockFsExecutor);
 
       // Assert: File system executor was NOT called
       expect(mockFsExecutor.getCallCount()).toBe(0);
@@ -245,12 +235,7 @@ describe("FILE_SYSTEM_OPS router_outage → fail-closed tripwire", () => {
       };
 
       // Act: Execute through fail-closed wrapper
-      const result = executeFileSystemOpWithGating(
-        mockPack,
-        routeResult,
-        context,
-        mockFsExecutor
-      );
+      const result = executeFileSystemOpWithGating(mockPack, routeResult, context, mockFsExecutor);
 
       // Assert: Blocked with fail-closed properties
       expect(result).toMatchObject({
@@ -276,12 +261,7 @@ describe("FILE_SYSTEM_OPS router_outage → fail-closed tripwire", () => {
       };
 
       // Act: Execute wrapper with router outage
-      const result = executeFileSystemOpWithGating(
-        mockPack,
-        routeResult,
-        context,
-        mockFsExecutor
-      );
+      const result = executeFileSystemOpWithGating(mockPack, routeResult, context, mockFsExecutor);
 
       // Assert: File system executor was NOT called
       expect(mockFsExecutor.getCallCount()).toBe(0);
@@ -309,12 +289,7 @@ describe("FILE_SYSTEM_OPS router_outage → fail-closed tripwire", () => {
       };
 
       // Act: Execute through fail-closed wrapper
-      const result = executeFileSystemOpWithGating(
-        mockPack,
-        routeResult,
-        context,
-        mockFsExecutor
-      );
+      const result = executeFileSystemOpWithGating(mockPack, routeResult, context, mockFsExecutor);
 
       // Assert: Blocked with fail-closed properties
       expect(result).toMatchObject({
@@ -340,12 +315,7 @@ describe("FILE_SYSTEM_OPS router_outage → fail-closed tripwire", () => {
       };
 
       // Act: Execute wrapper with router outage
-      const result = executeFileSystemOpWithGating(
-        mockPack,
-        routeResult,
-        context,
-        mockFsExecutor
-      );
+      const result = executeFileSystemOpWithGating(mockPack, routeResult, context, mockFsExecutor);
 
       // Assert: File system executor was NOT called
       expect(mockFsExecutor.getCallCount()).toBe(0);
@@ -372,16 +342,11 @@ describe("FILE_SYSTEM_OPS router_outage → fail-closed tripwire", () => {
       };
 
       // Act: Execute wrapper
-      const result = executeFileSystemOpWithGating(
-        mockPack,
-        routeResult,
-        context,
-        mockFsExecutor
-      );
+      const result = executeFileSystemOpWithGating(mockPack, routeResult, context, mockFsExecutor);
 
       // Assert: nonRetryable must be true to prevent retry loops
       expect(result).toHaveProperty("nonRetryable", true);
-      
+
       // Assert: File system operation should never be called
       expect(mockFsExecutor.getCallCount()).toBe(0);
     });
@@ -389,20 +354,20 @@ describe("FILE_SYSTEM_OPS router_outage → fail-closed tripwire", () => {
     it("should propagate router_outage reason through all three commit points", () => {
       // Test that all three wrapped functions use the same router_outage reason
       const testCases = [
-        { 
-          path: "~/.openclaw/sessions/store.json", 
+        {
+          path: "~/.openclaw/sessions/store.json",
           operation: "write",
-          name: "saveSessionStore"
+          name: "saveSessionStore",
         },
-        { 
-          path: "~/.openclaw/config.json", 
+        {
+          path: "~/.openclaw/config.json",
           operation: "write",
-          name: "writeConfigFile"
+          name: "writeConfigFile",
         },
-        { 
-          path: "~/.openclaw/sessions", 
+        {
+          path: "~/.openclaw/sessions",
           operation: "mkdir",
-          name: "ensureDir"
+          name: "ensureDir",
         },
       ];
 
@@ -420,12 +385,7 @@ describe("FILE_SYSTEM_OPS router_outage → fail-closed tripwire", () => {
         };
 
         // Act: Execute wrapper
-        const result = executeFileSystemOpWithGating(
-          mockPack,
-          routeResult,
-          context,
-          fsExecutor
-        );
+        const result = executeFileSystemOpWithGating(mockPack, routeResult, context, fsExecutor);
 
         // Assert: All commit points return consistent fail-closed response
         expect(result).toMatchObject({
@@ -453,12 +413,7 @@ describe("FILE_SYSTEM_OPS router_outage → fail-closed tripwire", () => {
       };
 
       // Act: Execute wrapper
-      const result = executeFileSystemOpWithGating(
-        mockPack,
-        routeResult,
-        context,
-        mockFsExecutor
-      );
+      const result = executeFileSystemOpWithGating(mockPack, routeResult, context, mockFsExecutor);
 
       // Assert: Still blocked (fail-closed) even though userConfirmed is true
       expect(result).toMatchObject({
@@ -475,19 +430,7 @@ describe("FILE_SYSTEM_OPS router_outage → fail-closed tripwire", () => {
 
   describe("GATING WIRING VERIFICATION", () => {
     it("should confirm that applyFileSystemOverrides is exported and wired", () => {
-      // Verify the gating function is exported from decision-override.ts
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const decisionOverride = require("../decision-override.js");
-        
-        expect(decisionOverride.applyFileSystemOverrides).toBeDefined();
-      } catch (e) {
-        // Module exists but export doesn't - fail with guidance
-        expect.fail(
-          "applyFileSystemOverrides not found in decision-override.ts. " +
-          "Phase 3 integration should have added this function."
-        );
-      }
+      expect(applyFileSystemOverrides).toBeDefined();
     });
 
     it("should confirm that FILE_SYSTEM_OPS gating is wired into commit points", () => {
@@ -499,10 +442,6 @@ describe("FILE_SYSTEM_OPS router_outage → fail-closed tripwire", () => {
       // Phase 3 should have added wrappers that call applyFileSystemOverrides
       // before executing the underlying file system operations.
 
-      // Verify that the gating function exists
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { applyFileSystemOverrides } = require("../decision-override.js");
-      
       expect(applyFileSystemOverrides).toBeDefined();
       expect(typeof applyFileSystemOverrides).toBe("function");
     });

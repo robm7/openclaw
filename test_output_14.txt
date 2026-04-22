@@ -1,0 +1,156 @@
+﻿
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mC:/Users/rob_m/openclaw[39m
+
+ [31mΓ¥»[39m src/clarityburst/__tests__/file_system_ops.save_session_store.pack_incomplete.fail_closed.at_commit_point.tripwire.test.ts [2m([22m[2m7 tests[22m[2m | [22m[31m7 failed[39m[2m)[22m[33m 5563[2mms[22m[39m
+[31m       [31m├ù[31m should return BlockedResponsePayload when FILE_SYSTEM_OPS pack is incomplete[39m[33m 5552[2mms[22m[39m
+[31m       [31m├ù[31m should block with PACK_POLICY_INCOMPLETE reason and nonRetryable=true[39m[32m 2[2mms[22m[39m
+[31m       [31m├ù[31m should NOT write to disk when pack is incomplete[39m[32m 2[2mms[22m[39m
+[31m       [31m├ù[31m should reach gating logic before any disk write attempts[39m[32m 1[2mms[22m[39m
+[31m       [31m├ù[31m should convert ClarityBurstAbstainError to BlockedResponsePayload via convertAbstainToBlockedResponse[39m[32m 1[2mms[22m[39m
+[31m       [31m├ù[31m should ensure nonRetryable=true prevents client retry on incomplete pack error[39m[32m 1[2mms[22m[39m
+[31m       [31m├ù[31m should block even if store data looks valid[39m[32m 1[2mms[22m[39m
+node.exe : 
+At C:\Users\rob_m\AppData\Roaming\npm\pnpm.ps1:24 char:5
++     & "node$exe"  "$basedir/node_modules/pnpm/bin/pnpm.cjs" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m[1m[41m Failed Tests 7 [49m[22m[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m
+
+[41m[1m FAIL [22m[49m 
+src/clarityburst/__tests__/file_system_ops.save_session_store.pack_incomplete.fail_closed.at_commit_point.tripwire.test.ts[2m 
+> [22mFILE_SYSTEM_OPS saveSessionStore() pack_incomplete ΓåÆ fail-closed at commit point tripwire[2m > [22mpack incomplete 
+blocking at saveSessionStoreUnlocked commit point[2m > [22mshould return BlockedResponsePayload when FILE_SYSTEM_OPS pack is 
+incomplete
+[31m[1mTypeError[22m: storeModule.saveSessionStoreUnlocked is not a function[39m
+[36m [2mΓ¥»[22m callSaveSessionStoreWithMocks src/clarityburst/__tests__/file_system_ops.save_session_store.pack_incomplete.f
+ail_closed.at_commit_point.tripwire.test.ts:[2m141:33[22m[39m
+    [90m139| [39m    // Get the store module and call saveSessionStore which internallyΓÇª
+    [90m140| [39m    [35mconst[39m storeModule [33m=[39m [35mawait[39m 
+[35mimport[39m([32m"../../config/sessions/store.js"[39m)[33m;[39m
+    [90m141| [39m    return (storeModule as any).saveSessionStoreUnlocked(testStorePathΓÇª
+    [90m   | [39m                                [31m^[39m
+    [90m142| [39m  }
+    [90m143| [39m
+[90m [2mΓ¥»[22m src/clarityburst/__tests__/file_system_ops.save_session_store.pack_incomplete.fail_closed.at_commit_point.tri
+pwire.test.ts:[2m150:22[22m[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/7]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m 
+src/clarityburst/__tests__/file_system_ops.save_session_store.pack_incomplete.fail_closed.at_commit_point.tripwire.test.ts[2m 
+> [22mFILE_SYSTEM_OPS saveSessionStore() pack_incomplete ΓåÆ fail-closed at commit point tripwire[2m > [22mpack incomplete 
+blocking at saveSessionStoreUnlocked commit point[2m > [22mshould block with PACK_POLICY_INCOMPLETE reason and 
+nonRetryable=true
+[31m[1mTypeError[22m: storeModule.saveSessionStoreUnlocked is not a function[39m
+[36m [2mΓ¥»[22m callSaveSessionStoreWithMocks src/clarityburst/__tests__/file_system_ops.save_session_store.pack_incomplete.f
+ail_closed.at_commit_point.tripwire.test.ts:[2m141:33[22m[39m
+    [90m139| [39m    // Get the store module and call saveSessionStore which internallyΓÇª
+    [90m140| [39m    [35mconst[39m storeModule [33m=[39m [35mawait[39m 
+[35mimport[39m([32m"../../config/sessions/store.js"[39m)[33m;[39m
+    [90m141| [39m    return (storeModule as any).saveSessionStoreUnlocked(testStorePathΓÇª
+    [90m   | [39m                                [31m^[39m
+    [90m142| [39m  }
+    [90m143| [39m
+[90m [2mΓ¥»[22m src/clarityburst/__tests__/file_system_ops.save_session_store.pack_incomplete.fail_closed.at_commit_point.tri
+pwire.test.ts:[2m175:22[22m[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[2/7]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m 
+src/clarityburst/__tests__/file_system_ops.save_session_store.pack_incomplete.fail_closed.at_commit_point.tripwire.test.ts[2m 
+> [22mFILE_SYSTEM_OPS saveSessionStore() pack_incomplete ΓåÆ fail-closed at commit point tripwire[2m > [22mpack incomplete 
+blocking at saveSessionStoreUnlocked commit point[2m > [22mshould NOT write to disk when pack is incomplete
+[31m[1mTypeError[22m: storeModule.saveSessionStoreUnlocked is not a function[39m
+[36m [2mΓ¥»[22m callSaveSessionStoreWithMocks src/clarityburst/__tests__/file_system_ops.save_session_store.pack_incomplete.f
+ail_closed.at_commit_point.tripwire.test.ts:[2m141:33[22m[39m
+    [90m139| [39m    // Get the store module and call saveSessionStore which internallyΓÇª
+    [90m140| [39m    [35mconst[39m storeModule [33m=[39m [35mawait[39m 
+[35mimport[39m([32m"../../config/sessions/store.js"[39m)[33m;[39m
+    [90m141| [39m    return (storeModule as any).saveSessionStoreUnlocked(testStorePathΓÇª
+    [90m   | [39m                                [31m^[39m
+    [90m142| [39m  }
+    [90m143| [39m
+[90m [2mΓ¥»[22m src/clarityburst/__tests__/file_system_ops.save_session_store.pack_incomplete.fail_closed.at_commit_point.tri
+pwire.test.ts:[2m191:7[22m[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[3/7]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m 
+src/clarityburst/__tests__/file_system_ops.save_session_store.pack_incomplete.fail_closed.at_commit_point.tripwire.test.ts[2m 
+> [22mFILE_SYSTEM_OPS saveSessionStore() pack_incomplete ΓåÆ fail-closed at commit point tripwire[2m > [22mpack incomplete 
+blocking at saveSessionStoreUnlocked commit point[2m > [22mshould reach gating logic before any disk write attempts
+[31m[1mTypeError[22m: storeModule.saveSessionStoreUnlocked is not a function[39m
+[36m [2mΓ¥»[22m src/clarityburst/__tests__/file_system_ops.save_session_store.pack_incomplete.fail_closed.at_commit_point.tri
+pwire.test.ts:[2m223:34[22m[39m
+    [90m221| [39m
+    [90m222| [39m      [90m// Act[39m
+    [90m223| [39m      await (storeModule as any).saveSessionStoreUnlocked(testStorePatΓÇª
+    [90m   | [39m                                 [31m^[39m
+    [90m224| [39m
+    [90m225| [39m      // Assert: loadPackOrAbstain was called first (gating is checkedΓÇª
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[4/7]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m 
+src/clarityburst/__tests__/file_system_ops.save_session_store.pack_incomplete.fail_closed.at_commit_point.tripwire.test.ts[2m 
+> [22mFILE_SYSTEM_OPS saveSessionStore() pack_incomplete ΓåÆ fail-closed at commit point tripwire[2m > [22mpack incomplete 
+blocking at saveSessionStoreUnlocked commit point[2m > [22mshould convert ClarityBurstAbstainError to BlockedResponsePayload 
+via convertAbstainToBlockedResponse
+[31m[1mTypeError[22m: storeModule.saveSessionStoreUnlocked is not a function[39m
+[36m [2mΓ¥»[22m src/clarityburst/__tests__/file_system_ops.save_session_store.pack_incomplete.fail_closed.at_commit_point.tri
+pwire.test.ts:[2m256:49[22m[39m
+    [90m254| [39m
+    [90m255| [39m      [90m// Act[39m
+    [90m256| [39m      const result = await (storeModule as any).saveSessionStoreUnlockΓÇª
+    [90m   | [39m                                                [31m^[39m
+    [90m257| [39m
+    [90m258| [39m      // Assert: Result matches convertAbstainToBlockedResponse outputΓÇª
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[5/7]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m 
+src/clarityburst/__tests__/file_system_ops.save_session_store.pack_incomplete.fail_closed.at_commit_point.tripwire.test.ts[2m 
+> [22mFILE_SYSTEM_OPS saveSessionStore() pack_incomplete ΓåÆ fail-closed at commit point tripwire[2m > [22mfail-closed 
+guarantees for incomplete pack[2m > [22mshould ensure nonRetryable=true prevents client retry on incomplete pack error
+[31m[1mTypeError[22m: storeModule.saveSessionStoreUnlocked is not a function[39m
+[36m [2mΓ¥»[22m callSaveSessionStoreWithMocks src/clarityburst/__tests__/file_system_ops.save_session_store.pack_incomplete.f
+ail_closed.at_commit_point.tripwire.test.ts:[2m141:33[22m[39m
+    [90m139| [39m    // Get the store module and call saveSessionStore which internallyΓÇª
+    [90m140| [39m    [35mconst[39m storeModule [33m=[39m [35mawait[39m 
+[35mimport[39m([32m"../../config/sessions/store.js"[39m)[33m;[39m
+    [90m141| [39m    return (storeModule as any).saveSessionStoreUnlocked(testStorePathΓÇª
+    [90m   | [39m                                [31m^[39m
+    [90m142| [39m  }
+    [90m143| [39m
+[90m [2mΓ¥»[22m src/clarityburst/__tests__/file_system_ops.save_session_store.pack_incomplete.fail_closed.at_commit_point.tri
+pwire.test.ts:[2m270:22[22m[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[6/7]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m 
+src/clarityburst/__tests__/file_system_ops.save_session_store.pack_incomplete.fail_closed.at_commit_point.tripwire.test.ts[2m 
+> [22mFILE_SYSTEM_OPS saveSessionStore() pack_incomplete ΓåÆ fail-closed at commit point tripwire[2m > [22mfail-closed 
+guarantees for incomplete pack[2m > [22mshould block even if store data looks valid
+[31m[1mTypeError[22m: storeModule.saveSessionStoreUnlocked is not a function[39m
+[36m [2mΓ¥»[22m callSaveSessionStoreWithMocks src/clarityburst/__tests__/file_system_ops.save_session_store.pack_incomplete.f
+ail_closed.at_commit_point.tripwire.test.ts:[2m141:33[22m[39m
+    [90m139| [39m    // Get the store module and call saveSessionStore which internallyΓÇª
+    [90m140| [39m    [35mconst[39m storeModule [33m=[39m [35mawait[39m 
+[35mimport[39m([32m"../../config/sessions/store.js"[39m)[33m;[39m
+    [90m141| [39m    return (storeModule as any).saveSessionStoreUnlocked(testStorePathΓÇª
+    [90m   | [39m                                [31m^[39m
+    [90m142| [39m  }
+    [90m143| [39m
+[90m [2mΓ¥»[22m src/clarityburst/__tests__/file_system_ops.save_session_store.pack_incomplete.fail_closed.at_commit_point.tri
+pwire.test.ts:[2m298:22[22m[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[7/7]ΓÄ»[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m7 failed[39m[22m[90m (7)[39m
+[2m   Start at [22m 10:44:46
+[2m   Duration [22m 6.84s[2m (transform 3.16s, setup 486ms, import 476ms, tests 5.56s, environment 0ms)[22m
+

@@ -171,23 +171,12 @@ class ClarityBurstConfigManager {
   /**
    * Parse CLARITYBURST_API_KEY environment variable.
    * Returns the trimmed key string, or null if not set.
-   * Emits a startup warning when the router URL is not localhost and no key is configured —
-   * every request will be rejected 401 by the production Fly.io router in that state.
+   * No startup warning is emitted — missing API keys are handled at runtime
+   * via 401 responses from the router service.
    */
-  private parseApiKey(routerUrl: string): string | null {
+  private parseApiKey(_routerUrl: string): string | null {
     const raw = (process.env.CLARITYBURST_API_KEY ?? "").trim();
     if (!raw) {
-      // Only warn when the router URL is not a local address — localhost stubs
-      // use their own token scheme and don't require this key.
-      const isLocal = routerUrl.includes("localhost") || routerUrl.includes("127.0.0.1");
-      if (!isLocal) {
-        console.warn(
-          "[ClarityBurst Config] ⚠️  WARNING: CLARITYBURST_API_KEY is not set but " +
-            `CLARITYBURST_ROUTER_URL points to a remote host (${routerUrl}). ` +
-            "Every routing request will be rejected with 401 Unauthorized. " +
-            "Set CLARITYBURST_API_KEY to a valid API key provisioned in the router's api_keys table.",
-        );
-      }
       return null;
     }
     return raw;
@@ -284,6 +273,28 @@ class ClarityBurstConfigManager {
    */
   getApiKey(): string | null {
     return this.getConfig().apiKey;
+  }
+
+  /**
+   * Check if the configured router URL points to a local address (localhost or 127.0.0.1).
+   * Local routers typically use their own authentication scheme and don't require CLARITYBURST_API_KEY.
+   */
+  getRouterIsLocal(): boolean {
+    const routerUrl = this.getRouterUrl();
+    return routerUrl.includes("localhost") || routerUrl.includes("127.0.0.1");
+  }
+
+  /**
+   * Check if an API key is required for the current router configuration.
+   * Returns true when:
+   * 1. Router URL is not local (points to a remote host)
+   * 2. No API key is configured (getApiKey() returns null)
+   *
+   * This utility can be used by other modules to determine if API key configuration
+   * is needed before making router requests.
+   */
+  isApiKeyRequiredForRouter(): boolean {
+    return !this.getRouterIsLocal() && this.getApiKey() === null;
   }
 
   /**

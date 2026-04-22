@@ -1,0 +1,67 @@
+﻿
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mC:/Users/rob_m/openclaw[39m
+
+ [31mΓ¥»[39m src/clarityburst/__tests__/fetch_gating.invariant.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 536[2mms[22m[39m
+[31m     [31m├ù[31m enforces that ALL bare fetch() calls are wrapped by approved gating wrappers[39m[33m 530[2mms[22m[39m
+     [32mΓ£ô[39m documents the approved gating wrappers and their purposes[32m 2[2mms[22m[39m
+node.exe : 
+At C:\Users\rob_m\AppData\Roaming\npm\pnpm.ps1:24 char:5
++     & "node$exe"  "$basedir/node_modules/pnpm/bin/pnpm.cjs" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m[1m[41m Failed Tests 1 [49m[22m[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m
+
+[41m[1m FAIL [22m[49m src/clarityburst/__tests__/fetch_gating.invariant.test.ts[2m > [22mFetch Gating Invariant[2m > 
+[22menforces that ALL bare fetch() calls are wrapped by approved gating wrappers
+[31m[1mError[22m: [FETCH GATING VIOLATION] 6 bare fetch() call(s) found that are not wrapped by approved gating:
+
+  src\agents\opencode-zen-models.ts:285
+    const response = await fetch(`${OPENCODE_ZEN_API_BASE_URL}/models`, {
+    Γ£ù Bare fetch() call not wrapped by approved gating wrapper. Must use one of: applyNetworkIOGateAndFetch, gateFetch, 
+fetchWithWebToolsNetworkGuard, fetchWithSsrFGuard, withWebToolsNetworkGuard
+
+  src\agents\sandbox\browser.ts:52
+    const res = await fetch(url, { signal: ctrl.signal });
+    Γ£ù Bare fetch() call not wrapped by approved gating wrapper. Must use one of: applyNetworkIOGateAndFetch, gateFetch, 
+fetchWithWebToolsNetworkGuard, fetchWithSsrFGuard, withWebToolsNetworkGuard
+
+  src\browser\cdp.helpers.ts:125
+    const res = await fetch(url, { ...init, headers, signal: ctrl.signal });
+    Γ£ù Bare fetch() call not wrapped by approved gating wrapper. Must use one of: applyNetworkIOGateAndFetch, gateFetch, 
+fetchWithWebToolsNetworkGuard, fetchWithSsrFGuard, withWebToolsNetworkGuard
+
+  src\browser\chrome.ts:86
+    const res = await fetch(versionUrl, {
+    Γ£ù Bare fetch() call not wrapped by approved gating wrapper. Must use one of: applyNetworkIOGateAndFetch, gateFetch, 
+fetchWithWebToolsNetworkGuard, fetchWithSsrFGuard, withWebToolsNetworkGuard
+
+  src\cli\nodes-camera.ts:81
+    const res = await fetch(url);
+    Γ£ù Bare fetch() call not wrapped by approved gating wrapper. Must use one of: applyNetworkIOGateAndFetch, gateFetch, 
+fetchWithWebToolsNetworkGuard, fetchWithSsrFGuard, withWebToolsNetworkGuard
+
+  src\commands\signal-install.ts:219
+    const response = await fetch(apiUrl, {
+    Γ£ù Bare fetch() call not wrapped by approved gating wrapper. Must use one of: applyNetworkIOGateAndFetch, gateFetch, 
+fetchWithWebToolsNetworkGuard, fetchWithSsrFGuard, withWebToolsNetworkGuard
+
+Approved wrappers:
+  - applyNetworkIOGateAndFetch()
+  - gateFetch()
+  - fetchWithWebToolsNetworkGuard()
+  - fetchWithSsrFGuard()
+
+See src/clarityburst/network-io-gating.ts for details.[39m
+[36m [2mΓ¥»[22m src/clarityburst/__tests__/fetch_gating.invariant.test.ts:[2m253:13[22m[39m
+
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/1]ΓÄ»[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (2)[39m
+[2m   Start at [22m 10:41:41
+[2m   Duration [22m 1.35s[2m (transform 393ms, setup 474ms, import 18ms, tests 536ms, environment 0ms)[22m
+

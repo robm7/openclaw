@@ -6,7 +6,7 @@ import type { OntologyPack, PackContract } from "./pack-registry.js";
 import type { ClarityBurstStageId } from "./stages.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
 import configManager from "./config.js";
-import { ClarityBurstAbstainError } from "./errors.js";
+import { ClarityBurstAbstainError, ClarityBurstApiKeyRequiredError } from "./errors.js";
 import { applyNetworkIOGateAndFetch } from "./network-io-gating.js";
 import { scorePackPhaseA } from "./pack-scoring-phase-a.js";
 
@@ -439,6 +439,13 @@ export async function routeClarityBurst(input: RouterInput): Promise<RouterResul
 
       if (response.status >= 400) {
         const errorText = await response.text();
+
+        // Special handling for 401 Unauthorized responses from the router
+        // This indicates a missing or invalid API key
+        if (response.status === 401) {
+          throw new ClarityBurstApiKeyRequiredError(routerEndpoint, response.status);
+        }
+
         throw new Error(`HTTP ${response.status}: ${errorText.slice(0, 200)}`);
       }
 

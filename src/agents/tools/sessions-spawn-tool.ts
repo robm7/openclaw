@@ -1,9 +1,12 @@
 import { Type } from "@sinclair/typebox";
 import type { GatewayMessageChannel } from "../../utils/message-channel.js";
+import type { AnyAgentTool } from "./common.js";
+import { applySubagentSpawnOverrides } from "../../clarityburst/decision-override.js";
+import { ClarityBurstAbstainError } from "../../clarityburst/errors.js";
 import { ACP_SPAWN_MODES, spawnAcpDirect } from "../acp-spawn.js";
+import { convertAbstainToBlockedResponse } from "../pi-tool-definition-adapter.js";
 import { optionalStringEnum } from "../schema/typebox.js";
 import { SUBAGENT_SPAWN_MODES, spawnSubagentDirect } from "../subagent-spawn.js";
-import type { AnyAgentTool } from "./common.js";
 import { jsonResult, readStringParam } from "./common.js";
 
 const SESSIONS_SPAWN_RUNTIMES = ["subagent", "acp"] as const;
@@ -68,51 +71,86 @@ export function createSessionsSpawnTool(opts?: {
           : undefined;
       const thread = params.thread === true;
 
-      const result =
-        runtime === "acp"
-          ? await spawnAcpDirect(
-              {
-                task,
-                label: label || undefined,
-                agentId: requestedAgentId,
-                cwd,
-                mode: mode && ACP_SPAWN_MODES.includes(mode) ? mode : undefined,
-                thread,
-              },
-              {
-                agentSessionKey: opts?.agentSessionKey,
-                agentChannel: opts?.agentChannel,
-                agentAccountId: opts?.agentAccountId,
-                agentTo: opts?.agentTo,
-                agentThreadId: opts?.agentThreadId,
-              },
-            )
-          : await spawnSubagentDirect(
-              {
-                task,
-                label: label || undefined,
-                agentId: requestedAgentId,
-                model: modelOverride,
-                thinking: thinkingOverrideRaw,
-                runTimeoutSeconds,
-                thread,
-                mode,
-                cleanup,
-                expectsCompletionMessage: true,
-              },
-              {
-                agentSessionKey: opts?.agentSessionKey,
-                agentChannel: opts?.agentChannel,
-                agentAccountId: opts?.agentAccountId,
-                agentTo: opts?.agentTo,
-                agentThreadId: opts?.agentThreadId,
-                agentGroupId: opts?.agentGroupId,
-                agentGroupChannel: opts?.agentGroupChannel,
-                agentGroupSpace: opts?.agentGroupSpace,
-                requesterAgentIdOverride: opts?.requesterAgentIdOverride,
-              },
-            );
+      // ClarityBurst gating: check subagent spawn permission before proceeding
+      try {
+        const gatingResult = await applySubagentSpawnOverrides({
+          stageId: "SUBAGENT_SPAWN",
+          userConfirmed: false,
+          task,
+          agentId: requestedAgentId || "assistant",
+        });
+        if (gatingResult.outcome !== "PROCEED") {
+          return convertAbstainToBlockedResponse(
+            new ClarityBurstAbstainError({
+              stageId: "SUBAGENT_SPAWN",
+              outcome: gatingResult.outcome,
+              reason: gatingResult.reason,
+              contractId: gatingResult.contractId,
+              instructions:
+                gatingResult.instructions ?? `${gatingResult.outcome}: ${gatingResult.reason}`,
+              nonRetryable: (gatingResult as any).nonRetryable,
+            }),
+          ) as any;
+        }
+      } catch (err) {
+        if (err instanceof ClarityBurstAbstainError) {
+          return convertAbstainToBlockedResponse(err) as any;
+        }
+        throw err;
+      }
 
+      let result;
+      try {
+        result =
+          runtime === "acp"
+            ? await spawnAcpDirect(
+                {
+                  task,
+                  label: label || undefined,
+                  agentId: requestedAgentId,
+                  cwd,
+                  mode: mode && ACP_SPAWN_MODES.includes(mode) ? mode : undefined,
+                  thread,
+                },
+                {
+                  agentSessionKey: opts?.agentSessionKey,
+                  agentChannel: opts?.agentChannel,
+                  agentAccountId: opts?.agentAccountId,
+                  agentTo: opts?.agentTo,
+                  agentThreadId: opts?.agentThreadId,
+                },
+              )
+            : await spawnSubagentDirect(
+                {
+                  task,
+                  label: label || undefined,
+                  agentId: requestedAgentId,
+                  model: modelOverride,
+                  thinking: thinkingOverrideRaw,
+                  runTimeoutSeconds,
+                  thread,
+                  mode,
+                  cleanup,
+                  expectsCompletionMessage: true,
+                },
+                {
+                  agentSessionKey: opts?.agentSessionKey,
+                  agentChannel: opts?.agentChannel,
+                  agentAccountId: opts?.agentAccountId,
+                  agentTo: opts?.agentTo,
+                  agentThreadId: opts?.agentThreadId,
+                  agentGroupId: opts?.agentGroupId,
+                  agentGroupChannel: opts?.agentGroupChannel,
+                  agentGroupSpace: opts?.agentGroupSpace,
+                  requesterAgentIdOverride: opts?.requesterAgentIdOverride,
+                },
+              );
+      } catch (err) {
+        if (err instanceof ClarityBurstAbstainError) {
+          return convertAbstainToBlockedResponse(err) as any;
+        }
+        throw err;
+      }
       return jsonResult(result);
     },
   };

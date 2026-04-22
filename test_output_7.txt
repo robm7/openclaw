@@ -1,0 +1,91 @@
+﻿
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mC:/Users/rob_m/openclaw[39m
+
+ [31mΓ¥»[39m src/clarityburst/__tests__/memory_modify.hook_handler.router_outage.fail_closed.tripwire.test.ts [2m([22m[2m3 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 78[2mms[22m[39m
+[31m     [31m├ù[31m should emit deterministic block message (and not write) when routeClarityBurst throws (router outage)[39m[32m 33[2mms[22m[39m
+[31m     [31m├ù[31m should not write to memory file when router is unavailable[39m[32m 20[2mms[22m[39m
+[31m     [31m├ù[31m should abort with router_outage message when router is unavailable (exact fail-closed signal)[39m[32m 22[2mms[22m[39m
+node.exe : 
+At C:\Users\rob_m\AppData\Roaming\npm\pnpm.ps1:24 char:5
++     & "node$exe"  "$basedir/node_modules/pnpm/bin/pnpm.cjs" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m[1m[41m Failed Tests 3 [49m[22m[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m
+
+[41m[1m FAIL [22m[49m src/clarityburst/__tests__/memory_modify.hook_handler.router_outage.fail_closed.tripwire.test.ts[2m 
+> [22msession-memory hook handler ΓåÆ MEMORY_MODIFY router_outage ΓåÆ fail-closed tripwire[2m > [22mshould emit 
+deterministic block message (and not write) when routeClarityBurst throws (router outage)
+[31m[1mAssertionError[22m: expected +0 to be 1 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 0[39m
+
+[36m [2mΓ¥»[22m 
+src/clarityburst/__tests__/memory_modify.hook_handler.router_outage.fail_closed.tripwire.test.ts:[2m97:35[22m[39m
+    [90m 95| [39m    [90m// Assert: deterministic user-visible blocked message emitted[39m
+    [90m 96| [39m    [34mexpect[39m(event[33m.[39mmessages)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+    [90m 97| [39m    
+[34mexpect[39m(event[33m.[39mmessages[33m.[39mlength)[33m.[39m[34mtoBe[39m([34m1[39m)[33m;[39m
+    [90m   | [39m                                  [31m^[39m
+    [90m 98| [39m    expect(event.messages[0]).toContain("[Blocked] MEMORY_MODIFY: routΓÇª
+    [90m 99| [39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/3]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m src/clarityburst/__tests__/memory_modify.hook_handler.router_outage.fail_closed.tripwire.test.ts[2m 
+> [22msession-memory hook handler ΓåÆ MEMORY_MODIFY router_outage ΓåÆ fail-closed tripwire[2m > [22mshould not write to 
+memory file when router is unavailable
+[31m[1mAssertionError[22m: expected +0 to be 1 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 0[39m
+
+[36m [2mΓ¥»[22m 
+src/clarityburst/__tests__/memory_modify.hook_handler.router_outage.fail_closed.tripwire.test.ts:[2m150:35[22m[39m
+    [90m148| [39m    [90m// Assert: deterministic user-visible blocked message emitted[39m
+    [90m149| [39m    [34mexpect[39m(event[33m.[39mmessages)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+    [90m150| [39m    
+[34mexpect[39m(event[33m.[39mmessages[33m.[39mlength)[33m.[39m[34mtoBe[39m([34m1[39m)[33m;[39m
+    [90m   | [39m                                  [31m^[39m
+    [90m151| [39m    expect(event.messages[0]).toContain("[Blocked] MEMORY_MODIFY: routΓÇª
+    [90m152| [39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[2/3]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m src/clarityburst/__tests__/memory_modify.hook_handler.router_outage.fail_closed.tripwire.test.ts[2m 
+> [22msession-memory hook handler ΓåÆ MEMORY_MODIFY router_outage ΓåÆ fail-closed tripwire[2m > [22mshould abort with 
+router_outage message when router is unavailable (exact fail-closed signal)
+[31m[1mAssertionError[22m: expected +0 to be 1 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 0[39m
+
+[36m [2mΓ¥»[22m 
+src/clarityburst/__tests__/memory_modify.hook_handler.router_outage.fail_closed.tripwire.test.ts:[2m209:35[22m[39m
+    [90m207| [39m    // Assert: deterministic fail-closed signal is user-visible via hoΓÇª
+    [90m208| [39m    [34mexpect[39m(event[33m.[39mmessages)[33m.[39m[34mtoBeDefined[39m()[33m;[39m
+    [90m209| [39m    
+[34mexpect[39m(event[33m.[39mmessages[33m.[39mlength)[33m.[39m[34mtoBe[39m([34m1[39m)[33m;[39m
+    [90m   | [39m                                  [31m^[39m
+    [90m210| [39m    expect(event.messages[0]).toContain("[Blocked] MEMORY_MODIFY: routΓÇª
+    [90m211| [39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[3/3]ΓÄ»[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m3 failed[39m[22m[90m (3)[39m
+[2m   Start at [22m 10:36:30
+[2m   Duration [22m 28.74s[2m (transform 18.25s, setup 495ms, import 27.82s, tests 78ms, environment 0ms)[22m
+

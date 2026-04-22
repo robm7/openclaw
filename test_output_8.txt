@@ -1,0 +1,90 @@
+﻿
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mC:/Users/rob_m/openclaw[39m
+
+ [31mΓ¥»[39m src/clarityburst/__tests__/memory_modify.hook_handler.pack_incomplete.fail_closed.tripwire.test.ts [2m([22m[2m3 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 66[2mms[22m[39m
+[31m     [31m├ù[31m should throw ClarityBurstAbstainError when loadPackOrAbstain throws PACK_POLICY_INCOMPLETE[39m[32m 28[2mms[22m[39m
+[31m     [31m├ù[31m should not write to memory file when pack policy is incomplete[39m[32m 17[2mms[22m[39m
+[31m     [31m├ù[31m should abort with exact ABSTAIN_CLARIFY properties on pack incomplete[39m[32m 19[2mms[22m[39m
+node.exe : 
+At C:\Users\rob_m\AppData\Roaming\npm\pnpm.ps1:24 char:5
++     & "node$exe"  "$basedir/node_modules/pnpm/bin/pnpm.cjs" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m[1m[41m Failed Tests 3 [49m[22m[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m
+
+[41m[1m FAIL [22m[49m 
+src/clarityburst/__tests__/memory_modify.hook_handler.pack_incomplete.fail_closed.tripwire.test.ts[2m > [22msession-memory 
+hook handler ΓåÆ MEMORY_MODIFY pack_incomplete ΓåÆ fail-closed tripwire[2m > [22mshould throw ClarityBurstAbstainError when 
+loadPackOrAbstain throws PACK_POLICY_INCOMPLETE
+[31m[1mAssertionError[22m: promise resolved "undefined" instead of rejecting[39m
+
+[32m- Expected:[39m 
+Error {
+  "message": "rejected promise",
+}
+
+[31m+ Received:[39m 
+undefined
+
+[36m [2mΓ¥»[22m 
+src/clarityburst/__tests__/memory_modify.hook_handler.pack_incomplete.fail_closed.tripwire.test.ts:[2m96:44[22m[39m
+    [90m 94| [39m
+    [90m 95| [39m    // Act & Assert: Handler should throw ClarityBurstAbstainError witΓÇª
+    [90m 96| [39m    await expect(saveSessionToMemory(event)).rejects.toThrow(ClarityBuΓÇª
+    [90m   | [39m                                           [31m^[39m
+    [90m 97| [39m
+    [90m 98| [39m    [90m// Verify the error has correct properties[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/3]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m 
+src/clarityburst/__tests__/memory_modify.hook_handler.pack_incomplete.fail_closed.tripwire.test.ts[2m > [22msession-memory 
+hook handler ΓåÆ MEMORY_MODIFY pack_incomplete ΓåÆ fail-closed tripwire[2m > [22mshould not write to memory file when pack 
+policy is incomplete
+[31m[1mAssertionError[22m: promise resolved "undefined" instead of rejecting[39m
+
+[32m- Expected:[39m 
+Error {
+  "message": "rejected promise",
+}
+
+[31m+ Received:[39m 
+undefined
+
+[36m [2mΓ¥»[22m 
+src/clarityburst/__tests__/memory_modify.hook_handler.pack_incomplete.fail_closed.tripwire.test.ts:[2m162:44[22m[39m
+    [90m160| [39m
+    [90m161| [39m    [90m// Act: Call handler (should throw and abort before write)[39m
+    [90m162| [39m    await expect(saveSessionToMemory(event)).rejects.toThrow(ClarityBuΓÇª
+    [90m   | [39m                                           [31m^[39m
+    [90m163| [39m
+    [90m164| [39m    // Assert: fs.writeFile was never called (fail-closed prevents wriΓÇª
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[2/3]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m 
+src/clarityburst/__tests__/memory_modify.hook_handler.pack_incomplete.fail_closed.tripwire.test.ts[2m > [22msession-memory 
+hook handler ΓåÆ MEMORY_MODIFY pack_incomplete ΓåÆ fail-closed tripwire[2m > [22mshould abort with exact ABSTAIN_CLARIFY 
+properties on pack incomplete
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2mΓ¥»[22m 
+src/clarityburst/__tests__/memory_modify.hook_handler.pack_incomplete.fail_closed.tripwire.test.ts:[2m224:29[22m[39m
+    [90m222| [39m
+    [90m223| [39m    [90m// Assert: All required properties match expected values[39m
+    [90m224| [39m    [34mexpect[39m(caughtError)[33m.[39mnot[33m.[39m[34mtoBeNull[39m()[33m;[39m
+    [90m   | [39m                            [31m^[39m
+    [90m225| [39m    
+[34mexpect[39m(caughtError[33m![39m[33m.[39mstageId)[33m.[39m[34mtoBe[39m([32m"MEMORY_MODIFY"[39m)[33m;[39m
+    [90m226| [39m    
+[34mexpect[39m(caughtError[33m![39m[33m.[39moutcome)[33m.[39m[34mtoBe[39m([32m"ABSTAIN_CLARIFY"[39m)[33m;[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[3/3]ΓÄ»[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m3 failed[39m[22m[90m (3)[39m
+[2m   Start at [22m 10:38:18
+[2m   Duration [22m 22.60s[2m (transform 14.94s, setup 488ms, import 21.75s, tests 66ms, environment 0ms)[22m
+

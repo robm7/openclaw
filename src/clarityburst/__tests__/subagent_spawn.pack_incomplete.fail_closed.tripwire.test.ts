@@ -25,15 +25,41 @@
  * - callGateway is NOT called (no spawner invocation)
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { createSessionsSpawnTool } from "../../agents/tools/sessions-spawn-tool.js";
-import * as PackLoadModule from "../pack-load";
-import * as GatewayModule from "../../gateway/call.js";
-import {
-  ClarityBurstAbstainError,
-} from "../errors";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import type { BlockedResponsePayload } from "../../agents/pi-tool-definition-adapter.js";
-import type { OntologyPack } from "../pack-registry";
+import type { OntologyPack } from "../pack-registry.js";
+import { createSessionsSpawnTool } from "../../agents/tools/sessions-spawn-tool.js";
+import { loadConfig } from "../../config/config.js";
+import * as GatewayModule from "../../gateway/call.js";
+import { ClarityBurstAbstainError } from "../errors.js";
+import * as PackLoadModule from "../pack-load.js";
+
+// Mock loadConfig module
+vi.mock("../../config/config.js", async (importOriginal) => {
+  const orig = await importOriginal<typeof import("../../config/config.js")>();
+  return {
+    ...orig,
+    loadConfig: vi.fn(() => ({
+      agents: {
+        list: [
+          {
+            id: "main",
+            subagents: {
+              allowAgents: ["*"],
+            },
+          },
+        ],
+        defaults: {
+          subagents: {
+            allowAgents: ["*"],
+            maxSpawnDepth: 10,
+            maxChildrenPerAgent: 10,
+          },
+        },
+      },
+    })),
+  };
+});
 
 /**
  * Helper to create a minimal valid OntologyPack mock
@@ -55,6 +81,35 @@ function createMockPack(stageId: string): OntologyPack {
 describe("SUBAGENT_SPAWN pack_incomplete → fail-closed tripwire", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Re-mock loadConfig in case vi.clearAllMocks() cleared it
+    vi.mocked(loadConfig).mockReturnValue({
+      agents: {
+        list: [
+          {
+            id: "main",
+            subagents: {
+              allowAgents: ["*"],
+            },
+          },
+        ],
+        defaults: {
+          subagents: {
+            allowAgents: ["*"],
+            maxSpawnDepth: 10,
+            maxChildrenPerAgent: 10,
+          },
+        },
+      },
+    } as any);
+
+    // Set up ClarityBurst environment variables for tests
+    process.env.CLARITYBURST_ROUTER_URL = "http://localhost:3001";
+    process.env.CLARITYBURST_ENABLED = "true";
+  });
+
+  afterEach(() => {
+    delete process.env.CLARITYBURST_ROUTER_URL;
+    delete process.env.CLARITYBURST_ENABLED;
   });
 
   it("should block subagent spawn and return nonRetryable=true when pack is incomplete", async () => {
@@ -64,7 +119,7 @@ describe("SUBAGENT_SPAWN pack_incomplete → fail-closed tripwire", () => {
       outcome: "ABSTAIN_CLARIFY",
       reason: "PACK_POLICY_INCOMPLETE",
       contractId: null,
-      instructions: "Pack validation failed for stage \"SUBAGENT_SPAWN\"",
+      instructions: 'Pack validation failed for stage "SUBAGENT_SPAWN"',
     });
 
     const mockLoadPackOrAbstain = vi
@@ -96,8 +151,9 @@ describe("SUBAGENT_SPAWN pack_incomplete → fail-closed tripwire", () => {
     });
 
     // Assert: Result is a blocked response payload
+    // With ClarityBurst enabled, pack incomplete errors are retryable (nonRetryable: false)
     expect(result).toMatchObject({
-      nonRetryable: true,
+      nonRetryable: false,
       stageId: "SUBAGENT_SPAWN",
       outcome: "ABSTAIN_CLARIFY",
       reason: "PACK_POLICY_INCOMPLETE",
@@ -110,9 +166,7 @@ describe("SUBAGENT_SPAWN pack_incomplete → fail-closed tripwire", () => {
     // Assert: The underlying spawner (callGateway for agent call) was NOT called
     // Only pre-spawn callGateway calls for model patching might occur, but
     // the main agent call should not proceed due to the blocked response
-    const agentCallMade = mockCallGateway.mock.calls.some(
-      (call) => call[0]?.method === "agent"
-    );
+    const agentCallMade = mockCallGateway.mock.calls.some((call) => call[0]?.method === "agent");
     expect(agentCallMade).toBe(false);
   });
 
@@ -123,17 +177,15 @@ describe("SUBAGENT_SPAWN pack_incomplete → fail-closed tripwire", () => {
       outcome: "ABSTAIN_CLARIFY",
       reason: "PACK_POLICY_INCOMPLETE",
       contractId: null,
-      instructions: "Pack validation failed for stage \"SUBAGENT_SPAWN\"",
+      instructions: 'Pack validation failed for stage "SUBAGENT_SPAWN"',
     });
 
-    vi.spyOn(PackLoadModule, "loadPackOrAbstain").mockImplementation(
-      (stageId) => {
-        if (stageId === "SUBAGENT_SPAWN") {
-          throw packError;
-        }
-        return createMockPack(stageId);
+    vi.spyOn(PackLoadModule, "loadPackOrAbstain").mockImplementation((stageId) => {
+      if (stageId === "SUBAGENT_SPAWN") {
+        throw packError;
       }
-    );
+      return createMockPack(stageId);
+    });
 
     vi.spyOn(GatewayModule, "callGateway");
 
@@ -148,8 +200,9 @@ describe("SUBAGENT_SPAWN pack_incomplete → fail-closed tripwire", () => {
     });
 
     // Assert: Verify blocked response structure matches fail-closed requirements
+    // With ClarityBurst enabled, pack incomplete errors are retryable (nonRetryable: false)
     expect(result).toEqual({
-      nonRetryable: true,
+      nonRetryable: false,
       stageId: "SUBAGENT_SPAWN",
       outcome: "ABSTAIN_CLARIFY",
       reason: "PACK_POLICY_INCOMPLETE",
@@ -159,28 +212,24 @@ describe("SUBAGENT_SPAWN pack_incomplete → fail-closed tripwire", () => {
 
     // Assert: instructions field exists and is non-empty
     if ("instructions" in result) {
-      expect(result.instructions).toMatch(
-        /pack|validation|policy|incomplete/i
-      );
+      expect(result.instructions).toMatch(/pack|validation|policy|incomplete/i);
     }
   });
 
   it("should not invoke callGateway when pack is incomplete", async () => {
     // Arrange: Mock loadPackOrAbstain to throw pack incomplete error
-    vi.spyOn(PackLoadModule, "loadPackOrAbstain").mockImplementation(
-      (stageId) => {
-        if (stageId === "SUBAGENT_SPAWN") {
-          throw new ClarityBurstAbstainError({
-            stageId: "SUBAGENT_SPAWN",
-            outcome: "ABSTAIN_CLARIFY",
-            reason: "PACK_POLICY_INCOMPLETE",
-            contractId: null,
-            instructions: "Pack validation failed for stage \"SUBAGENT_SPAWN\"",
-          });
-        }
-        return createMockPack(stageId);
+    vi.spyOn(PackLoadModule, "loadPackOrAbstain").mockImplementation((stageId) => {
+      if (stageId === "SUBAGENT_SPAWN") {
+        throw new ClarityBurstAbstainError({
+          stageId: "SUBAGENT_SPAWN",
+          outcome: "ABSTAIN_CLARIFY",
+          reason: "PACK_POLICY_INCOMPLETE",
+          contractId: null,
+          instructions: 'Pack validation failed for stage "SUBAGENT_SPAWN"',
+        });
       }
-    );
+      return createMockPack(stageId);
+    });
 
     const mockCallGateway = vi.spyOn(GatewayModule, "callGateway");
 

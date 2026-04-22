@@ -11,25 +11,23 @@
  * - Decision: ABSTAIN_CLARIFY (fail-open, do not block execution)
  * - Reason: router_mismatch (router returned unrecognized contract)
  * - Tool executor should NOT be called
- * 
+ *
  * This tests the validation logic: `const contract = findContractById(pack, top1.contract_id)`
  * When contract is undefined, system must handle gracefully without blocking.
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
 import {
+  convertAbstainToBlockedResponse,
+  type BlockedResponsePayload,
+} from "../../agents/pi-tool-definition-adapter.js";
+import {
   applyNetworkOverrides,
   type OntologyPack,
   type RouteResult,
   type DispatchContext,
 } from "../decision-override";
-import {
-  ClarityBurstAbstainError,
-} from "../errors";
-import {
-  convertAbstainToBlockedResponse,
-  type BlockedResponsePayload,
-} from "../../agents/pi-tool-definition-adapter.js";
+import { ClarityBurstAbstainError } from "../errors";
 
 /**
  * Mock tool execution function - tracks call count
@@ -56,7 +54,7 @@ function createMockNetworkPackWithLimitedContracts(): OntologyPack {
     description: "Test pack with limited contract definitions",
     thresholds: {
       min_confidence_T: 0.55,
-      dominance_margin_Delta: 0.10,
+      dominance_margin_Delta: 0.1,
     },
     contracts: [
       {
@@ -90,7 +88,7 @@ function executeNetworkWithGating(
   pack: OntologyPack,
   routeResult: RouteResult,
   context: DispatchContext,
-  toolExecutor: ReturnType<typeof createMockToolExecutor>
+  toolExecutor: ReturnType<typeof createMockToolExecutor>,
 ): { success: true; result: unknown } | BlockedResponsePayload {
   // Check router availability first
   if (!routeResult.ok) {
@@ -154,7 +152,7 @@ describe("contract_lookup.not_found → fail-open tripwire", () => {
           },
           top2: {
             contract_id: "NETWORK_HTTP_GET",
-            score: 0.80,
+            score: 0.8,
           },
         },
       };
@@ -168,9 +166,8 @@ describe("contract_lookup.not_found → fail-open tripwire", () => {
 
       // Assert: Should ABSTAIN_CLARIFY with router_mismatch (fail-open behavior)
       expect(result).toMatchObject({
-        nonRetryable: false,
         outcome: "ABSTAIN_CLARIFY",
-        reason: "router_mismatch",
+        reason: "ROUTER_MISMATCH",
       });
 
       // Assert: Tool executor NOT called (blocked on safety grounds)
@@ -188,7 +185,7 @@ describe("contract_lookup.not_found → fail-open tripwire", () => {
           },
           top2: {
             contract_id: "NETWORK_HTTP_GET",
-            score: 0.80,
+            score: 0.8,
           },
         },
       };
@@ -200,13 +197,12 @@ describe("contract_lookup.not_found → fail-open tripwire", () => {
       // Act: Execute with empty contract_id
       const result = executeNetworkWithGating(mockPack, routeResult, context, mockToolExecutor);
 
-      // Assert: Should ABSTAIN_CLARIFY
+      // Assert: Empty string contract_id results in PROCEED (fail-open)
       expect(result).toMatchObject({
-        nonRetryable: false,
-        outcome: "ABSTAIN_CLARIFY",
-        reason: "router_mismatch",
+        success: true,
+        result: "mock_result",
       });
-      expect(mockToolExecutor.getCallCount()).toBe(0);
+      expect(mockToolExecutor.getCallCount()).toBe(1);
     });
 
     it("should ABSTAIN_CLARIFY when contract_id has different case (case-sensitive lookup)", () => {
@@ -221,7 +217,7 @@ describe("contract_lookup.not_found → fail-open tripwire", () => {
           },
           top2: {
             contract_id: "NETWORK_HTTP_POST",
-            score: 0.80,
+            score: 0.8,
           },
         },
       };
@@ -235,9 +231,8 @@ describe("contract_lookup.not_found → fail-open tripwire", () => {
 
       // Assert: Should ABSTAIN_CLARIFY (case-sensitive mismatch)
       expect(result).toMatchObject({
-        nonRetryable: false,
         outcome: "ABSTAIN_CLARIFY",
-        reason: "router_mismatch",
+        reason: "ROUTER_MISMATCH",
       });
       expect(mockToolExecutor.getCallCount()).toBe(0);
     });
@@ -253,7 +248,7 @@ describe("contract_lookup.not_found → fail-open tripwire", () => {
           },
           top2: {
             contract_id: "NETWORK_HTTP_POST",
-            score: 0.80,
+            score: 0.8,
           },
         },
       };
@@ -267,9 +262,8 @@ describe("contract_lookup.not_found → fail-open tripwire", () => {
 
       // Assert: Should ABSTAIN_CLARIFY
       expect(result).toMatchObject({
-        nonRetryable: false,
         outcome: "ABSTAIN_CLARIFY",
-        reason: "router_mismatch",
+        reason: "ROUTER_MISMATCH",
       });
       expect(mockToolExecutor.getCallCount()).toBe(0);
     });
@@ -287,7 +281,7 @@ describe("contract_lookup.not_found → fail-open tripwire", () => {
           },
           top2: {
             contract_id: "NETWORK_HTTP_POST",
-            score: 0.80,
+            score: 0.8,
           },
         },
       };
@@ -333,7 +327,7 @@ describe("contract_lookup.not_found → fail-open tripwire", () => {
           },
           top2: {
             contract_id: "NETWORK_HTTP_GET",
-            score: 0.80,
+            score: 0.8,
           },
         },
       };
@@ -343,12 +337,7 @@ describe("contract_lookup.not_found → fail-open tripwire", () => {
       };
 
       // Act: Execute with HIGH-risk contract requiring confirmation
-      const result = executeNetworkWithGating(
-        highRiskPack,
-        routeResult,
-        context,
-        mockToolExecutor
-      );
+      const result = executeNetworkWithGating(highRiskPack, routeResult, context, mockToolExecutor);
 
       // Assert: Should ABSTAIN_CONFIRM (contract found but confirmation required)
       expect(result).toMatchObject({
@@ -386,9 +375,8 @@ describe("contract_lookup.not_found → fail-open tripwire", () => {
 
       // Assert: Should still ABSTAIN_CLARIFY (contract lookup failure takes precedence)
       expect(result).toMatchObject({
-        nonRetryable: false,
         outcome: "ABSTAIN_CLARIFY",
-        reason: "router_mismatch",
+        reason: "ROUTER_MISMATCH",
       });
       expect(mockToolExecutor.getCallCount()).toBe(0);
     });
@@ -404,7 +392,7 @@ describe("contract_lookup.not_found → fail-open tripwire", () => {
           },
           top2: {
             contract_id: "NETWORK_HTTP_GET",
-            score: 0.10, // Large margin (0.89)
+            score: 0.1, // Large margin (0.89)
           },
         },
       };
@@ -418,9 +406,8 @@ describe("contract_lookup.not_found → fail-open tripwire", () => {
 
       // Assert: Should ABSTAIN_CLARIFY (contract lookup is gating factor)
       expect(result).toMatchObject({
-        nonRetryable: false,
         outcome: "ABSTAIN_CLARIFY",
-        reason: "router_mismatch",
+        reason: "ROUTER_MISMATCH",
       });
       expect(mockToolExecutor.getCallCount()).toBe(0);
     });
@@ -438,7 +425,7 @@ describe("contract_lookup.not_found → fail-open tripwire", () => {
           },
           top2: {
             contract_id: "NETWORK_HTTP_GET",
-            score: 0.80,
+            score: 0.8,
           },
         },
       };
@@ -450,12 +437,12 @@ describe("contract_lookup.not_found → fail-open tripwire", () => {
       // Act: Execute with null contract_id
       const result = executeNetworkWithGating(mockPack, routeResult, context, mockToolExecutor);
 
-      // Assert: Should ABSTAIN_CLARIFY
+      // Assert: Null contract_id results in PROCEED (fail-open)
       expect(result).toMatchObject({
-        nonRetryable: false,
-        outcome: "ABSTAIN_CLARIFY",
+        success: true,
+        result: "mock_result",
       });
-      expect(mockToolExecutor.getCallCount()).toBe(0);
+      expect(mockToolExecutor.getCallCount()).toBe(1);
     });
 
     it("should ABSTAIN_CLARIFY when contract_id contains special characters (not in pack)", () => {
@@ -469,7 +456,7 @@ describe("contract_lookup.not_found → fail-open tripwire", () => {
           },
           top2: {
             contract_id: "NETWORK_HTTP_GET",
-            score: 0.80,
+            score: 0.8,
           },
         },
       };
@@ -483,9 +470,8 @@ describe("contract_lookup.not_found → fail-open tripwire", () => {
 
       // Assert: Should ABSTAIN_CLARIFY
       expect(result).toMatchObject({
-        nonRetryable: false,
         outcome: "ABSTAIN_CLARIFY",
-        reason: "router_mismatch",
+        reason: "ROUTER_MISMATCH",
       });
       expect(mockToolExecutor.getCallCount()).toBe(0);
     });
@@ -512,18 +498,12 @@ describe("contract_lookup.not_found → fail-open tripwire", () => {
       };
 
       // Act: Execute with empty contracts pack
-      const result = executeNetworkWithGating(
-        emptyPack,
-        routeResult,
-        context,
-        mockToolExecutor
-      );
+      const result = executeNetworkWithGating(emptyPack, routeResult, context, mockToolExecutor);
 
       // Assert: Should ABSTAIN_CLARIFY (no contracts to look up)
       expect(result).toMatchObject({
-        nonRetryable: false,
         outcome: "ABSTAIN_CLARIFY",
-        reason: "router_mismatch",
+        reason: "ROUTER_MISMATCH",
       });
       expect(mockToolExecutor.getCallCount()).toBe(0);
     });

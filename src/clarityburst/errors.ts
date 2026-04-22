@@ -9,8 +9,8 @@
  * It MUST NOT import from agents/ to maintain dependency-downward architecture.
  */
 
-import type { ClarityBurstStageId } from "./stages";
 import type { AbstainReason } from "./decision-override";
+import type { ClarityBurstStageId } from "./stages";
 
 // Re-export for convenience
 export type { AbstainReason } from "./decision-override";
@@ -91,5 +91,34 @@ export class ClarityBurstAbstainError extends Error {
     this.nonRetryable = opts.nonRetryable ?? false;
     // Ensure prototype chain is correct for instanceof checks
     Object.setPrototypeOf(this, ClarityBurstAbstainError.prototype);
+  }
+}
+
+/**
+ * Error thrown when a ClarityBurst router request fails due to missing or invalid API key.
+ * This error is thrown by the router client when it receives a 401 Unauthorized response
+ * from the router service, indicating that the CLARITYBURST_API_KEY is missing, expired,
+ * or invalid.
+ *
+ * Callers should catch this error and:
+ * 1. Display a user-friendly message prompting the user to configure their API key
+ * 2. Provide a link or button to the settings page where the key can be entered
+ * 3. Allow the user to retry the operation after configuring the key
+ */
+export class ClarityBurstApiKeyRequiredError extends Error {
+  readonly routerUrl: string;
+  readonly statusCode: number;
+
+  constructor(routerUrl: string, statusCode: number = 401) {
+    const message =
+      `ClarityBurst API key required for router at ${routerUrl}. ` +
+      `Please configure your CLARITYBURST_API_KEY in settings. ` +
+      `The router responded with HTTP ${statusCode} Unauthorized.`;
+    super(message);
+    this.name = "ClarityBurstApiKeyRequiredError";
+    this.routerUrl = routerUrl;
+    this.statusCode = statusCode;
+    // Ensure prototype chain is correct for instanceof checks
+    Object.setPrototypeOf(this, ClarityBurstApiKeyRequiredError.prototype);
   }
 }

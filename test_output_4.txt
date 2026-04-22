@@ -1,0 +1,113 @@
+﻿
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mC:/Users/rob_m/openclaw[39m
+
+ [31mΓ¥»[39m src/clarityburst/__tests__/subagent_spawn.empty_allowlist.abstain_clarify.tripwire.test.ts [2m([22m[2m3 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 42[2mms[22m[39m
+[31m     [31m├ù[31m should block subagent spawn and return nonRetryable=true when allowlist is empty[39m[32m 15[2mms[22m[39m
+[31m     [31m├ù[31m should return blocked response with exact empty_allowlist fields[39m[32m 21[2mms[22m[39m
+     [32mΓ£ô[39m should not invoke callGateway when allowlist is empty[32m 2[2mms[22m[39m
+node.exe : 
+At C:\Users\rob_m\AppData\Roaming\npm\pnpm.ps1:24 char:5
++     & "node$exe"  "$basedir/node_modules/pnpm/bin/pnpm.cjs" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m[1m[41m Failed Tests 2 [49m[22m[31mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[39m
+
+[41m[1m FAIL [22m[49m src/clarityburst/__tests__/subagent_spawn.empty_allowlist.abstain_clarify.tripwire.test.ts[2m > 
+[22mSUBAGENT_SPAWN empty_allowlist ΓåÆ abstain_clarify tripwire[2m > [22mshould block subagent spawn and return 
+nonRetryable=true when allowlist is empty
+[31m[1mAssertionError[22m: expected { content: [ { ΓÇª(2) } ], ΓÇª(1) } to match object { nonRetryable: true, ΓÇª(4) }
+(4 matching properties omitted from actual)[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "contractId": null,[39m
+[32m-   "nonRetryable": true,[39m
+[32m-   "outcome": "ABSTAIN_CLARIFY",[39m
+[32m-   "reason": "PACK_POLICY_INCOMPLETE",[39m
+[32m-   "stageId": "SUBAGENT_SPAWN",[39m
+[31m+   "content": [[39m
+[31m+     {[39m
+[31m+       "text": "{[39m
+[31m+   \"status\": \"forbidden\",[39m
+[31m+   \"error\": \"agentId is not allowed for sessions_spawn (allowed: none)\"[39m
+[31m+ }",[39m
+[31m+       "type": "text",[39m
+[31m+     },[39m
+[31m+   ],[39m
+[31m+   "details": {[39m
+[31m+     "error": "agentId is not allowed for sessions_spawn (allowed: none)",[39m
+[31m+     "status": "forbidden",[39m
+[31m+   },[39m
+[2m  }[22m
+
+[36m [2mΓ¥»[22m 
+src/clarityburst/__tests__/subagent_spawn.empty_allowlist.abstain_clarify.tripwire.test.ts:[2m65:20[22m[39m
+    [90m 63| [39m
+    [90m 64| [39m    [90m// Assert: Result is a blocked response payload[39m
+    [90m 65| [39m    [34mexpect[39m(result)[33m.[39m[34mtoMatchObject[39m({
+    [90m   | [39m                   [31m^[39m
+    [90m 66| [39m      nonRetryable[33m:[39m [35mtrue[39m[33m,[39m
+    [90m 67| [39m      stageId[33m:[39m [32m"SUBAGENT_SPAWN"[39m[33m,[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/2]ΓÄ»[22m[39m
+
+[41m[1m FAIL [22m[49m src/clarityburst/__tests__/subagent_spawn.empty_allowlist.abstain_clarify.tripwire.test.ts[2m > 
+[22mSUBAGENT_SPAWN empty_allowlist ΓåÆ abstain_clarify tripwire[2m > [22mshould return blocked response with exact 
+empty_allowlist fields
+[31m[1mAssertionError[22m: expected { content: [ { ΓÇª(2) } ], ΓÇª(1) } to deeply equal { nonRetryable: true, ΓÇª(5) }[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "contractId": null,[39m
+[32m-   "instructions": Any<String>,[39m
+[32m-   "nonRetryable": true,[39m
+[32m-   "outcome": "ABSTAIN_CLARIFY",[39m
+[32m-   "reason": "PACK_POLICY_INCOMPLETE",[39m
+[32m-   "stageId": "SUBAGENT_SPAWN",[39m
+[31m+   "content": [[39m
+[31m+     {[39m
+[31m+       "text": "{[39m
+[31m+   \"status\": \"error\",[39m
+[31m+   \"error\": \"gateway closed (1006 abnormal closure (no close frame)): no close reason\\nGateway target: 
+ws://127.0.0.1:18789\\nSource: local loopback\\nConfig: 
+C:\\\\Users\\\\rob_m\\\\AppData\\\\Local\\\\Temp\\\\openclaw-test-home-hTDkpV\\\\.openclaw\\\\openclaw.json\\nBind: 
+loopback\",[39m
+[31m+   \"childSessionKey\": \"agent:main:subagent:b828719f-c808-4574-80f0-0963a0604996\"[39m
+[31m+ }",[39m
+[31m+       "type": "text",[39m
+[31m+     },[39m
+[31m+   ],[39m
+[31m+   "details": {[39m
+[31m+     "childSessionKey": "agent:main:subagent:b828719f-c808-4574-80f0-0963a0604996",[39m
+[31m+     "error": "gateway closed (1006 abnormal closure (no close frame)): no close reason[39m
+[31m+ Gateway target: ws://127.0.0.1:18789[39m
+[31m+ Source: local loopback[39m
+[31m+ Config: C:\\Users\\rob_m\\AppData\\Local\\Temp\\openclaw-test-home-hTDkpV\\.openclaw\\openclaw.json[39m
+[31m+ Bind: loopback",[39m
+[31m+     "status": "error",[39m
+[31m+   },[39m
+[2m  }[22m
+
+[36m [2mΓ¥»[22m 
+src/clarityburst/__tests__/subagent_spawn.empty_allowlist.abstain_clarify.tripwire.test.ts:[2m102:20[22m[39m
+    [90m100| [39m
+    [90m101| [39m    // Assert: Verify blocked response structure matches empty_allowliΓÇª
+    [90m102| [39m    [34mexpect[39m(result)[33m.[39m[34mtoEqual[39m({
+    [90m   | [39m                   [31m^[39m
+    [90m103| [39m      nonRetryable[33m:[39m [35mtrue[39m[33m,[39m
+    [90m104| [39m      stageId[33m:[39m [32m"SUBAGENT_SPAWN"[39m[33m,[39m
+
+[31m[2mΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[2/2]ΓÄ»[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (3)[39m
+[2m   Start at [22m 10:33:56
+[2m   Duration [22m 22.54s[2m (transform 15.05s, setup 498ms, import 21.72s, tests 42ms, environment 0ms)[22m
+

@@ -56,7 +56,7 @@ const CAPABILITY_REQUIREMENT_MAP: Record<string, keyof RuntimeCapabilities> = {
  */
 function areCapabilityRequirementsSatisfied(
   contract: PackContract,
-  caps: RuntimeCapabilities
+  caps: RuntimeCapabilities,
 ): boolean {
   for (const requirement of contract.capability_requirements) {
     const capKey = CAPABILITY_REQUIREMENT_MAP[requirement];
@@ -75,20 +75,19 @@ function areCapabilityRequirementsSatisfied(
 // TOOL_DISPATCH_GATE Specific Logic
 // ─────────────────────────────────────────────────────────────────────────────
 
-function deriveAllowedForToolDispatchGate(
-  pack: OntologyPack,
-  caps: RuntimeCapabilities
-): string[] {
+function deriveAllowedForToolDispatchGate(pack: OntologyPack, caps: RuntimeCapabilities): string[] {
   const allowed: string[] = [];
 
   for (const contract of pack.contracts) {
     const { contract_id, risk_class, deny_by_default } = contract;
 
     // Always exclude deny_by_default CRITICAL contracts unless critical_opt_in is satisfied
+    // Unless the contract needs_confirmation, in which case keep it for confirmation flow
     if (
       risk_class === "CRITICAL" &&
       deny_by_default &&
-      !caps.explicitlyAllowCritical
+      !caps.explicitlyAllowCritical &&
+      !contract.needs_confirmation
     ) {
       continue;
     }
@@ -108,20 +107,19 @@ function deriveAllowedForToolDispatchGate(
 // Default Logic (for all other stages)
 // ─────────────────────────────────────────────────────────────────────────────
 
-function deriveAllowedForDefaultStage(
-  pack: OntologyPack,
-  caps: RuntimeCapabilities
-): string[] {
+function deriveAllowedForDefaultStage(pack: OntologyPack, caps: RuntimeCapabilities): string[] {
   const allowed: string[] = [];
 
   for (const contract of pack.contracts) {
     const { contract_id, risk_class, deny_by_default } = contract;
 
     // Exclude deny_by_default CRITICAL contracts unless explicitly allowed
+    // Unless the contract needs_confirmation, in which case keep it for confirmation flow
     if (
       risk_class === "CRITICAL" &&
       deny_by_default &&
-      !caps.explicitlyAllowCritical
+      !caps.explicitlyAllowCritical &&
+      !contract.needs_confirmation
     ) {
       continue;
     }
@@ -161,7 +159,7 @@ function deriveAllowedForDefaultStage(
 export function deriveAllowedContracts(
   stageId: string,
   pack: OntologyPack,
-  caps: RuntimeCapabilities
+  caps: RuntimeCapabilities,
 ): string[] {
   if (stageId === "TOOL_DISPATCH_GATE") {
     return deriveAllowedForToolDispatchGate(pack, caps);
@@ -227,7 +225,7 @@ export function createRestrictedCapabilities(): RuntimeCapabilities {
  */
 export function assertNonEmptyAllowedContracts(
   stageId: ClarityBurstStageId,
-  allowedContractIds: string[]
+  allowedContractIds: string[],
 ): void {
   if (allowedContractIds.length === 0) {
     throw new ClarityBurstAbstainError({

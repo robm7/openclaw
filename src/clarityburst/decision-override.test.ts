@@ -12,16 +12,16 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
+  convertAbstainToBlockedResponse,
+  type BlockedResponsePayload,
+} from "../agents/pi-tool-definition-adapter.js";
+import {
   applyNetworkOverrides,
   type OntologyPack,
   type RouteResult,
   type NetworkIOContext,
 } from "./decision-override";
 import { ClarityBurstAbstainError } from "./errors";
-import {
-  convertAbstainToBlockedResponse,
-  type BlockedResponsePayload,
-} from "../agents/pi-tool-definition-adapter.js";
 
 /**
  * Mock tool execution function - tracks call count
@@ -52,7 +52,7 @@ function createMockNetworkIOPack(): OntologyPack {
     description: "Test pack for NETWORK_IO operations",
     thresholds: {
       min_confidence_T: 0.55,
-      dominance_margin_Delta: 0.10,
+      dominance_margin_Delta: 0.1,
     },
     contracts: [
       {
@@ -119,7 +119,7 @@ function createPassingRouteResult(contractId: string): RouteResult {
 function applyNetworkOverridesWithGating(
   pack: OntologyPack,
   routeResult: RouteResult,
-  context: NetworkIOContext
+  context: NetworkIOContext,
 ): { outcome: "PROCEED"; contractId: string | null } {
   const result = applyNetworkOverrides(pack, routeResult, context);
 
@@ -340,13 +340,15 @@ describe("applyNetworkOverrides - HIGH risk contract confirmation gating", () =>
       // Both should require confirmation and include placeholder instructions
       expect(resultFalse.outcome).toBe("ABSTAIN_CONFIRM");
       expect(resultUndefined.outcome).toBe("ABSTAIN_CONFIRM");
-      
+
       // Both should have instructions with placeholder token format
       if (resultFalse.outcome === "ABSTAIN_CONFIRM") {
         expect(resultFalse.instructions).toContain("CONFIRM NETWORK_IO <CONTRACT_ID> <opHash8>");
       }
       if (resultUndefined.outcome === "ABSTAIN_CONFIRM") {
-        expect(resultUndefined.instructions).toContain("CONFIRM NETWORK_IO <CONTRACT_ID> <opHash8>");
+        expect(resultUndefined.instructions).toContain(
+          "CONFIRM NETWORK_IO <CONTRACT_ID> <opHash8>",
+        );
       }
     });
 
@@ -432,7 +434,7 @@ describe("applyNetworkOverrides - uncertainty gating before confirmation", () =>
       data: {
         top1: {
           contract_id: "NETWORK_HIGH_RISK_OPERATION",
-          score: 0.40, // Below min_confidence_T of 0.55
+          score: 0.4, // Below min_confidence_T of 0.55
         },
       },
     };
@@ -461,7 +463,7 @@ describe("applyNetworkOverrides - uncertainty gating before confirmation", () =>
       data: {
         top1: {
           contract_id: "NETWORK_HIGH_RISK_OPERATION",
-          score: 0.60, // Above threshold
+          score: 0.6, // Above threshold
         },
         top2: {
           contract_id: "NETWORK_GET_PUBLIC",
@@ -499,30 +501,36 @@ function executeNetworkOperationWithGating(
   pack: OntologyPack,
   routeResult: RouteResult,
   context: NetworkIOContext,
-  toolExecutor: ReturnType<typeof createMockToolExecutor>
+  toolExecutor: ReturnType<typeof createMockToolExecutor>,
 ): { success: true; result: unknown } | BlockedResponsePayload {
   const gatingResult = applyNetworkOverrides(pack, routeResult, context);
 
   if (gatingResult.outcome === "ABSTAIN_CLARIFY") {
     // Convert to blocked response - this is the non-retryable path
+    // Extract nonRetryable from gatingResult (may not be in type but present in object)
+    const nonRetryable =
+      (gatingResult as unknown as { nonRetryable?: boolean }).nonRetryable ??
+      gatingResult.reason === "router_outage";
     const error = new ClarityBurstAbstainError({
       stageId: "NETWORK_IO",
       outcome: gatingResult.outcome,
       reason: gatingResult.reason,
       contractId: gatingResult.contractId,
       instructions: gatingResult.instructions ?? `${gatingResult.outcome}: ${gatingResult.reason}`,
+      nonRetryable,
     });
     return convertAbstainToBlockedResponse(error, gatingResult.instructions);
   }
 
   if (gatingResult.outcome === "ABSTAIN_CONFIRM") {
-    // Convert to blocked response - this is the non-retryable path
+    // Convert to blocked response - ABSTAIN_CONFIRM is retryable (user can confirm)
     const error = new ClarityBurstAbstainError({
       stageId: "NETWORK_IO",
       outcome: gatingResult.outcome,
       reason: gatingResult.reason,
       contractId: gatingResult.contractId,
       instructions: gatingResult.instructions ?? `${gatingResult.outcome}: ${gatingResult.reason}`,
+      nonRetryable: false, // ABSTAIN_CONFIRM is retryable
     });
     return convertAbstainToBlockedResponse(error, gatingResult.instructions);
   }
@@ -559,7 +567,7 @@ describe("NETWORK_IO ClarityBurstAbstainError - central non-retryable handling p
         mockPack,
         routeResult,
         context,
-        mockToolExecutor
+        mockToolExecutor,
       );
 
       // Assert: Blocked response payload structure
@@ -598,20 +606,26 @@ describe("NETWORK_IO ClarityBurstAbstainError - central non-retryable handling p
         reason: "router_outage",
         stageId: "NETWORK_IO",
         contractId: null,
+        nonRetryable: true,
         instructions: expect.stringContaining("router"),
       });
 
       // Verify this is converted to non-retryable blocked response
       if (gatingResult.outcome === "ABSTAIN_CLARIFY") {
+        // Extract nonRetryable from gatingResult (added via type assertion)
+        const nonRetryable =
+          (gatingResult as unknown as { nonRetryable?: boolean }).nonRetryable ?? false;
         const error = new ClarityBurstAbstainError({
           stageId: "NETWORK_IO",
           outcome: gatingResult.outcome,
           reason: gatingResult.reason,
           contractId: gatingResult.contractId,
-          instructions: gatingResult.instructions ?? `${gatingResult.outcome}: ${gatingResult.reason}`,
+          instructions:
+            gatingResult.instructions ?? `${gatingResult.outcome}: ${gatingResult.reason}`,
+          nonRetryable,
         });
         const blocked = convertAbstainToBlockedResponse(error, gatingResult.instructions);
-        
+
         expect(blocked.nonRetryable).toBe(true);
         expect(blocked.stageId).toBe("NETWORK_IO");
         expect(blocked.outcome).toBe("ABSTAIN_CLARIFY");
@@ -638,12 +652,12 @@ describe("NETWORK_IO ClarityBurstAbstainError - central non-retryable handling p
         mockPack,
         routeResult,
         context,
-        mockToolExecutor
+        mockToolExecutor,
       );
 
       // Assert: Blocked response payload structure
       expect(result).toMatchObject({
-        nonRetryable: true,
+        nonRetryable: false, // ABSTAIN_CONFIRM is retryable (user can confirm)
         stageId: "NETWORK_IO",
         outcome: "ABSTAIN_CONFIRM",
         reason: "CONFIRM_REQUIRED",
@@ -688,11 +702,12 @@ describe("NETWORK_IO ClarityBurstAbstainError - central non-retryable handling p
           outcome: gatingResult.outcome,
           reason: gatingResult.reason,
           contractId: gatingResult.contractId,
-          instructions: gatingResult.instructions ?? `${gatingResult.outcome}: ${gatingResult.reason}`,
+          instructions:
+            gatingResult.instructions ?? `${gatingResult.outcome}: ${gatingResult.reason}`,
         });
         const blocked = convertAbstainToBlockedResponse(error, gatingResult.instructions);
-        
-        expect(blocked.nonRetryable).toBe(true);
+
+        expect(blocked.nonRetryable).toBe(false);
         expect(blocked.stageId).toBe("NETWORK_IO");
         expect(blocked.outcome).toBe("ABSTAIN_CONFIRM");
         expect(blocked.reason).toBe("CONFIRM_REQUIRED");
@@ -710,16 +725,16 @@ describe("NETWORK_IO ClarityBurstAbstainError - central non-retryable handling p
       };
 
       // Act: Simulate 3 retry attempts (should all be blocked)
-      const results: (ReturnType<typeof executeNetworkOperationWithGating>)[] = [];
+      const results: ReturnType<typeof executeNetworkOperationWithGating>[] = [];
       for (let i = 0; i < 3; i++) {
         results.push(
-          executeNetworkOperationWithGating(mockPack, routeResult, context, mockToolExecutor)
+          executeNetworkOperationWithGating(mockPack, routeResult, context, mockToolExecutor),
         );
       }
 
       // Assert: All results are blocked responses
       for (const result of results) {
-        expect((result as BlockedResponsePayload).nonRetryable).toBe(true);
+        expect((result as BlockedResponsePayload).nonRetryable).toBe(false); // ABSTAIN_CONFIRM is retryable
         expect((result as BlockedResponsePayload).outcome).toBe("ABSTAIN_CONFIRM");
       }
 
@@ -745,7 +760,7 @@ describe("NETWORK_IO ClarityBurstAbstainError - central non-retryable handling p
         mockPack,
         routeResult,
         context,
-        mockToolExecutor
+        mockToolExecutor,
       );
 
       // Assert: Successful execution result
@@ -771,7 +786,7 @@ describe("NETWORK_IO ClarityBurstAbstainError - central non-retryable handling p
         mockPack,
         routeResult,
         context,
-        mockToolExecutor
+        mockToolExecutor,
       );
 
       // Assert: Successful execution

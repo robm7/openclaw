@@ -157,7 +157,60 @@ export function parseLsofOutput(output: string): PortProcess[] {
   return results;
 }
 
+function parseNetstatListeners(output: string, port: number): PortProcess[] {
+  const listeners: PortProcess[] = [];
+  const portToken = `:${port}`;
+  for (const rawLine of output.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line) {
+      continue;
+    }
+    if (!line.toLowerCase().includes("listen")) {
+      continue;
+    }
+    if (!line.includes(portToken)) {
+      continue;
+    }
+    const parts = line.split(/\s+/);
+    if (parts.length < 4) {
+      continue;
+    }
+    const pidRaw = parts.at(-1);
+    const pid = pidRaw ? Number.parseInt(pidRaw, 10) : NaN;
+    if (Number.isFinite(pid)) {
+      listeners.push({ pid });
+    }
+  }
+  return listeners;
+}
+
+function listPortListenersWindows(port: number): PortProcess[] {
+  try {
+    const out = execFileSync("netstat", ["-ano", "-p", "tcp"], {
+      encoding: "utf-8",
+    });
+    return parseNetstatListeners(out, port);
+  } catch (err: unknown) {
+    const execErr = err as ExecFileError;
+    const code = execErr.code;
+    if (code === "ENOENT") {
+      throw withErrnoCode("netstat not found; required for --force on Windows", "ENOENT", err);
+    }
+    if (code === "EACCES" || code === "EPERM") {
+      throw withErrnoCode("netstat permission denied while inspecting gateway port", code, err);
+    }
+    // If netstat fails for other reasons, return empty (port might be free)
+    return [];
+  }
+}
+
 export function listPortListeners(port: number): PortProcess[] {
+  // Use Windows-specific implementation on Windows
+  if (process.platform === "win32") {
+    return listPortListenersWindows(port);
+  }
+
+  // Original Unix implementation
   try {
     const lsof = resolveLsofCommandSync();
     const out = execFileSync(lsof, ["-nP", `-iTCP:${port}`, "-sTCP:LISTEN", "-FpFc"], {
@@ -238,9 +291,16 @@ export async function forceFreePortAndWait(
   let killed: PortProcess[] = [];
   let useFuserFallback = false;
 
+  // On Windows, don't use fuser fallback (fuser doesn't exist)
+  const isWindows = process.platform === "win32";
+
   try {
     killed = forceFreePort(port);
   } catch (err) {
+    if (isWindows) {
+      // On Windows, we should not fall back to fuser
+      throw err;
+    }
     if (!isRecoverableLsofError(err)) {
       throw err;
     }

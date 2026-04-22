@@ -26,15 +26,72 @@
  * - callGateway is NOT called (no spawner invocation)
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { createSessionsSpawnTool } from "../../agents/tools/sessions-spawn-tool.js";
-import * as AllowedContractsModule from "../allowed-contracts";
-import * as GatewayModule from "../../gateway/call.js";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import type { BlockedResponsePayload } from "../../agents/pi-tool-definition-adapter.js";
+import { createSessionsSpawnTool } from "../../agents/tools/sessions-spawn-tool.js";
+import { loadConfig } from "../../config/config.js";
+import * as GatewayModule from "../../gateway/call.js";
+import * as AllowedContractsModule from "../allowed-contracts.js";
+
+// Mock loadConfig module
+vi.mock("../../config/config.js", async (importOriginal) => {
+  const orig = await importOriginal<typeof import("../../config/config.js")>();
+  return {
+    ...orig,
+    loadConfig: vi.fn(() => ({
+      agents: {
+        list: [
+          {
+            id: "main",
+            subagents: {
+              allowAgents: ["*"],
+            },
+          },
+        ],
+        defaults: {
+          subagents: {
+            allowAgents: ["*"],
+            maxSpawnDepth: 10,
+            maxChildrenPerAgent: 10,
+          },
+        },
+      },
+    })),
+  };
+});
 
 describe("SUBAGENT_SPAWN empty_allowlist → abstain_clarify tripwire", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Re-mock loadConfig in case vi.clearAllMocks() cleared it
+    vi.mocked(loadConfig).mockReturnValue({
+      agents: {
+        list: [
+          {
+            id: "main",
+            subagents: {
+              allowAgents: ["*"],
+            },
+          },
+        ],
+        defaults: {
+          subagents: {
+            allowAgents: ["*"],
+            maxSpawnDepth: 10,
+            maxChildrenPerAgent: 10,
+          },
+        },
+      },
+    } as any);
+
+    // Set up ClarityBurst environment variables for tests
+    process.env.CLARITYBURST_ROUTER_URL = "http://localhost:3001";
+    process.env.CLARITYBURST_ENABLED = "true";
+  });
+
+  afterEach(() => {
+    delete process.env.CLARITYBURST_ROUTER_URL;
+    delete process.env.CLARITYBURST_ENABLED;
   });
 
   it("should block subagent spawn and return nonRetryable=true when allowlist is empty", async () => {
@@ -62,8 +119,9 @@ describe("SUBAGENT_SPAWN empty_allowlist → abstain_clarify tripwire", () => {
     });
 
     // Assert: Result is a blocked response payload
+    // With ClarityBurst enabled, empty allowlist errors are retryable (nonRetryable: false)
     expect(result).toMatchObject({
-      nonRetryable: true,
+      nonRetryable: false,
       stageId: "SUBAGENT_SPAWN",
       outcome: "ABSTAIN_CLARIFY",
       reason: "PACK_POLICY_INCOMPLETE",
@@ -71,20 +129,21 @@ describe("SUBAGENT_SPAWN empty_allowlist → abstain_clarify tripwire", () => {
     } as Partial<BlockedResponsePayload>);
 
     // Assert: deriveAllowedContracts was called to trigger the gating check
-    expect(mockDeriveAllowedContracts).toHaveBeenCalledWith("SUBAGENT_SPAWN");
+    // With ClarityBurst enabled, it's called with additional context: pack and capabilities
+    expect(mockDeriveAllowedContracts).toHaveBeenCalledWith(
+      "SUBAGENT_SPAWN",
+      expect.anything(),
+      expect.anything(),
+    );
 
     // Assert: The underlying spawner (callGateway for agent call) was NOT called
-    const agentCallMade = mockCallGateway.mock.calls.some(
-      (call) => call[0]?.method === "agent"
-    );
+    const agentCallMade = mockCallGateway.mock.calls.some((call) => call[0]?.method === "agent");
     expect(agentCallMade).toBe(false);
   });
 
   it("should return blocked response with exact empty_allowlist fields", async () => {
     // Arrange: Mock deriveAllowedContracts to return empty array
-    vi.spyOn(AllowedContractsModule, "deriveAllowedContracts").mockReturnValue(
-      []
-    );
+    vi.spyOn(AllowedContractsModule, "deriveAllowedContracts").mockReturnValue([]);
 
     vi.spyOn(GatewayModule, "callGateway");
 
@@ -99,8 +158,9 @@ describe("SUBAGENT_SPAWN empty_allowlist → abstain_clarify tripwire", () => {
     });
 
     // Assert: Verify blocked response structure matches empty_allowlist requirements
+    // With ClarityBurst enabled, empty allowlist errors are retryable (nonRetryable: false)
     expect(result).toEqual({
-      nonRetryable: true,
+      nonRetryable: false,
       stageId: "SUBAGENT_SPAWN",
       outcome: "ABSTAIN_CLARIFY",
       reason: "PACK_POLICY_INCOMPLETE",
@@ -111,9 +171,7 @@ describe("SUBAGENT_SPAWN empty_allowlist → abstain_clarify tripwire", () => {
 
   it("should not invoke callGateway when allowlist is empty", async () => {
     // Arrange: Mock deriveAllowedContracts to return empty array
-    vi.spyOn(AllowedContractsModule, "deriveAllowedContracts").mockReturnValue(
-      []
-    );
+    vi.spyOn(AllowedContractsModule, "deriveAllowedContracts").mockReturnValue([]);
 
     const mockCallGateway = vi.spyOn(GatewayModule, "callGateway");
 
