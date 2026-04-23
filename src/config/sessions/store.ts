@@ -5,6 +5,7 @@ import type { MsgContext } from "../../auto-reply/templating.js";
 import type { SessionMaintenanceConfig, SessionMaintenanceMode } from "../types.base.js";
 import { acquireSessionWriteLock } from "../../agents/session-write-lock.js";
 import configManager from "../../clarityburst/config.js";
+import { ClarityBurstAbstainError } from "../../clarityburst/errors.js";
 import {
   applyFileSystemOpsGateAndWrite,
   applyFileSystemOpsGateAndRename,
@@ -654,7 +655,10 @@ async function saveSessionStoreUnlocked(
     if (configManager.isEnabled()) {
       loadPackOrAbstain("FILE_SYSTEM_OPS");
     }
-  } catch {
+  } catch (err) {
+    if (err instanceof ClarityBurstAbstainError) {
+      throw err;
+    }
     // ClarityBurst not configured — proceed without gating
   }
   // Invalidate cache on write to ensure consistency

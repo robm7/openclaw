@@ -7,6 +7,7 @@ import { isDeepStrictEqual } from "node:util";
 import type { OpenClawConfig, ConfigFileSnapshot, LegacyConfigIssue } from "./types.js";
 import { ensureOwnerDisplaySecret } from "../agents/owner-display.js";
 import configManager from "../clarityburst/config.js";
+import { ClarityBurstAbstainError } from "../clarityburst/errors.js";
 import { applyFileSystemOpsGateAndWrite } from "../clarityburst/file-system-ops-gating.js";
 import { loadPackOrAbstain } from "../clarityburst/pack-load.js";
 import { loadDotEnv } from "../infra/dotenv.js";
@@ -1391,7 +1392,10 @@ export async function writeConfigFile(
     if (configManager.isEnabled()) {
       loadPackOrAbstain("FILE_SYSTEM_OPS");
     }
-  } catch {
+  } catch (err) {
+    if (err instanceof ClarityBurstAbstainError) {
+      throw err;
+    }
     // ClarityBurst not configured — proceed without gating
   }
   const io = createConfigIO();
