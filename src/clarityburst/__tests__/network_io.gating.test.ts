@@ -12,10 +12,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { ClarityBurstAbstainError } from "../errors.js";
 
-// Mock the applyNetworkIOOverrides function
-const mockApplyNetworkIOOverrides = vi.fn();
+// Mock the applyNetworkOverrides function
+const mockApplyNetworkOverrides = vi.fn();
 vi.mock("../decision-override.js", () => ({
-  applyNetworkIOOverrides: mockApplyNetworkIOOverrides,
+  applyNetworkOverrides: mockApplyNetworkOverrides,
 }));
 
 // Mock the logging module
@@ -38,7 +38,7 @@ const { applyNetworkIOGateAndFetch } = await import("../network-io-gating.js");
 describe("Network I/O Gating (NETWORK_IO Stage)", () => {
   beforeEach(() => {
     fetchMock.mockClear();
-    mockApplyNetworkIOOverrides.mockClear();
+    mockApplyNetworkOverrides.mockClear();
   });
 
   afterEach(() => {
@@ -49,8 +49,8 @@ describe("Network I/O Gating (NETWORK_IO Stage)", () => {
     it("should execute fetch when gate returns PROCEED with contractId", async () => {
       const testUrl = "https://api.example.com/data";
       const testResponse = { ok: true, status: 200 };
-      
-      mockApplyNetworkIOOverrides.mockResolvedValue({
+
+      mockApplyNetworkOverrides.mockResolvedValue({
         outcome: "PROCEED",
         contractId: "NETWORK_GET_PUBLIC",
       });
@@ -72,8 +72,8 @@ describe("Network I/O Gating (NETWORK_IO Stage)", () => {
     it("should execute fetch when gate returns PROCEED with null contractId", async () => {
       const testUrl = "https://api.example.com/public";
       const testResponse = { ok: true, status: 200 };
-      
-      mockApplyNetworkIOOverrides.mockResolvedValue({
+
+      mockApplyNetworkOverrides.mockResolvedValue({
         outcome: "PROCEED",
         contractId: null,
       });
@@ -90,8 +90,8 @@ describe("Network I/O Gating (NETWORK_IO Stage)", () => {
       const testUrl = "https://api.example.com/create";
       const testBody = JSON.stringify({ key: "value" });
       const testResponse = { ok: true, status: 201 };
-      
-      mockApplyNetworkIOOverrides.mockResolvedValue({
+
+      mockApplyNetworkOverrides.mockResolvedValue({
         outcome: "PROCEED",
         contractId: "NETWORK_POST_DATA",
       });
@@ -115,17 +115,18 @@ describe("Network I/O Gating (NETWORK_IO Stage)", () => {
   describe("ABSTAIN_CONFIRM outcome", () => {
     it("should throw ClarityBurstAbstainError when gate returns ABSTAIN_CONFIRM", async () => {
       const testUrl = "https://api.example.com/sensitive";
-      
-      mockApplyNetworkIOOverrides.mockResolvedValue({
+
+      mockApplyNetworkOverrides.mockResolvedValue({
         outcome: "ABSTAIN_CONFIRM",
         reason: "CONFIRM_REQUIRED",
         contractId: "NETWORK_HIGH_RISK_OPERATION",
-        instructions: "This operation requires user confirmation. Contract NETWORK_HIGH_RISK_OPERATION has HIGH risk. Obtain explicit consent.",
+        instructions:
+          "This operation requires user confirmation. Contract NETWORK_HIGH_RISK_OPERATION has HIGH risk. Obtain explicit consent.",
       });
 
-      await expect(
-        applyNetworkIOGateAndFetch(testUrl, { method: "POST" })
-      ).rejects.toThrow(ClarityBurstAbstainError);
+      await expect(applyNetworkIOGateAndFetch(testUrl, { method: "POST" })).rejects.toThrow(
+        ClarityBurstAbstainError,
+      );
 
       // Verify fetch was NOT called
       expect(fetchMock).not.toHaveBeenCalled();
@@ -135,8 +136,8 @@ describe("Network I/O Gating (NETWORK_IO Stage)", () => {
       const testUrl = "https://api.example.com/write";
       const contractId = "NETWORK_POST_SENSITIVE";
       const instructions = "Confirmation required for sensitive POST operation";
-      
-      mockApplyNetworkIOOverrides.mockResolvedValue({
+
+      mockApplyNetworkOverrides.mockResolvedValue({
         outcome: "ABSTAIN_CONFIRM",
         reason: "CONFIRM_REQUIRED",
         contractId,
@@ -159,17 +160,17 @@ describe("Network I/O Gating (NETWORK_IO Stage)", () => {
   describe("ABSTAIN_CLARIFY outcome", () => {
     it("should throw ClarityBurstAbstainError when gate returns ABSTAIN_CLARIFY", async () => {
       const testUrl = "https://api.example.com/uncertain";
-      
-      mockApplyNetworkIOOverrides.mockResolvedValue({
+
+      mockApplyNetworkOverrides.mockResolvedValue({
         outcome: "ABSTAIN_CLARIFY",
         reason: "LOW_DOMINANCE_OR_CONFIDENCE",
         contractId: "NETWORK_UNCERTAIN_OPERATION",
         instructions: "Router uncertainty too high; clarification required before proceeding.",
       });
 
-      await expect(
-        applyNetworkIOGateAndFetch(testUrl, { method: "GET" })
-      ).rejects.toThrow(ClarityBurstAbstainError);
+      await expect(applyNetworkIOGateAndFetch(testUrl, { method: "GET" })).rejects.toThrow(
+        ClarityBurstAbstainError,
+      );
 
       // Verify fetch was NOT called
       expect(fetchMock).not.toHaveBeenCalled();
@@ -177,8 +178,8 @@ describe("Network I/O Gating (NETWORK_IO Stage)", () => {
 
     it("should throw with correct error properties on ABSTAIN_CLARIFY with ROUTER_UNAVAILABLE", async () => {
       const testUrl = "https://api.example.com/delete";
-      
-      mockApplyNetworkIOOverrides.mockResolvedValue({
+
+      mockApplyNetworkOverrides.mockResolvedValue({
         outcome: "ABSTAIN_CLARIFY",
         reason: "ROUTER_UNAVAILABLE",
         contractId: null,
@@ -199,7 +200,7 @@ describe("Network I/O Gating (NETWORK_IO Stage)", () => {
 
   describe("HTTP Method Extraction", () => {
     it("should extract GET method (default)", async () => {
-      mockApplyNetworkIOOverrides.mockResolvedValue({
+      mockApplyNetworkOverrides.mockResolvedValue({
         outcome: "PROCEED",
         contractId: "NETWORK_GET_PUBLIC",
       });
@@ -208,15 +209,15 @@ describe("Network I/O Gating (NETWORK_IO Stage)", () => {
       await applyNetworkIOGateAndFetch("https://api.example.com/data");
 
       // Gate should be called with GET method
-      expect(mockApplyNetworkIOOverrides).toHaveBeenCalledWith(
+      expect(mockApplyNetworkOverrides).toHaveBeenCalledWith(
         expect.objectContaining({
           operation: "GET",
-        })
+        }),
       );
     });
 
     it("should extract POST method from init", async () => {
-      mockApplyNetworkIOOverrides.mockResolvedValue({
+      mockApplyNetworkOverrides.mockResolvedValue({
         outcome: "PROCEED",
         contractId: "NETWORK_POST_DATA",
       });
@@ -226,15 +227,15 @@ describe("Network I/O Gating (NETWORK_IO Stage)", () => {
         method: "POST",
       });
 
-      expect(mockApplyNetworkIOOverrides).toHaveBeenCalledWith(
+      expect(mockApplyNetworkOverrides).toHaveBeenCalledWith(
         expect.objectContaining({
           operation: "POST",
-        })
+        }),
       );
     });
 
     it("should handle PUT method", async () => {
-      mockApplyNetworkIOOverrides.mockResolvedValue({
+      mockApplyNetworkOverrides.mockResolvedValue({
         outcome: "PROCEED",
         contractId: "NETWORK_PUT_UPDATE",
       });
@@ -244,15 +245,15 @@ describe("Network I/O Gating (NETWORK_IO Stage)", () => {
         method: "PUT",
       });
 
-      expect(mockApplyNetworkIOOverrides).toHaveBeenCalledWith(
+      expect(mockApplyNetworkOverrides).toHaveBeenCalledWith(
         expect.objectContaining({
           operation: "PUT",
-        })
+        }),
       );
     });
 
     it("should handle DELETE method", async () => {
-      mockApplyNetworkIOOverrides.mockResolvedValue({
+      mockApplyNetworkOverrides.mockResolvedValue({
         outcome: "PROCEED",
         contractId: "NETWORK_DELETE_RESOURCE",
       });
@@ -262,15 +263,15 @@ describe("Network I/O Gating (NETWORK_IO Stage)", () => {
         method: "DELETE",
       });
 
-      expect(mockApplyNetworkIOOverrides).toHaveBeenCalledWith(
+      expect(mockApplyNetworkOverrides).toHaveBeenCalledWith(
         expect.objectContaining({
           operation: "DELETE",
-        })
+        }),
       );
     });
 
     it("should normalize method to uppercase", async () => {
-      mockApplyNetworkIOOverrides.mockResolvedValue({
+      mockApplyNetworkOverrides.mockResolvedValue({
         outcome: "PROCEED",
         contractId: null,
       });
@@ -280,17 +281,17 @@ describe("Network I/O Gating (NETWORK_IO Stage)", () => {
         method: "post",
       });
 
-      expect(mockApplyNetworkIOOverrides).toHaveBeenCalledWith(
+      expect(mockApplyNetworkOverrides).toHaveBeenCalledWith(
         expect.objectContaining({
           operation: "POST",
-        })
+        }),
       );
     });
   });
 
   describe("URL Hostname Extraction", () => {
     it("should extract hostname from standard URL", async () => {
-      mockApplyNetworkIOOverrides.mockResolvedValue({
+      mockApplyNetworkOverrides.mockResolvedValue({
         outcome: "PROCEED",
         contractId: null,
       });
@@ -299,15 +300,15 @@ describe("Network I/O Gating (NETWORK_IO Stage)", () => {
       const url = "https://api.example.com/v1/data?param=value";
       await applyNetworkIOGateAndFetch(url);
 
-      expect(mockApplyNetworkIOOverrides).toHaveBeenCalledWith(
+      expect(mockApplyNetworkOverrides).toHaveBeenCalledWith(
         expect.objectContaining({
           url: "api.example.com",
-        })
+        }),
       );
     });
 
     it("should extract hostname from URL with port", async () => {
-      mockApplyNetworkIOOverrides.mockResolvedValue({
+      mockApplyNetworkOverrides.mockResolvedValue({
         outcome: "PROCEED",
         contractId: null,
       });
@@ -316,15 +317,15 @@ describe("Network I/O Gating (NETWORK_IO Stage)", () => {
       const url = "http://localhost:8080/api";
       await applyNetworkIOGateAndFetch(url);
 
-      expect(mockApplyNetworkIOOverrides).toHaveBeenCalledWith(
+      expect(mockApplyNetworkOverrides).toHaveBeenCalledWith(
         expect.objectContaining({
           url: "localhost",
-        })
+        }),
       );
     });
 
     it("should fallback to truncated URL on parsing error", async () => {
-      mockApplyNetworkIOOverrides.mockResolvedValue({
+      mockApplyNetworkOverrides.mockResolvedValue({
         outcome: "PROCEED",
         contractId: null,
       });
@@ -333,17 +334,17 @@ describe("Network I/O Gating (NETWORK_IO Stage)", () => {
       const invalidUrl = "not a valid url";
       await applyNetworkIOGateAndFetch(invalidUrl);
 
-      expect(mockApplyNetworkIOOverrides).toHaveBeenCalledWith(
+      expect(mockApplyNetworkOverrides).toHaveBeenCalledWith(
         expect.objectContaining({
           url: invalidUrl,
-        })
+        }),
       );
     });
   });
 
   describe("Gating Call Validation", () => {
     it("should call applyNetworkIOOverrides with correct stageId", async () => {
-      mockApplyNetworkIOOverrides.mockResolvedValue({
+      mockApplyNetworkOverrides.mockResolvedValue({
         outcome: "PROCEED",
         contractId: null,
       });
@@ -351,15 +352,15 @@ describe("Network I/O Gating (NETWORK_IO Stage)", () => {
 
       await applyNetworkIOGateAndFetch("https://api.example.com/test");
 
-      expect(mockApplyNetworkIOOverrides).toHaveBeenCalledWith(
+      expect(mockApplyNetworkOverrides).toHaveBeenCalledWith(
         expect.objectContaining({
           stageId: "NETWORK_IO",
-        })
+        }),
       );
     });
 
     it("should call applyNetworkIOOverrides with userConfirmed false by default", async () => {
-      mockApplyNetworkIOOverrides.mockResolvedValue({
+      mockApplyNetworkOverrides.mockResolvedValue({
         outcome: "PROCEED",
         contractId: null,
       });
@@ -367,17 +368,17 @@ describe("Network I/O Gating (NETWORK_IO Stage)", () => {
 
       await applyNetworkIOGateAndFetch("https://api.example.com/test");
 
-      expect(mockApplyNetworkIOOverrides).toHaveBeenCalledWith(
+      expect(mockApplyNetworkOverrides).toHaveBeenCalledWith(
         expect.objectContaining({
           userConfirmed: false,
-        })
+        }),
       );
     });
 
     it("should call applyNetworkIOOverrides before fetch", async () => {
       const callOrder: string[] = [];
-      
-      mockApplyNetworkIOOverrides.mockImplementation(() => {
+
+      mockApplyNetworkOverrides.mockImplementation(() => {
         callOrder.push("gate");
         return Promise.resolve({
           outcome: "PROCEED",
@@ -397,25 +398,25 @@ describe("Network I/O Gating (NETWORK_IO Stage)", () => {
 
   describe("Error Handling", () => {
     it("should preserve fetch error if gate approves", async () => {
-      mockApplyNetworkIOOverrides.mockResolvedValue({
+      mockApplyNetworkOverrides.mockResolvedValue({
         outcome: "PROCEED",
         contractId: null,
       });
       const fetchError = new Error("Network timeout");
       fetchMock.mockRejectedValue(fetchError);
 
-      await expect(
-        applyNetworkIOGateAndFetch("https://api.example.com/test")
-      ).rejects.toBe(fetchError);
+      await expect(applyNetworkIOGateAndFetch("https://api.example.com/test")).rejects.toBe(
+        fetchError,
+      );
     });
 
     it("should handle gate throwing unexpected error", async () => {
-      mockApplyNetworkIOOverrides.mockRejectedValue(new Error("Gate internal error"));
+      mockApplyNetworkOverrides.mockRejectedValue(new Error("Gate internal error"));
       fetchMock.mockResolvedValue({ ok: true });
 
-      await expect(
-        applyNetworkIOGateAndFetch("https://api.example.com/test")
-      ).rejects.toThrow("Gate internal error");
+      await expect(applyNetworkIOGateAndFetch("https://api.example.com/test")).rejects.toThrow(
+        "Gate internal error",
+      );
 
       // Fetch should not be called if gate throws
       expect(fetchMock).not.toHaveBeenCalled();
@@ -425,8 +426,8 @@ describe("Network I/O Gating (NETWORK_IO Stage)", () => {
   describe("Real-World Scenarios", () => {
     it("should handle OAuth token refresh with NETWORK_IO_BLOCKED", async () => {
       const tokenEndpoint = "https://github.com/login/oauth/access_token";
-      
-      mockApplyNetworkIOOverrides.mockResolvedValue({
+
+      mockApplyNetworkOverrides.mockResolvedValue({
         outcome: "ABSTAIN_CONFIRM",
         reason: "CONFIRM_REQUIRED",
         contractId: "NETWORK_OAUTH_TOKEN",
@@ -449,17 +450,17 @@ describe("Network I/O Gating (NETWORK_IO Stage)", () => {
 
     it("should handle API call with router uncertainty", async () => {
       const apiUrl = "https://api.example.com/data";
-      
-      mockApplyNetworkIOOverrides.mockResolvedValue({
+
+      mockApplyNetworkOverrides.mockResolvedValue({
         outcome: "ABSTAIN_CLARIFY",
         reason: "LOW_DOMINANCE_OR_CONFIDENCE",
         contractId: "NETWORK_API_CALL",
         instructions: "Router uncertainty - cannot classify request",
       });
 
-      await expect(
-        applyNetworkIOGateAndFetch(apiUrl, { method: "GET" })
-      ).rejects.toThrow(ClarityBurstAbstainError);
+      await expect(applyNetworkIOGateAndFetch(apiUrl, { method: "GET" })).rejects.toThrow(
+        ClarityBurstAbstainError,
+      );
 
       expect(fetchMock).not.toHaveBeenCalled();
     });
@@ -467,8 +468,8 @@ describe("Network I/O Gating (NETWORK_IO Stage)", () => {
     it("should allow approved simple GET request", async () => {
       const publicUrl = "https://api.example.com/public-data";
       const response = { ok: true, status: 200, json: async () => ({ data: "ok" }) };
-      
-      mockApplyNetworkIOOverrides.mockResolvedValue({
+
+      mockApplyNetworkOverrides.mockResolvedValue({
         outcome: "PROCEED",
         contractId: "NETWORK_GET_PUBLIC",
       });

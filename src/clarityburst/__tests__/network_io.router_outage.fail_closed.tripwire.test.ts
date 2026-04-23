@@ -8,12 +8,24 @@
  * ClarityBurst routing is broken, preventing silent bypass of network gating.
  */
 
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import type { NetworkContext } from "../decision-override.js";
 import { applyNetworkOverrides } from "../decision-override.js";
-import { getPackForStage } from "../pack-registry.js";
-import type { NetworkContext, RouteResult } from "../decision-override.js";
+import * as routerClient from "../router-client.js";
 
 describe("NETWORK_IO Router Outage - Fail-Closed Tripwire", () => {
+  beforeEach(() => {
+    process.env.CLARITYBURST_ROUTER_URL = "http://localhost:3001";
+    process.env.CLARITYBURST_ENABLED = "true";
+    process.env.CLARITYBURST_ROUTER_REQUIRED = "1";
+  });
+
+  afterEach(() => {
+    delete process.env.CLARITYBURST_ROUTER_URL;
+    delete process.env.CLARITYBURST_ENABLED;
+    delete process.env.CLARITYBURST_ROUTER_REQUIRED;
+  });
+
   it("should return ABSTAIN_CLARIFY with router_outage when router unavailable", async () => {
     // Arrange: Create a context for a fetch operation
     const context: NetworkContext = {
@@ -23,31 +35,26 @@ describe("NETWORK_IO Router Outage - Fail-Closed Tripwire", () => {
       url: "https://api.example.com/data",
     };
 
-    // Mock router to be unavailable (simulate network error)
-    const originalFetch = globalThis.fetch;
-    globalThis.fetch = vi.fn().mockRejectedValueOnce(new Error("Router unavailable"));
+    // Mock routeClarityBurst to simulate router outage
+    vi.spyOn(routerClient, "routeClarityBurst").mockRejectedValue(new Error("Router unavailable"));
 
-    try {
-      // Act: Call applyNetworkOverrides (async version)
-      const result = await applyNetworkOverrides(context);
+    // Act: Call applyNetworkOverrides (async version)
+    const result = await applyNetworkOverrides(context);
 
-      // Assert: Should return ABSTAIN_CLARIFY with router_outage reason
-      expect(result).toEqual(
-        expect.objectContaining({
-          outcome: "ABSTAIN_CLARIFY",
-          reason: "router_outage",
-          stageId: "NETWORK_IO",
-          contractId: null,
-        })
-      );
+    // Assert: Should return ABSTAIN_CLARIFY with ROUTER_UNAVAILABLE reason
+    expect(result).toEqual(
+      expect.objectContaining({
+        outcome: "ABSTAIN_CLARIFY",
+        reason: "ROUTER_UNAVAILABLE",
+        stageId: "NETWORK_IO",
+        contractId: null,
+      }),
+    );
 
-      // Verify the instructions are present
-      if (result.outcome === "ABSTAIN_CLARIFY") {
-        expect(result).toHaveProperty("instructions");
-        expect(typeof result.instructions).toBe("string");
-      }
-    } finally {
-      globalThis.fetch = originalFetch;
+    // Verify the instructions are present
+    if (result.outcome === "ABSTAIN_CLARIFY") {
+      expect(result).toHaveProperty("instructions");
+      expect(typeof result.instructions).toBe("string");
     }
   });
 
@@ -59,22 +66,17 @@ describe("NETWORK_IO Router Outage - Fail-Closed Tripwire", () => {
       url: "https://sensitive-api.example.com/confidential",
     };
 
-    // Mock router to fail
-    const originalFetch = globalThis.fetch;
-    globalThis.fetch = vi.fn().mockRejectedValueOnce(new Error("Connection refused"));
+    // Mock routeClarityBurst to simulate router outage
+    vi.spyOn(routerClient, "routeClarityBurst").mockRejectedValue(new Error("Connection refused"));
 
-    try {
-      // Act
-      const result = await applyNetworkOverrides(context);
+    // Act
+    const result = await applyNetworkOverrides(context);
 
-      // Assert: Must not proceed (fail-closed invariant)
-      expect(result.outcome).not.toBe("PROCEED");
-      expect(result.outcome).toBe("ABSTAIN_CLARIFY");
-      if (result.outcome === "ABSTAIN_CLARIFY") {
-        expect(result.reason).toBe("router_outage");
-      }
-    } finally {
-      globalThis.fetch = originalFetch;
+    // Assert: Must not proceed (fail-closed invariant)
+    expect(result.outcome).not.toBe("PROCEED");
+    expect(result.outcome).toBe("ABSTAIN_CLARIFY");
+    if (result.outcome === "ABSTAIN_CLARIFY") {
+      expect(result.reason).toBe("ROUTER_UNAVAILABLE");
     }
   });
 
@@ -86,22 +88,17 @@ describe("NETWORK_IO Router Outage - Fail-Closed Tripwire", () => {
       url: "https://api.example.com",
     };
 
-    // Mock router failure
-    const originalFetch = globalThis.fetch;
-    globalThis.fetch = vi.fn().mockRejectedValueOnce(new Error("Service unavailable"));
+    // Mock routeClarityBurst to simulate router failure
+    vi.spyOn(routerClient, "routeClarityBurst").mockRejectedValue(new Error("Service unavailable"));
 
-    try {
-      // Act
-      const result = await applyNetworkOverrides(context);
+    // Act
+    const result = await applyNetworkOverrides(context);
 
-      // Assert: Instructions should mention router restoration
-      if (result.outcome === "ABSTAIN_CLARIFY" && result.instructions) {
-        expect(result).toHaveProperty("instructions");
-        const instructions = result.instructions;
-        expect(instructions.toLowerCase()).toContain("router");
-      }
-    } finally {
-      globalThis.fetch = originalFetch;
+    // Assert: Instructions should mention router restoration
+    if (result.outcome === "ABSTAIN_CLARIFY" && result.instructions) {
+      expect(result).toHaveProperty("instructions");
+      const instructions = result.instructions;
+      expect(instructions.toLowerCase()).toContain("router");
     }
   });
 });
