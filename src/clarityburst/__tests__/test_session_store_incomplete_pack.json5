@@ -1,0 +1,30 @@
+{
+  "session_valid_1": {
+    "channel": "telegram",
+    "lastChannel": "telegram",
+    "lastTo": "user123",
+    "lastAccountId": "tg-user123",
+    "lastThreadId": "thread_1",
+    "updatedAt": 1776915611377,
+    "deliveryContext": {
+      "channel": "telegram",
+      "to": "user123",
+      "accountId": "tg-user123",
+      "threadId": "thread_1"
+    }
+  },
+  "session_valid_2": {
+    "channel": "discord",
+    "lastChannel": "discord",
+    "lastTo": "user456",
+    "lastAccountId": "discord-user456",
+    "lastThreadId": "thread_2",
+    "updatedAt": 1776915611377,
+    "deliveryContext": {
+      "channel": "discord",
+      "to": "user456",
+      "accountId": "discord-user456",
+      "threadId": "thread_2"
+    }
+  }
+}

@@ -6,23 +6,35 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { ClarityBurstAbstainError } from "./errors";
-import type { OntologyPack } from "./pack-registry";
+import type { OntologyPack } from "./pack-registry.js";
+import { ClarityBurstAbstainError } from "./errors.js";
 
-// Mock the pack-registry module to control getPackForStage behavior
-vi.mock("./pack-registry", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("./pack-registry")>();
-  return {
-    ...actual,
-    getPackForStage: vi.fn(),
-  };
-});
+// Mock the pack-registry module to control getPackForStage behavior using hoisted mock
+const mockGetPackForStage = vi.hoisted(() => vi.fn());
 
 // Import after mocking
-import { loadPackOrAbstain } from "./pack-load";
-import { getPackForStage, PackPolicyIncompleteError } from "./pack-registry";
+import { loadPackOrAbstain } from "./pack-load.js";
+import { PackPolicyIncompleteError } from "./pack-registry.js";
 
-const mockedGetPackForStage = vi.mocked(getPackForStage);
+const mockedGetPackForStage = mockGetPackForStage;
+
+// Set up the mock before each test
+beforeEach(() => {
+  vi.doMock("./pack-registry.js", () => {
+    console.log("Mock factory executing");
+    return {
+      getPackForStage: mockGetPackForStage,
+      PackPolicyIncompleteError: class PackPolicyIncompleteError extends Error {
+        missingFields: string[];
+        constructor(message: string, missingFields: string[]) {
+          super(message);
+          this.name = "PackPolicyIncompleteError";
+          this.missingFields = missingFields;
+        }
+      },
+    };
+  });
+});
 
 describe("loadPackOrAbstain - stage_id mismatch detection", () => {
   beforeEach(() => {
@@ -73,9 +85,7 @@ describe("loadPackOrAbstain - stage_id mismatch detection", () => {
       mockedGetPackForStage.mockReturnValue(mismatchedPack);
 
       // Act & Assert: Should throw with deterministic fields
-      expect(() => loadPackOrAbstain("SHELL_EXEC")).toThrow(
-        ClarityBurstAbstainError
-      );
+      expect(() => loadPackOrAbstain("SHELL_EXEC")).toThrow(ClarityBurstAbstainError);
     });
 
     it("should have deterministic abstain fields when stage_id mismatch detected", () => {
@@ -97,7 +107,7 @@ describe("loadPackOrAbstain - stage_id mismatch detection", () => {
         expect(abstainErr.reason).toBe("PACK_POLICY_INCOMPLETE");
         expect(abstainErr.contractId).toBeNull();
         expect(abstainErr.instructions).toContain(
-          'Pack stage_id mismatch: requested "SHELL_EXEC" but pack declares "NETWORK_IO"'
+          'Pack stage_id mismatch: requested "SHELL_EXEC" but pack declares "NETWORK_IO"',
         );
       }
     });
@@ -178,15 +188,11 @@ describe("loadPackOrAbstain - stage_id mismatch detection", () => {
     it("should convert PackPolicyIncompleteError to ClarityBurstAbstainError", () => {
       // Arrange: getPackForStage throws PackPolicyIncompleteError
       mockedGetPackForStage.mockImplementation(() => {
-        throw new PackPolicyIncompleteError("SHELL_EXEC", [
-          "contracts[0].capability_requirements",
-        ]);
+        throw new PackPolicyIncompleteError("SHELL_EXEC", ["contracts[0].capability_requirements"]);
       });
 
       // Act & Assert
-      expect(() => loadPackOrAbstain("SHELL_EXEC")).toThrow(
-        ClarityBurstAbstainError
-      );
+      expect(() => loadPackOrAbstain("SHELL_EXEC")).toThrow(ClarityBurstAbstainError);
 
       try {
         loadPackOrAbstain("SHELL_EXEC");

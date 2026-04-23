@@ -8,14 +8,23 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { resolveAgentWorkspaceDir } from "../../../agents/agent-scope.js";
 import type { OpenClawConfig } from "../../../config/config.js";
+import type { HookHandler } from "../../hooks.js";
+import { resolveAgentWorkspaceDir } from "../../../agents/agent-scope.js";
+import {
+  deriveAllowedContracts,
+  createFullCapabilities,
+  assertNonEmptyAllowedContracts,
+} from "../../../clarityburst/allowed-contracts.js";
+import configManager from "../../../clarityburst/config.js";
+import { ClarityBurstAbstainError } from "../../../clarityburst/errors.js";
+import { loadPackOrAbstain } from "../../../clarityburst/pack-load.js";
+import { routeClarityBurst } from "../../../clarityburst/router-client.js";
 import { resolveStateDir } from "../../../config/paths.js";
 import { createSubsystemLogger } from "../../../logging/subsystem.js";
 import { resolveAgentIdFromSessionKey } from "../../../routing/session-key.js";
 import { hasInterSessionUserProvenance } from "../../../sessions/input-provenance.js";
 import { resolveHookConfig } from "../../config.js";
-import type { HookHandler } from "../../hooks.js";
 import { generateSlugViaLLM } from "../../llm-slug-generator.js";
 
 const log = createSubsystemLogger("hooks/session-memory");
@@ -305,6 +314,46 @@ const saveSessionToMemory: HookHandler = async (event) => {
 
     const entry = entryParts.join("\n");
 
+    // ClarityBurst MEMORY_MODIFY gating: check before writing memory file
+    if (configManager.isEnabled()) {
+      try {
+        const pack = loadPackOrAbstain("MEMORY_MODIFY");
+        const caps = createFullCapabilities();
+        const allowedContractIds = deriveAllowedContracts("MEMORY_MODIFY", pack, caps);
+        assertNonEmptyAllowedContracts("MEMORY_MODIFY", allowedContractIds);
+        await routeClarityBurst({
+          stageId: "MEMORY_MODIFY",
+          packId: pack.pack_id,
+          packVersion: pack.pack_version,
+          allowedContractIds,
+          userText: entry,
+        });
+      } catch (gatingErr) {
+        if (gatingErr instanceof ClarityBurstAbstainError) {
+          if (gatingErr.reason === "router_outage" || gatingErr.reason === "ROUTER_UNAVAILABLE") {
+            // Transient: emit blocked message, return gracefully
+            const blockMsg = `[Blocked] MEMORY_MODIFY: router_outage`;
+            log.info(blockMsg);
+            if (event.messages) {
+              event.messages.push(blockMsg);
+            }
+            return;
+          }
+          // Config errors (pack_incomplete, empty_allowlist): propagate
+          throw gatingErr;
+        }
+        // Unknown router transport errors: treat as transient
+        const blockMsg = `[Blocked] MEMORY_MODIFY: router_outage`;
+        log.info(blockMsg, {
+          error: gatingErr instanceof Error ? gatingErr.message : String(gatingErr),
+        });
+        if (event.messages) {
+          event.messages.push(blockMsg);
+        }
+        return;
+      }
+    }
+
     // Write to new memory file
     await fs.writeFile(memoryFilePath, entry, "utf-8");
     log.debug("Memory file written successfully");
@@ -313,6 +362,9 @@ const saveSessionToMemory: HookHandler = async (event) => {
     const relPath = memoryFilePath.replace(os.homedir(), "~");
     log.info(`Session context saved to ${relPath}`);
   } catch (err) {
+    if (err instanceof ClarityBurstAbstainError) {
+      throw err;
+    }
     if (err instanceof Error) {
       log.error("Failed to save session memory", {
         errorName: err.name,
