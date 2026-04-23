@@ -629,27 +629,13 @@ export function applyShellExecOverrides(
     return stampRequestId(failClosedOutcome, requestId);
   }
 
-  // Fail-closed: if router result is not ok, abstain with router_outage
+  // Fail-open: router unavailable but CLARITYBURST_ROUTER_REQUIRED not set
   if (!routeResult.ok) {
-    // DIAGNOSTIC: Log when fail-closed blocks execution after router error
-    const diagnosticPayload = {
-      stageId: SHELL_EXEC_STAGE_ID,
-      routerOk: routeResult.ok,
-      failClosedTriggered: true,
-      diagnostic: "SHELL_EXEC_ROUTER_FAIL_CLOSED_BLOCKED",
-    };
-    console.warn(
-      "[CLARITYBURST_DIAGNOSTIC] Shell exec blocked via fail-closed after router error:",
-      JSON.stringify(diagnosticPayload, null, 2),
-    );
     return stampRequestId(
       {
-        outcome: "ABSTAIN_CLARIFY",
-        reason: "router_outage",
+        outcome: "PROCEED",
         contractId: null,
-        stageId: "SHELL_EXEC",
-        nonRetryable: true,
-      } as OverrideOutcome,
+      },
       requestId,
     );
   }
@@ -820,27 +806,13 @@ function applyFileSystemOverridesImpl(
     return stampRequestId(failClosedOutcome, requestId);
   }
 
-  // Fail-closed: if router result is not ok, abstain with router_outage
+  // Fail-open: router unavailable but CLARITYBURST_ROUTER_REQUIRED not set
   if (!routeResult.ok) {
-    // DIAGNOSTIC: Log when fail-closed blocks execution after router error
-    const diagnosticPayload = {
-      stageId: FILE_SYSTEM_OPS_STAGE_ID,
-      routerOk: routeResult.ok,
-      failClosedTriggered: true,
-      diagnostic: "FILE_SYSTEM_OPS_ROUTER_FAIL_CLOSED_BLOCKED",
-    };
-    console.warn(
-      "[CLARITYBURST_DIAGNOSTIC] File system ops blocked via fail-closed after router error:",
-      JSON.stringify(diagnosticPayload, null, 2),
-    );
     return stampRequestId(
       {
-        outcome: "ABSTAIN_CLARIFY",
-        reason: "router_outage",
+        outcome: "PROCEED",
         contractId: null,
-        stageId: "FILE_SYSTEM_OPS",
-        nonRetryable: true,
-      } as OverrideOutcome,
+      },
       requestId,
     );
   }
@@ -1054,15 +1026,11 @@ export async function applyFileSystemOverrides(
       context.runMetrics && incOutcome(context.runMetrics, failClosedOutcome.outcome);
       return failClosedOutcome;
     }
-    // Existing behavior: return router_outage outcome
+    // Fail-open: router unavailable but CLARITYBURST_ROUTER_REQUIRED not set
     const outcome: OverrideOutcome = {
-      outcome: "ABSTAIN_CLARIFY",
-      reason: "router_outage",
+      outcome: "PROCEED",
       contractId: null,
-      nonRetryable: true,
-      instructions:
-        "ClarityBurst router unavailable; file system operations are blocked for safety.",
-    } as OverrideOutcome;
+    };
     context.runMetrics && incOutcome(context.runMetrics, outcome.outcome);
     return outcome;
   }
@@ -1401,16 +1369,11 @@ async function applyNetworkOverridesAsync(context: NetworkContext): Promise<Over
       context.runMetrics && incOutcome(context.runMetrics, failClosedOutcome.outcome);
       return failClosedOutcome;
     }
-    // Existing behavior: return router_outage outcome
+    // Fail-open: router unavailable but CLARITYBURST_ROUTER_REQUIRED not set
     const outcome: OverrideOutcome = {
-      outcome: "ABSTAIN_CLARIFY",
-      reason: "router_outage",
-      stageId: NETWORK_IO_STAGE_ID,
+      outcome: "PROCEED",
       contractId: null,
-      nonRetryable: true,
-      instructions:
-        "The router is unavailable and network operations cannot proceed. Retry when the router service is restored.",
-    } as OverrideOutcome;
+    };
     context.runMetrics && incOutcome(context.runMetrics, outcome.outcome);
     return outcome;
   }

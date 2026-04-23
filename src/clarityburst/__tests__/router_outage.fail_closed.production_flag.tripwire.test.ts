@@ -13,22 +13,23 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import {
-  applyFileSystemOverrides,
-  type FileSystemContext,
-} from "../decision-override";
+import { applyFileSystemOverrides, type FileSystemContext } from "../decision-override";
 import * as routerClient from "../router-client";
 
 describe("Router outage fail-closed production flag (CLARITYBURST_ROUTER_REQUIRED=1)", () => {
   beforeEach(() => {
     // Reset environment and mocks
     delete process.env.CLARITYBURST_ROUTER_REQUIRED;
+    process.env.CLARITYBURST_ROUTER_URL = "http://localhost:3001";
+    process.env.CLARITYBURST_ENABLED = "true";
     vi.clearAllMocks();
   });
 
   afterEach(() => {
     // Clean up environment
     delete process.env.CLARITYBURST_ROUTER_REQUIRED;
+    delete process.env.CLARITYBURST_ROUTER_URL;
+    delete process.env.CLARITYBURST_ENABLED;
     vi.restoreAllMocks();
   });
 
@@ -38,9 +39,9 @@ describe("Router outage fail-closed production flag (CLARITYBURST_ROUTER_REQUIRE
       process.env.CLARITYBURST_ROUTER_REQUIRED = "1";
 
       // Mock router to throw (unavailable)
-      const routerSpy = vi.spyOn(routerClient, "routeClarityBurst").mockRejectedValue(
-        new Error("Router connection timeout"),
-      );
+      const routerSpy = vi
+        .spyOn(routerClient, "routeClarityBurst")
+        .mockRejectedValue(new Error("Router connection timeout"));
 
       const context: FileSystemContext = {
         stageId: "FILE_SYSTEM_OPS",
@@ -72,9 +73,9 @@ describe("Router outage fail-closed production flag (CLARITYBURST_ROUTER_REQUIRE
       }
 
       // Mock router to throw
-      const routerSpy = vi.spyOn(routerClient, "routeClarityBurst").mockRejectedValue(
-        new Error("Router unavailable"),
-      );
+      const routerSpy = vi
+        .spyOn(routerClient, "routeClarityBurst")
+        .mockRejectedValue(new Error("Router unavailable"));
 
       const context: FileSystemContext = {
         stageId: "FILE_SYSTEM_OPS",
@@ -102,9 +103,9 @@ describe("Router outage fail-closed production flag (CLARITYBURST_ROUTER_REQUIRE
       process.env.CLARITYBURST_ROUTER_REQUIRED = "1";
 
       // Mock router to throw (unavailable)
-      const routerSpy = vi.spyOn(routerClient, "routeClarityBurst").mockRejectedValue(
-        new Error("Router connection timeout"),
-      );
+      const routerSpy = vi
+        .spyOn(routerClient, "routeClarityBurst")
+        .mockRejectedValue(new Error("Router connection timeout"));
 
       const context: FileSystemContext = {
         stageId: "FILE_SYSTEM_OPS",
@@ -130,9 +131,9 @@ describe("Router outage fail-closed production flag (CLARITYBURST_ROUTER_REQUIRE
       process.env.CLARITYBURST_ROUTER_REQUIRED = "1";
 
       // Mock router to throw
-      const routerSpy = vi.spyOn(routerClient, "routeClarityBurst").mockRejectedValue(
-        new Error("Router unavailable"),
-      );
+      const routerSpy = vi
+        .spyOn(routerClient, "routeClarityBurst")
+        .mockRejectedValue(new Error("Router unavailable"));
 
       const context: FileSystemContext = {
         stageId: "FILE_SYSTEM_OPS",
@@ -160,9 +161,9 @@ describe("Router outage fail-closed production flag (CLARITYBURST_ROUTER_REQUIRE
       process.env.CLARITYBURST_ROUTER_REQUIRED = "1";
 
       // Mock router to throw
-      const routerSpy = vi.spyOn(routerClient, "routeClarityBurst").mockRejectedValue(
-        new Error("Router unavailable"),
-      );
+      const routerSpy = vi
+        .spyOn(routerClient, "routeClarityBurst")
+        .mockRejectedValue(new Error("Router unavailable"));
 
       const context: FileSystemContext = {
         stageId: "FILE_SYSTEM_OPS",
@@ -188,9 +189,9 @@ describe("Router outage fail-closed production flag (CLARITYBURST_ROUTER_REQUIRE
       process.env.CLARITYBURST_ROUTER_REQUIRED = "1";
 
       // Mock router to throw
-      const routerSpy = vi.spyOn(routerClient, "routeClarityBurst").mockRejectedValue(
-        new Error("Router unavailable"),
-      );
+      const routerSpy = vi
+        .spyOn(routerClient, "routeClarityBurst")
+        .mockRejectedValue(new Error("Router unavailable"));
 
       const context: FileSystemContext = {
         stageId: "FILE_SYSTEM_OPS",
@@ -218,9 +219,9 @@ describe("Router outage fail-closed production flag (CLARITYBURST_ROUTER_REQUIRE
       process.env.CLARITYBURST_ROUTER_REQUIRED = "0";
 
       // Mock router to throw
-      const routerSpy = vi.spyOn(routerClient, "routeClarityBurst").mockRejectedValue(
-        new Error("Router unavailable"),
-      );
+      const routerSpy = vi
+        .spyOn(routerClient, "routeClarityBurst")
+        .mockRejectedValue(new Error("Router unavailable"));
 
       const context: FileSystemContext = {
         stageId: "FILE_SYSTEM_OPS",
@@ -246,9 +247,9 @@ describe("Router outage fail-closed production flag (CLARITYBURST_ROUTER_REQUIRE
       process.env.CLARITYBURST_ROUTER_REQUIRED = "true";
 
       // Mock router to throw
-      const routerSpy = vi.spyOn(routerClient, "routeClarityBurst").mockRejectedValue(
-        new Error("Router unavailable"),
-      );
+      const routerSpy = vi
+        .spyOn(routerClient, "routeClarityBurst")
+        .mockRejectedValue(new Error("Router unavailable"));
 
       const context: FileSystemContext = {
         stageId: "FILE_SYSTEM_OPS",
@@ -274,9 +275,9 @@ describe("Router outage fail-closed production flag (CLARITYBURST_ROUTER_REQUIRE
       process.env.CLARITYBURST_ROUTER_REQUIRED = "1";
 
       // Mock router to throw
-      const routerSpy = vi.spyOn(routerClient, "routeClarityBurst").mockRejectedValue(
-        new Error("Router connection timeout"),
-      );
+      const routerSpy = vi
+        .spyOn(routerClient, "routeClarityBurst")
+        .mockRejectedValue(new Error("Router connection timeout"));
 
       const context: FileSystemContext = {
         stageId: "FILE_SYSTEM_OPS",
@@ -309,12 +310,12 @@ describe("Router outage fail-closed production flag (CLARITYBURST_ROUTER_REQUIRE
         ok: true,
         data: {
           top1: {
-            contract_id: "FS_WRITE_FILE",
+            contract_id: "FS_WRITE_WORKSPACE",
             score: 0.95,
           },
           top2: {
             contract_id: "FS_READ_FILE",
-            score: 0.80,
+            score: 0.8,
           },
         },
       });
