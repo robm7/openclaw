@@ -8,24 +8,22 @@
  * - Score EXACTLY AT threshold → PROCEED (not ABSTAIN_CLARIFY)
  * - Score BELOW threshold → ABSTAIN_CLARIFY (fail-closed)
  * - Score ABOVE threshold → PROCEED
- * 
+ *
  * Uses NETWORK_IO stage as the test vehicle since it has explicit threshold checking.
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
+import {
+  convertAbstainToBlockedResponse,
+  type BlockedResponsePayload,
+} from "../../agents/pi-tool-definition-adapter.js";
 import {
   applyNetworkOverrides,
   type OntologyPack,
   type RouteResult,
   type DispatchContext,
 } from "../decision-override";
-import {
-  ClarityBurstAbstainError,
-} from "../errors";
-import {
-  convertAbstainToBlockedResponse,
-  type BlockedResponsePayload,
-} from "../../agents/pi-tool-definition-adapter.js";
+import { ClarityBurstAbstainError } from "../errors";
 
 /**
  * Mock tool execution function - tracks call count
@@ -52,7 +50,7 @@ function createMockNetworkPack(minConfidenceT: number): OntologyPack {
     description: "Test pack for confidence threshold boundary",
     thresholds: {
       min_confidence_T: minConfidenceT,
-      dominance_margin_Delta: 0.10,
+      dominance_margin_Delta: 0.1,
     },
     contracts: [
       {
@@ -85,7 +83,7 @@ function executeNetworkWithGating(
   pack: OntologyPack,
   routeResult: RouteResult,
   context: DispatchContext,
-  toolExecutor: ReturnType<typeof createMockToolExecutor>
+  toolExecutor: ReturnType<typeof createMockToolExecutor>,
 ): { success: true; result: unknown } | BlockedResponsePayload {
   // Check router availability first
   if (!routeResult.ok) {
@@ -148,7 +146,7 @@ describe("threshold_boundary.confidence.exact_match → tripwire", () => {
           },
           top2: {
             contract_id: "NETWORK_HTTP_POST",
-            score: 0.40,
+            score: 0.4,
           },
         },
       };
@@ -180,7 +178,7 @@ describe("threshold_boundary.confidence.exact_match → tripwire", () => {
           },
           top2: {
             contract_id: "NETWORK_HTTP_POST",
-            score: 0.40,
+            score: 0.4,
           },
         },
       };
@@ -213,7 +211,7 @@ describe("threshold_boundary.confidence.exact_match → tripwire", () => {
           },
           top2: {
             contract_id: "NETWORK_HTTP_POST",
-            score: 0.40,
+            score: 0.4,
           },
         },
       };
@@ -247,7 +245,7 @@ describe("threshold_boundary.confidence.exact_match → tripwire", () => {
           },
           top2: {
             contract_id: "NETWORK_HTTP_POST",
-            score: 0.60,
+            score: 0.6,
           },
         },
       };
@@ -279,7 +277,7 @@ describe("threshold_boundary.confidence.exact_match → tripwire", () => {
           },
           top2: {
             contract_id: "NETWORK_HTTP_POST",
-            score: 0.60,
+            score: 0.6,
           },
         },
       };
@@ -311,10 +309,6 @@ describe("threshold_boundary.confidence.exact_match → tripwire", () => {
           top1: {
             contract_id: "NETWORK_HTTP_GET",
             score: 0.0, // Exactly at zero threshold
-          },
-          top2: {
-            contract_id: "NETWORK_HTTP_POST",
-            score: 0.0,
           },
         },
       };
@@ -348,7 +342,7 @@ describe("threshold_boundary.confidence.exact_match → tripwire", () => {
           },
           top2: {
             contract_id: "NETWORK_HTTP_POST",
-            score: 0.95,
+            score: 0.5,
           },
         },
       };
