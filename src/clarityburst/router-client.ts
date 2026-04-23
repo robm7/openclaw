@@ -490,7 +490,27 @@ export async function routeClarityBurst(input: RouterInput): Promise<RouterResul
         await delay(200);
         continue;
       }
-      throw err;
+
+      // Gate abstention: convert to error result instead of throwing
+      if (err instanceof ClarityBurstAbstainError) {
+        routerClientLog.warn("CB_RT_GATE_ABSTAIN", {
+          outcome: err.outcome,
+          reason: err.reason,
+          stageId: err.stageId,
+        });
+        return {
+          ok: false as const,
+          error: err.message,
+          status: 403,
+        };
+      }
+      // All other gate/transport errors: return as error result (never bypass)
+      const errMessage = err instanceof Error ? err.message : String(err);
+      routerClientLog.warn("CB_RT_GATE_ERROR", { error: errMessage });
+      return {
+        ok: false as const,
+        error: errMessage,
+      };
     }
   }
 
