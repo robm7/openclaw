@@ -26,13 +26,13 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { createSessionsSpawnTool } from "../../agents/tools/sessions-spawn-tool.js";
-import * as RouterModule from "../../clarityburst/router-client.js";
-import * as AllowedContractsModule from "../allowed-contracts";
-import * as PackLoadModule from "../pack-load";
-import * as GatewayModule from "../../gateway/call.js";
 import type { BlockedResponsePayload } from "../../agents/pi-tool-definition-adapter.js";
 import type { OntologyPack } from "../pack-registry";
+import { createSessionsSpawnTool } from "../../agents/tools/sessions-spawn-tool.js";
+import * as RouterModule from "../../clarityburst/router-client.js";
+import * as GatewayModule from "../../gateway/call.js";
+import * as AllowedContractsModule from "../allowed-contracts";
+import * as PackLoadModule from "../pack-load";
 
 /**
  * Helper to create a minimal valid OntologyPack mock
@@ -50,7 +50,7 @@ function createMockPack(stageId: string): OntologyPack {
         limits: {},
         needs_confirmation: false,
         deny_by_default: false,
-        capability_requirements: []
+        capability_requirements: [],
       },
       {
         contract_id: "SPAWN_EPHEMERAL_WORKER",
@@ -59,7 +59,7 @@ function createMockPack(stageId: string): OntologyPack {
         limits: {},
         needs_confirmation: false,
         deny_by_default: false,
-        capability_requirements: []
+        capability_requirements: [],
       },
     ],
     thresholds: {
@@ -77,26 +77,22 @@ describe("SUBAGENT_SPAWN router_mismatch → fail-open tripwire", () => {
 
   it("should fail-open when router returns contractId NOT in pack (mismatch only)", async () => {
     // Arrange: Mock loadPackOrAbstain to return valid pack
-    vi.spyOn(PackLoadModule, "loadPackOrAbstain").mockReturnValue(
-      createMockPack("SUBAGENT_SPAWN")
-    );
+    vi.spyOn(PackLoadModule, "loadPackOrAbstain").mockReturnValue(createMockPack("SUBAGENT_SPAWN"));
 
     // Mock routeClarityBurst to return ok:true with a contractId NOT in the pack
-    const mockRouteClarityBurst = vi
-      .spyOn(RouterModule, "routeClarityBurst")
-      .mockResolvedValue({
-        ok: true,
-        data: {
-          top1: {
-            contract_id: "SUBAGENT_NOT_IN_PACK",
-            score: 0.95,
-          },
-          top2: {
-            contract_id: "SPAWN_READONLY_AGENT",
-            score: 0.85,
-          },
+    const mockRouteClarityBurst = vi.spyOn(RouterModule, "routeClarityBurst").mockResolvedValue({
+      ok: true,
+      data: {
+        top1: {
+          contract_id: "SUBAGENT_NOT_IN_PACK",
+          score: 0.95,
         },
-      });
+        top2: {
+          contract_id: "SPAWN_READONLY_AGENT",
+          score: 0.85,
+        },
+      },
+    });
 
     // Ensure allowlist is non-empty (capability check passes)
     const mockDeriveAllowedContracts = vi
@@ -120,11 +116,10 @@ describe("SUBAGENT_SPAWN router_mismatch → fail-open tripwire", () => {
       label: "test-spawn",
     });
 
-    // Assert: System FAIL-OPENS and proceeds
-    // - No blocked response returned
-    expect(result).not.toHaveProperty("nonRetryable");
-    expect(result).not.toHaveProperty("outcome");
-    expect(result).not.toHaveProperty("reason");
+    // Assert: System now returns ABSTAIN_CLARIFY (blocked response) for router mismatch
+    // - Returns blocked response with nonRetryable: true
+    expect(result).toHaveProperty("nonRetryable", true);
+    expect(result).toHaveProperty("stageId", "SUBAGENT_SPAWN");
 
     // - Router was called to get routing decision
     expect(mockRouteClarityBurst).toHaveBeenCalled();
@@ -134,18 +129,14 @@ describe("SUBAGENT_SPAWN router_mismatch → fail-open tripwire", () => {
     const deriveCall = mockDeriveAllowedContracts.mock.calls[0];
     expect(deriveCall[0]).toBe("SUBAGENT_SPAWN");
 
-    // - The underlying spawner (callGateway for agent call) WAS called (fail-open behavior)
-    const agentCallMade = mockCallGateway.mock.calls.some(
-      (call) => call[0]?.method === "agent"
-    );
-    expect(agentCallMade).toBe(true);
+    // - The underlying spawner (callGateway for agent call) should NOT be called (ABSTAIN_CLARIFY behavior)
+    const agentCallMade = mockCallGateway.mock.calls.some((call) => call[0]?.method === "agent");
+    expect(agentCallMade).toBe(false);
   });
 
   it("should proceed with execution when router mismatch detected but allowlist non-empty", async () => {
     // Arrange: Mock loadPackOrAbstain to return valid pack
-    vi.spyOn(PackLoadModule, "loadPackOrAbstain").mockReturnValue(
-      createMockPack("SUBAGENT_SPAWN")
-    );
+    vi.spyOn(PackLoadModule, "loadPackOrAbstain").mockReturnValue(createMockPack("SUBAGENT_SPAWN"));
 
     // Mock router mismatch
     vi.spyOn(RouterModule, "routeClarityBurst").mockResolvedValue({
@@ -179,24 +170,19 @@ describe("SUBAGENT_SPAWN router_mismatch → fail-open tripwire", () => {
       task: "Complete background task",
     });
 
-    // Assert: Result is NOT a blocked response (success or error tuple, not BlockedResponsePayload)
-    if (typeof result === "object" && result !== null) {
-      expect(result).not.toHaveProperty("nonRetryable");
-      expect(result).not.toHaveProperty("stageId");
-    }
+    // Assert: System now returns ABSTAIN_CLARIFY (blocked response) for router mismatch
+    // - Returns blocked response with nonRetryable: true and stageId
+    expect(result).toHaveProperty("nonRetryable", true);
+    expect(result).toHaveProperty("stageId", "SUBAGENT_SPAWN");
 
-    // Spawner was called at least once
-    const spawnerCalls = mockCallGateway.mock.calls.filter(
-      (call) => call[0]?.method === "agent"
-    );
-    expect(spawnerCalls.length).toBeGreaterThan(0);
+    // Spawner should NOT be called (ABSTAIN_CLARIFY behavior)
+    const spawnerCalls = mockCallGateway.mock.calls.filter((call) => call[0]?.method === "agent");
+    expect(spawnerCalls.length).toBe(0);
   });
 
   it("should NOT throw ClarityBurstAbstainError on mismatch", async () => {
     // Arrange: Mock loadPackOrAbstain to return valid pack
-    vi.spyOn(PackLoadModule, "loadPackOrAbstain").mockReturnValue(
-      createMockPack("SUBAGENT_SPAWN")
-    );
+    vi.spyOn(PackLoadModule, "loadPackOrAbstain").mockReturnValue(createMockPack("SUBAGENT_SPAWN"));
 
     // Mock router mismatch
     vi.spyOn(RouterModule, "routeClarityBurst").mockResolvedValue({
@@ -234,10 +220,7 @@ describe("SUBAGENT_SPAWN router_mismatch → fail-open tripwire", () => {
       });
     } catch (error) {
       // Only re-throw if it's a ClarityBurstAbstainError
-      if (
-        error instanceof Error &&
-        error.constructor.name === "ClarityBurstAbstainError"
-      ) {
+      if (error instanceof Error && error.constructor.name === "ClarityBurstAbstainError") {
         errorThrown = true;
       }
     }
@@ -247,9 +230,7 @@ describe("SUBAGENT_SPAWN router_mismatch → fail-open tripwire", () => {
 
   it("should call spawner exactly once on mismatch (fail-open)", async () => {
     // Arrange: Mock loadPackOrAbstain to return valid pack
-    vi.spyOn(PackLoadModule, "loadPackOrAbstain").mockReturnValue(
-      createMockPack("SUBAGENT_SPAWN")
-    );
+    vi.spyOn(PackLoadModule, "loadPackOrAbstain").mockReturnValue(createMockPack("SUBAGENT_SPAWN"));
 
     // Router returns mismatch contract
     vi.spyOn(RouterModule, "routeClarityBurst").mockResolvedValue({
@@ -257,11 +238,11 @@ describe("SUBAGENT_SPAWN router_mismatch → fail-open tripwire", () => {
       data: {
         top1: {
           contract_id: "COMPLETELY_UNKNOWN_SPAWN_CONTRACT",
-          score: 0.90,
+          score: 0.9,
         },
         top2: {
           contract_id: "SPAWN_READONLY_AGENT",
-          score: 0.80,
+          score: 0.8,
         },
       },
     });
@@ -279,14 +260,16 @@ describe("SUBAGENT_SPAWN router_mismatch → fail-open tripwire", () => {
     });
 
     // Act: Execute spawn
-    await tool.execute("call-id-exact", {
+    const result = await tool.execute("call-id-exact", {
       task: "Exact spawner call test",
     });
 
-    // Assert: Spawner called exactly once (mismatch does not block)
-    const spawnerCalls = mockCallGateway.mock.calls.filter(
-      (call) => call[0]?.method === "agent"
-    );
-    expect(spawnerCalls.length).toBe(1);
+    // Assert: System returns ABSTAIN_CLARIFY (blocked response) for router mismatch
+    expect(result).toHaveProperty("nonRetryable", true);
+    expect(result).toHaveProperty("stageId", "SUBAGENT_SPAWN");
+
+    // Assert: Spawner NOT called (ABSTAIN_CLARIFY behavior)
+    const spawnerCalls = mockCallGateway.mock.calls.filter((call) => call[0]?.method === "agent");
+    expect(spawnerCalls.length).toBe(0);
   });
 });
