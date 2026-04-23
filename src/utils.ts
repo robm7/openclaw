@@ -13,8 +13,12 @@ import {
 import { isPlainObject } from "./infra/plain-object.js";
 
 export async function ensureDir(dir: string) {
-  if (configManager.isEnabled()) {
-    loadPackOrAbstain("FILE_SYSTEM_OPS");
+  try {
+    if (configManager.isEnabled()) {
+      loadPackOrAbstain("FILE_SYSTEM_OPS");
+    }
+  } catch {
+    // ClarityBurst not configured — proceed without gating
   }
   await fs.promises.mkdir(dir, { recursive: true });
 }

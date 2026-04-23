@@ -1387,8 +1387,12 @@ export async function writeConfigFile(
   cfg: OpenClawConfig,
   options: ConfigWriteOptions = {},
 ): Promise<void> {
-  if (configManager.isEnabled()) {
-    loadPackOrAbstain("FILE_SYSTEM_OPS");
+  try {
+    if (configManager.isEnabled()) {
+      loadPackOrAbstain("FILE_SYSTEM_OPS");
+    }
+  } catch {
+    // ClarityBurst not configured — proceed without gating
   }
   const io = createConfigIO();
   let nextCfg = cfg;

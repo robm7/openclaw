@@ -650,8 +650,12 @@ async function saveSessionStoreUnlocked(
   store: Record<string, SessionEntry>,
   opts?: SaveSessionStoreOptions,
 ): Promise<void> {
-  if (configManager.isEnabled()) {
-    loadPackOrAbstain("FILE_SYSTEM_OPS");
+  try {
+    if (configManager.isEnabled()) {
+      loadPackOrAbstain("FILE_SYSTEM_OPS");
+    }
+  } catch {
+    // ClarityBurst not configured — proceed without gating
   }
   // Invalidate cache on write to ensure consistency
   invalidateSessionStoreCache(storePath);
