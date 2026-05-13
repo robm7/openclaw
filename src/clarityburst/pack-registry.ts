@@ -18,7 +18,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { ClarityBurstStageId } from "./stages.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
 
 // Initialize logger for pack registry operations
@@ -72,7 +71,7 @@ export class PackValidationError extends Error {
 
   constructor(
     public readonly filePath: string,
-    public readonly details: string
+    public readonly details: string,
   ) {
     super(`Pack validation failed for "${filePath}": ${details}`);
     this.name = "PackValidationError";
@@ -101,14 +100,14 @@ export class PackPolicyIncompleteError extends Error {
   constructor(
     public readonly stageId: string,
     public readonly missingFields: string[],
-    public readonly packId?: string
+    public readonly packId?: string,
   ) {
     const fieldsStr = missingFields.join(", ");
     const packInfo = packId ? ` (pack: ${packId})` : "";
     super(
       `PACK_POLICY_INCOMPLETE: Stage "${stageId}"${packInfo} failed validation. ` +
         `Missing or invalid fields: [${fieldsStr}]. ` +
-        `No silent defaults applied - operation blocked.`
+        `No silent defaults applied - operation blocked.`,
     );
     this.name = "PackPolicyIncompleteError";
   }
@@ -133,11 +132,6 @@ const REQUIRED_PACK_FIELDS: (keyof OntologyPack)[] = [
  * Optional top-level fields that are stage-dependent.
  * Validation will check their structure if present.
  */
-const OPTIONAL_PACK_FIELDS: (keyof OntologyPack)[] = [
-  "thresholds",
-  "field_schema",
-  "description",
-];
 
 /**
  * Required fields for each contract entry.
@@ -201,26 +195,20 @@ function validatePack(pack: unknown, filePath: string): OntologyPack {
   if (missingFields.length > 0) {
     throw new PackValidationError(
       filePath,
-      `Missing or invalid required fields: [${missingFields.join(", ")}]`
+      `Missing or invalid required fields: [${missingFields.join(", ")}]`,
     );
   }
 
   // Validate thresholds structure if present
   if ("thresholds" in packObj && packObj.thresholds !== undefined) {
     if (typeof packObj.thresholds !== "object" || packObj.thresholds === null) {
-      throw new PackValidationError(
-        filePath,
-        '"thresholds" must be an object if provided'
-      );
+      throw new PackValidationError(filePath, '"thresholds" must be an object if provided');
     }
     const thresholds = packObj.thresholds as Record<string, unknown>;
-    if (
-      "min_confidence_T" in thresholds &&
-      typeof thresholds.min_confidence_T !== "number"
-    ) {
+    if ("min_confidence_T" in thresholds && typeof thresholds.min_confidence_T !== "number") {
       throw new PackValidationError(
         filePath,
-        '"thresholds.min_confidence_T" must be a number if provided'
+        '"thresholds.min_confidence_T" must be a number if provided',
       );
     }
     if (
@@ -229,21 +217,15 @@ function validatePack(pack: unknown, filePath: string): OntologyPack {
     ) {
       throw new PackValidationError(
         filePath,
-        '"thresholds.dominance_margin_Delta" must be a number if provided'
+        '"thresholds.dominance_margin_Delta" must be a number if provided',
       );
     }
   }
 
   // Validate field_schema structure if present
   if ("field_schema" in packObj && packObj.field_schema !== undefined) {
-    if (
-      typeof packObj.field_schema !== "object" ||
-      packObj.field_schema === null
-    ) {
-      throw new PackValidationError(
-        filePath,
-        '"field_schema" must be an object if provided'
-      );
+    if (typeof packObj.field_schema !== "object" || packObj.field_schema === null) {
+      throw new PackValidationError(filePath, '"field_schema" must be an object if provided');
     }
   }
 
@@ -254,10 +236,7 @@ function validatePack(pack: unknown, filePath: string): OntologyPack {
     const contractMissing: string[] = [];
 
     if (typeof contract !== "object" || contract === null) {
-      throw new PackValidationError(
-        filePath,
-        `contracts[${i}] must be a non-null object`
-      );
+      throw new PackValidationError(filePath, `contracts[${i}] must be a non-null object`);
     }
 
     const contractObj = contract as Record<string, unknown>;
@@ -270,66 +249,45 @@ function validatePack(pack: unknown, filePath: string): OntologyPack {
     }
 
     if (contractMissing.length > 0) {
-      packRegistryLog.error(
-        "pack registry: contract validation failed",
-        {
-          file_path: filePath,
-          contract_index: i,
-          missing_fields: contractMissing,
-          missing_field_count: contractMissing.length,
-        }
-      );
+      packRegistryLog.error("pack registry: contract validation failed", {
+        file_path: filePath,
+        contract_index: i,
+        missing_fields: contractMissing,
+        missing_field_count: contractMissing.length,
+      });
       throw new PackValidationError(
         filePath,
         `contracts[${i}] missing required fields: [${contractMissing.join(", ")}]. ` +
-          `FAIL-CLOSED: No silent defaults applied.`
+          `FAIL-CLOSED: No silent defaults applied.`,
       );
     }
 
     // Validate contract field types
     if (typeof contractObj.contract_id !== "string") {
-      throw new PackValidationError(
-        filePath,
-        `contracts[${i}].contract_id must be a string`
-      );
+      throw new PackValidationError(filePath, `contracts[${i}].contract_id must be a string`);
     }
     if (typeof contractObj.risk_class !== "string") {
-      throw new PackValidationError(
-        filePath,
-        `contracts[${i}].risk_class must be a string`
-      );
+      throw new PackValidationError(filePath, `contracts[${i}].risk_class must be a string`);
     }
     if (!Array.isArray(contractObj.required_fields)) {
-      throw new PackValidationError(
-        filePath,
-        `contracts[${i}].required_fields must be an array`
-      );
+      throw new PackValidationError(filePath, `contracts[${i}].required_fields must be an array`);
     }
-    if (
-      typeof contractObj.limits !== "object" ||
-      contractObj.limits === null
-    ) {
-      throw new PackValidationError(
-        filePath,
-        `contracts[${i}].limits must be an object`
-      );
+    if (typeof contractObj.limits !== "object" || contractObj.limits === null) {
+      throw new PackValidationError(filePath, `contracts[${i}].limits must be an object`);
     }
     if (typeof contractObj.needs_confirmation !== "boolean") {
       throw new PackValidationError(
         filePath,
-        `contracts[${i}].needs_confirmation must be a boolean`
+        `contracts[${i}].needs_confirmation must be a boolean`,
       );
     }
     if (typeof contractObj.deny_by_default !== "boolean") {
-      throw new PackValidationError(
-        filePath,
-        `contracts[${i}].deny_by_default must be a boolean`
-      );
+      throw new PackValidationError(filePath, `contracts[${i}].deny_by_default must be a boolean`);
     }
     if (!Array.isArray(contractObj.capability_requirements)) {
       throw new PackValidationError(
         filePath,
-        `contracts[${i}].capability_requirements must be an array`
+        `contracts[${i}].capability_requirements must be an array`,
       );
     }
   }
@@ -416,22 +374,22 @@ function loadAllPacks(): void {
   if (!fs.existsSync(packsDir)) {
     throw new Error(
       `Ontology packs directory not found: "${packsDir}". ` +
-        `Ensure the directory exists and contains valid JSON pack files.`
+        `Ensure the directory exists and contains valid JSON pack files.`,
     );
   }
 
-  const files = fs
-    .readdirSync(packsDir)
-    .filter((f: string) => f.endsWith(".json"));
+  const files = fs.readdirSync(packsDir).filter((f: string) => f.endsWith(".json"));
 
   if (files.length === 0) {
     throw new Error(
-      `No JSON pack files found in "${packsDir}". ` +
-        `Add at least one valid ontology pack file.`
+      `No JSON pack files found in "${packsDir}". Add at least one valid ontology pack file.`,
     );
   }
 
-  packRegistryLog.info("pack registry: initializing", { file_count: files.length, packs_dir: packsDir });
+  packRegistryLog.info("pack registry: initializing", {
+    file_count: files.length,
+    packs_dir: packsDir,
+  });
 
   for (const file of files) {
     const filePath = path.join(packsDir, file);
@@ -441,18 +399,16 @@ function loadAllPacks(): void {
       rawContent = fs.readFileSync(filePath, "utf-8");
       packRegistryLog.debug("pack registry: file read success", { file });
     } catch (err) {
-      packRegistryLog.error(
-        "pack registry: file read failed",
-        {
-          file,
-          filePath,
-          error: err instanceof Error ? err.message : String(err),
-        }
-      );
+      packRegistryLog.error("pack registry: file read failed", {
+        file,
+        filePath,
+        error: err instanceof Error ? err.message : String(err),
+      });
       throw new Error(
         `Failed to read pack file "${filePath}": ${
           err instanceof Error ? err.message : String(err)
-        }`
+        }`,
+        { cause: err },
       );
     }
 
@@ -461,66 +417,64 @@ function loadAllPacks(): void {
       parsed = JSON.parse(rawContent);
       packRegistryLog.debug("pack registry: JSON parse success", { file });
     } catch (err) {
-      packRegistryLog.error(
-        "pack registry: JSON parse failed",
-        {
-          file,
-          filePath,
-          error: err instanceof Error ? err.message : String(err),
-        }
-      );
+      packRegistryLog.error("pack registry: JSON parse failed", {
+        file,
+        filePath,
+        error: err instanceof Error ? err.message : String(err),
+      });
       throw new Error(
         `Failed to parse JSON in pack file "${filePath}": ${
           err instanceof Error ? err.message : String(err)
-        }`
+        }`,
+        { cause: err },
       );
     }
 
     const validatedPack = validatePack(parsed, filePath);
-    packRegistryLog.debug(
-      "pack registry: validation success",
-      {
-        file,
-        pack_id: validatedPack.pack_id,
-        stage_id: validatedPack.stage_id,
-        contract_count: validatedPack.contracts.length,
-      }
-    );
+    packRegistryLog.debug("pack registry: validation success", {
+      file,
+      pack_id: validatedPack.pack_id,
+      stage_id: validatedPack.stage_id,
+      contract_count: validatedPack.contracts.length,
+    });
 
     if (packsByStageId.has(validatedPack.stage_id)) {
       const existing = packsByStageId.get(validatedPack.stage_id)!;
-      packRegistryLog.error(
-        "pack registry: duplicate stage_id",
-        {
-          stage_id: validatedPack.stage_id,
-          new_pack_id: validatedPack.pack_id,
-          existing_pack_id: existing.pack_id,
-        }
-      );
+      packRegistryLog.error("pack registry: duplicate stage_id", {
+        stage_id: validatedPack.stage_id,
+        new_pack_id: validatedPack.pack_id,
+        existing_pack_id: existing.pack_id,
+      });
       throw new Error(
         `Duplicate stage_id "${validatedPack.stage_id}" found. ` +
-          `Pack "${validatedPack.pack_id}" conflicts with "${existing.pack_id}".`
+          `Pack "${validatedPack.pack_id}" conflicts with "${existing.pack_id}".`,
       );
     }
 
     packsByStageId.set(validatedPack.stage_id, validatedPack);
   }
 
-  packRegistryLog.info(
-    "pack registry: initialization complete",
-    {
-      total_files: files.length,
-      loaded_packs: packsByStageId.size,
-    }
-  );
+  packRegistryLog.info("pack registry: initialization complete", {
+    total_files: files.length,
+    loaded_packs: packsByStageId.size,
+  });
   registryInitialized = true;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Initialization (runs at module load)
+// Lazy initialization
 // ─────────────────────────────────────────────────────────────────────────────
 
-loadAllPacks();
+/**
+ * Ensures the pack registry is initialized before any lookup.
+ * Called lazily on first access instead of at module load to avoid
+ * temporal-dead-zone issues with logging dependencies in bundled output.
+ */
+function ensureRegistryInitialized(): void {
+  if (!registryInitialized) {
+    loadAllPacks();
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Exports
@@ -550,56 +504,39 @@ loadAllPacks();
  * }
  */
 export function getPackForStage(stage_id: string): OntologyPack {
-  if (!registryInitialized) {
-    throw new Error(
-      "Pack registry not initialized. This should not happen - packs load at module import."
-    );
-  }
+  ensureRegistryInitialized();
 
   const pack = packsByStageId.get(stage_id);
 
   if (!pack) {
-    const availableStages = Array.from(packsByStageId.keys()).sort();
-    packRegistryLog.error(
-      "pack registry: stage_id not found",
-      {
-        requested_stage_id: stage_id,
-        available_stages: availableStages,
-      }
-    );
+    const availableStages = Array.from(packsByStageId.keys()).toSorted();
+    packRegistryLog.error("pack registry: stage_id not found", {
+      requested_stage_id: stage_id,
+      available_stages: availableStages,
+    });
     throw new Error(
       `Unknown stage_id "${stage_id}". ` +
-        `Available stage_ids are: [${availableStages.join(", ")}]`
+        `Available stage_ids are: [${availableStages.join(", ")}]`,
     );
   }
 
   // Runtime validation - FAIL-CLOSED
   const validationIssues = validatePackRuntime(pack);
   if (validationIssues.length > 0) {
-    packRegistryLog.error(
-      "pack registry: runtime validation failed",
-      {
-        stage_id,
-        pack_id: pack.pack_id,
-        failed_fields: validationIssues,
-        field_count: validationIssues.length,
-      }
-    );
-    throw new PackPolicyIncompleteError(
-      stage_id,
-      validationIssues,
-      pack.pack_id
-    );
-  }
-
-  packRegistryLog.debug(
-    "pack registry: pack loaded successfully",
-    {
+    packRegistryLog.error("pack registry: runtime validation failed", {
       stage_id,
       pack_id: pack.pack_id,
-      contract_count: pack.contracts.length,
-    }
-  );
+      failed_fields: validationIssues,
+      field_count: validationIssues.length,
+    });
+    throw new PackPolicyIncompleteError(stage_id, validationIssues, pack.pack_id);
+  }
+
+  packRegistryLog.debug("pack registry: pack loaded successfully", {
+    stage_id,
+    pack_id: pack.pack_id,
+    contract_count: pack.contracts.length,
+  });
   return pack;
 }
 
@@ -616,7 +553,7 @@ export function getPackForStage(stage_id: string): OntologyPack {
  */
 export function validatePackObject(
   rawPack: unknown,
-  sourcePath: string = "<dynamic>"
+  sourcePath: string = "<dynamic>",
 ): OntologyPack {
   try {
     return validatePack(rawPack, sourcePath);
@@ -645,7 +582,8 @@ export function validatePackObject(
  * @returns Array of stage_id strings
  */
 export function getAvailableStageIds(): string[] {
-  return Array.from(packsByStageId.keys()).sort();
+  ensureRegistryInitialized();
+  return Array.from(packsByStageId.keys()).toSorted();
 }
 
 /**
@@ -654,5 +592,6 @@ export function getAvailableStageIds(): string[] {
  * @returns Number of packs in the registry
  */
 export function getPackCount(): number {
+  ensureRegistryInitialized();
   return packsByStageId.size;
 }
