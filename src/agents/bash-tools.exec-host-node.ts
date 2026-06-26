@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import type { AgentToolResult } from "@mariozechner/pi-agent-core";
+import { gateShellExec } from "../clarityburst/shell-exec-gate.js";
 import {
   type ExecApprovalsFile,
   type ExecAsk,
@@ -327,6 +328,31 @@ export async function executeNodeHostCommand(
   }
 
   const startedAt = Date.now();
+  
+  // PHASE 1 SHELL_EXEC GATE
+  // Node host: gate on params.command (no override exists for node execution)
+  const gateResult = await gateShellExec(params.command);
+  
+  if (!gateResult.allowed) {
+    // Blocked by governance - return AgentToolResult matching node exec's contract
+    const blockReason = gateResult.reason ?? "Command blocked by governance";
+    return {
+      content: [
+        {
+          type: "text",
+          text: blockReason,
+        },
+      ],
+      details: {
+        status: "failed" as const,
+        exitCode: null,
+        durationMs: 0,
+        aggregated: blockReason,
+        cwd: params.workdir ?? ".",
+      },
+    };
+  }
+  // PROCEED: fall through to existing remote dispatch
   
   // Dispatch through NODE_INVOKE gating wrapper
   const raw = await dispatchNodeInvokeGuarded(

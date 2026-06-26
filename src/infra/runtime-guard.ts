@@ -97,3 +97,42 @@ export function assertSupportedRuntime(
   );
   runtime.exit(1);
 }
+
+/**
+ * Assert that fail-open mode is not active in production environments.
+ * 
+ * Fail-open mode (CLARITYBURST_FAIL_OPEN=1 without CLARITYBURST_ROUTER_REQUIRED=1)
+ * allows side-effectful operations to proceed when the ClarityBurst router is unavailable.
+ * This is unsafe in production and must be blocked at boot time.
+ * 
+ * @throws {Error} When NODE_ENV=production and fail-open is active
+ */
+export function assertProductionFailClosedMode(): void {
+  const nodeEnv = process.env.NODE_ENV;
+  const failOpen = process.env.CLARITYBURST_FAIL_OPEN;
+  const routerRequired = process.env.CLARITYBURST_ROUTER_REQUIRED;
+
+  // Fail-open is active when CLARITYBURST_FAIL_OPEN=1 AND CLARITYBURST_ROUTER_REQUIRED≠1
+  // (ROUTER_REQUIRED=1 takes precedence and forces fail-closed)
+  const failOpenIsActive = failOpen === "1" && routerRequired !== "1";
+
+  if (nodeEnv === "production" && failOpenIsActive) {
+    throw new Error(
+      [
+        "openclaw: Cannot start in production with fail-open mode active.",
+        "",
+        "Fail-open mode allows side-effectful operations to proceed when the ClarityBurst",
+        "router is unavailable. This is unsafe in production environments.",
+        "",
+        "Current configuration:",
+        `  NODE_ENV=${nodeEnv || "(not set)"}`,
+        `  CLARITYBURST_FAIL_OPEN=${failOpen || "(not set)"}`,
+        `  CLARITYBURST_ROUTER_REQUIRED=${routerRequired || "(not set)"}`,
+        "",
+        "To fix, choose ONE of:",
+        "  1. Unset CLARITYBURST_FAIL_OPEN (recommended: removes fail-open mode)",
+        "  2. Set CLARITYBURST_ROUTER_REQUIRED=1 (forces fail-closed, overrides fail-open)",
+      ].join("\n"),
+    );
+  }
+}

@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import type { AgentTool, AgentToolResult } from "@mariozechner/pi-agent-core";
 import { type ExecHost, maxAsk, minSecurity } from "../infra/exec-approvals.js";
+import { gateShellExec } from "../clarityburst/shell-exec-gate.js";
 import { resolveExecSafeBinRuntimePolicy } from "../infra/exec-safe-bin-runtime-policy.js";
 import {
   getShellPathFromLoginShell,
@@ -463,6 +464,35 @@ export function createExecTool(
         : (explicitTimeoutSec ?? defaultTimeoutSec);
       const getWarningText = () => (warnings.length ? `${warnings.join("\n")}\n\n` : "");
       const usePty = params.pty === true && !sandbox;
+
+      // PHASE 1 SHELL_EXEC GATE
+      // Gate the command that will actually execute:
+      // - Gateway: execCommandOverride (if set by allowlist) OR params.command
+      // - Sandbox: params.command (execCommandOverride always undefined)
+      const effectiveCommand = execCommandOverride ?? params.command;
+      
+      const gateResult = await gateShellExec(effectiveCommand);
+      
+      if (!gateResult.allowed) {
+        // Blocked by governance - return AgentToolResult matching exec tool's contract
+        const blockReason = gateResult.reason;
+        return {
+          content: [
+            {
+              type: "text",
+              text: blockReason,
+            },
+          ],
+          details: {
+            status: "failed" as const,
+            exitCode: null,
+            durationMs: 0,
+            aggregated: blockReason,
+            cwd: workdir,
+          },
+        };
+      }
+      // PROCEED: fall through to existing execution
 
       // Preflight: catch a common model failure mode (shell syntax leaking into Python/JS sources)
       // before we execute and burn tokens in cron loops.

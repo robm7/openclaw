@@ -93,35 +93,51 @@ function handleRouterOutageFailClosed(
   stageId: string,
   context: Record<string, unknown>,
 ): AbstainClarifyOutcome | null {
-  if (!isRouterRequiredMode()) {
-    // Flag not set; use existing behavior (fail-open for most)
-    // DIAGNOSTIC: Log that fail-closed mode is NOT enabled
-    const diagnosticPayload = {
-      stageId,
-      failClosedEnabled: false,
-      diagnostic: "ROUTER_OUTAGE_FAIL_OPEN_MODE",
-      description:
-        "Router fail-closed mode is DISABLED (CLARITYBURST_ROUTER_REQUIRED not set) - router errors will be treated as fail-open (PROCEED)",
-    };
-    console.warn(
-      "[CLARITYBURST_DIAGNOSTIC] Router outage would use fail-open mode:",
-      JSON.stringify(diagnosticPayload, null, 2),
-    );
-    return null;
-  }
-
+  // REQUIREMENT 1: Read-only operations always proceed on router outage (safe default).
+  // Check this first, before any env var logic — read-only ops are not gated by fail-open/fail-closed.
   if (!isSideEffectfulOperation(stageId, context)) {
     // Read-only operations proceed even on router outage
     return null;
   }
 
-  // Side-effectful operation with router unavailable and flag set: fail-closed
+  // REQUIREMENT 2 & 3: For side-effectful operations, determine fail-open vs fail-closed mode.
+  // Default is now fail-closed (side-effectful ops are blocked).
+  // Opt-in to fail-open with CLARITYBURST_FAIL_OPEN=1.
+  // Precedence: if both CLARITYBURST_ROUTER_REQUIRED=1 (force closed) and CLARITYBURST_FAIL_OPEN=1 (force open)
+  // are set, fail-closed wins (safety-first).
+  
+  const routerRequired = process.env.CLARITYBURST_ROUTER_REQUIRED === "1";
+  const failOpenOptIn = process.env.CLARITYBURST_FAIL_OPEN === "1";
+
+  // Determine mode: fail-closed is default unless fail-open is explicitly opted into
+  // AND fail-closed is not forced (routerRequired=1 takes precedence).
+  const isFailOpen = failOpenOptIn && !routerRequired;
+
+  if (isFailOpen) {
+    // REQUIREMENT 3: Opt-in fail-open mode is the unusual, permissive configuration.
+    // Log a warning when it is active (not when it's disabled).
+    const diagnosticPayload = {
+      stageId,
+      failOpenEnabled: true,
+      diagnostic: "ROUTER_OUTAGE_FAIL_OPEN_MODE",
+      description:
+        "Router fail-open mode is ENABLED (CLARITYBURST_FAIL_OPEN=1) - side-effectful operations will proceed on router outage. This is a permissive configuration and should only be used during router maintenance.",
+    };
+    console.warn(
+      "[CLARITYBURST_DIAGNOSTIC] Router outage operating in FAIL-OPEN mode:",
+      JSON.stringify(diagnosticPayload, null, 2),
+    );
+    return null;  // fail-open: PROCEED
+  }
+
+  // Default: fail-closed for side-effectful operations on router outage.
+  // (This is now the default. No env var needs to be set.)
   return {
     outcome: "ABSTAIN_CLARIFY",
     reason: "ROUTER_UNAVAILABLE",
     contractId: null,
     stageId,
-    instructions: `Router unavailable. System operating in read-only mode. Retry when service is restored.`,
+    instructions: `Router unavailable. System operating in governance-constrained mode. Retry when service is restored.`,
   };
 }
 

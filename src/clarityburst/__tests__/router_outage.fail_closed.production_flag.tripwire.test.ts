@@ -1,25 +1,32 @@
 /**
- * Router Outage Fail-Closed Production Flag Tripwire Test
+ * Router Outage Fail-Closed Default Behavior Tripwire Test
  *
- * Verifies that CLARITYBURST_ROUTER_REQUIRED=1 enforces fail-closed behavior
- * for side-effectful operations when the router is unavailable.
+ * Verifies that the NEW default behavior is fail-closed for side-effectful operations
+ * when the router is unavailable, with an explicit opt-out via CLARITYBURST_FAIL_OPEN=1.
+ *
+ * Phase 0.1 Changes:
+ * - Default: fail-CLOSED (side-effectful ops → ABSTAIN_CLARIFY on router outage)
+ * - Opt-out: CLARITYBURST_FAIL_OPEN=1 → fail-open (side-effectful ops → PROCEED)
+ * - Precedence: CLARITYBURST_ROUTER_REQUIRED=1 overrides CLARITYBURST_FAIL_OPEN=1 (fail-closed wins)
+ * - Read-only ops: Always proceed on router outage (unchanged)
  *
  * Test coverage:
- * - Side-effectful operations (FILE_SYSTEM_OPS write) block with ABSTAIN_CLARIFY when flag=1 and router unavailable
- * - Read-only operations (FILE_SYSTEM_OPS read) proceed when flag=1 and router unavailable
- * - Existing behavior maintained when flag is unset (fail-open)
- * - Network operations (NETWORK_IO POST) block when flag=1 and router unavailable
- * - Network read operations (NETWORK_IO GET) proceed when flag=1 and router unavailable
+ * - Default fail-closed: side-effectful write → ABSTAIN_CLARIFY when CLARITYBURST_FAIL_OPEN undefined/not "1"
+ * - Fail-closed edge cases: CLARITYBURST_FAIL_OPEN ∈ {"", "0", "true"} → still fail-closed
+ * - Opt-out works: CLARITYBURST_FAIL_OPEN="1" → PROCEED
+ * - Precedence rule: both flags set → fail-closed wins
+ * - Read-only bypass: read operations proceed regardless of flags
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { applyFileSystemOverrides, type FileSystemContext } from "../decision-override";
 import * as routerClient from "../router-client";
 
-describe("Router outage fail-closed production flag (CLARITYBURST_ROUTER_REQUIRED=1)", () => {
+describe("Router outage fail-closed DEFAULT behavior (Phase 0.1)", () => {
   beforeEach(() => {
     // Reset environment and mocks
     delete process.env.CLARITYBURST_ROUTER_REQUIRED;
+    delete process.env.CLARITYBURST_FAIL_OPEN;
     process.env.CLARITYBURST_ROUTER_URL = "http://localhost:3001";
     process.env.CLARITYBURST_ENABLED = "true";
     vi.clearAllMocks();
@@ -28,15 +35,16 @@ describe("Router outage fail-closed production flag (CLARITYBURST_ROUTER_REQUIRE
   afterEach(() => {
     // Clean up environment
     delete process.env.CLARITYBURST_ROUTER_REQUIRED;
+    delete process.env.CLARITYBURST_FAIL_OPEN;
     delete process.env.CLARITYBURST_ROUTER_URL;
     delete process.env.CLARITYBURST_ENABLED;
     vi.restoreAllMocks();
   });
 
-  describe("side-effectful FILE_SYSTEM_OPS write with flag=1", () => {
-    it("should return ABSTAIN_CLARIFY when router unavailable with CLARITYBURST_ROUTER_REQUIRED=1", async () => {
-      // Arrange: Set production flag
-      process.env.CLARITYBURST_ROUTER_REQUIRED = "1";
+  describe("DEFAULT: fail-closed for side-effectful operations", () => {
+    it("should block (ABSTAIN_CLARIFY) when router unavailable and no flags set", async () => {
+      // Arrange: No flags set (default fail-closed)
+      // (CLARITYBURST_FAIL_OPEN and CLARITYBURST_ROUTER_REQUIRED both undefined)
 
       // Mock router to throw (unavailable)
       const routerSpy = vi
@@ -53,24 +61,21 @@ describe("Router outage fail-closed production flag (CLARITYBURST_ROUTER_REQUIRE
       // Act: Call applyFileSystemOverrides with router unavailable
       const result = await applyFileSystemOverrides(context);
 
-      // Assert: Should return ABSTAIN_CLARIFY (fail-closed for side-effectful)
+      // Assert: Should return ABSTAIN_CLARIFY (NEW default is fail-closed)
       expect(result.outcome).toBe("ABSTAIN_CLARIFY");
       if (result.outcome === "ABSTAIN_CLARIFY") {
         expect(result.reason).toBe("ROUTER_UNAVAILABLE");
         expect(result.contractId).toBe(null);
         expect(result.instructions).toContain("Router unavailable");
-        expect(result.instructions).toContain("read-only");
-        expect(result.instructions).toContain("Retry");
+        expect(result.instructions).toContain("governance-constrained mode");
       }
 
       routerSpy.mockRestore();
     });
 
-    it("should proceed with fail-open when CLARITYBURST_ROUTER_REQUIRED is NOT set", async () => {
-      // Arrange: Ensure flag is NOT set (default fail-open)
-      if (process.env.CLARITYBURST_ROUTER_REQUIRED !== undefined) {
-        delete process.env.CLARITYBURST_ROUTER_REQUIRED;
-      }
+    it("should block when CLARITYBURST_FAIL_OPEN='' (empty string, not '1')", async () => {
+      // Arrange: Set CLARITYBURST_FAIL_OPEN to empty string (not "1")
+      process.env.CLARITYBURST_FAIL_OPEN = "";
 
       // Mock router to throw
       const routerSpy = vi
@@ -84,10 +89,96 @@ describe("Router outage fail-closed production flag (CLARITYBURST_ROUTER_REQUIRE
         userConfirmed: false,
       };
 
-      // Act: Call applyFileSystemOverrides with router unavailable, flag unset
+      // Act
       const result = await applyFileSystemOverrides(context);
 
-      // Assert: Should return PROCEED (existing fail-open behavior)
+      // Assert: Should fail-closed (only "1" enables fail-open)
+      expect(result).toMatchObject({
+        outcome: "ABSTAIN_CLARIFY",
+        contractId: null,
+      });
+
+      routerSpy.mockRestore();
+    });
+
+    it("should block when CLARITYBURST_FAIL_OPEN='0' (not '1')", async () => {
+      // Arrange: Set CLARITYBURST_FAIL_OPEN to '0'
+      process.env.CLARITYBURST_FAIL_OPEN = "0";
+
+      // Mock router to throw
+      const routerSpy = vi
+        .spyOn(routerClient, "routeClarityBurst")
+        .mockRejectedValue(new Error("Router unavailable"));
+
+      const context: FileSystemContext = {
+        stageId: "FILE_SYSTEM_OPS",
+        operation: "write",
+        path: "/tmp/file.txt",
+        userConfirmed: false,
+      };
+
+      // Act
+      const result = await applyFileSystemOverrides(context);
+
+      // Assert: Should fail-closed (only "1" enables fail-open)
+      expect(result).toMatchObject({
+        outcome: "ABSTAIN_CLARIFY",
+        contractId: null,
+      });
+
+      routerSpy.mockRestore();
+    });
+
+    it("should block when CLARITYBURST_FAIL_OPEN='true' (non-standard value, not '1')", async () => {
+      // Arrange: Set CLARITYBURST_FAIL_OPEN to non-standard value
+      process.env.CLARITYBURST_FAIL_OPEN = "true";
+
+      // Mock router to throw
+      const routerSpy = vi
+        .spyOn(routerClient, "routeClarityBurst")
+        .mockRejectedValue(new Error("Router unavailable"));
+
+      const context: FileSystemContext = {
+        stageId: "FILE_SYSTEM_OPS",
+        operation: "write",
+        path: "/tmp/file.txt",
+        userConfirmed: false,
+      };
+
+      // Act
+      const result = await applyFileSystemOverrides(context);
+
+      // Assert: Should fail-closed (only "1" enables fail-open)
+      expect(result).toMatchObject({
+        outcome: "ABSTAIN_CLARIFY",
+        contractId: null,
+      });
+
+      routerSpy.mockRestore();
+    });
+  });
+
+  describe("OPT-OUT: fail-open with CLARITYBURST_FAIL_OPEN=1", () => {
+    it("should proceed when CLARITYBURST_FAIL_OPEN='1' (explicit opt-out)", async () => {
+      // Arrange: Set CLARITYBURST_FAIL_OPEN=1 to explicitly enable fail-open
+      process.env.CLARITYBURST_FAIL_OPEN = "1";
+
+      // Mock router to throw
+      const routerSpy = vi
+        .spyOn(routerClient, "routeClarityBurst")
+        .mockRejectedValue(new Error("Router unavailable"));
+
+      const context: FileSystemContext = {
+        stageId: "FILE_SYSTEM_OPS",
+        operation: "write",
+        path: "/tmp/file.txt",
+        userConfirmed: false,
+      };
+
+      // Act
+      const result = await applyFileSystemOverrides(context);
+
+      // Assert: Should return PROCEED (fail-open opt-out active)
       expect(result).toMatchObject({
         outcome: "PROCEED",
         contractId: null,
@@ -97,27 +188,57 @@ describe("Router outage fail-closed production flag (CLARITYBURST_ROUTER_REQUIRE
     });
   });
 
-  describe("read-only FILE_SYSTEM_OPS read with flag=1", () => {
-    it("should proceed when router unavailable but operation is read-only", async () => {
-      // Arrange: Set production flag
-      process.env.CLARITYBURST_ROUTER_REQUIRED = "1";
+  describe("PRECEDENCE: CLARITYBURST_ROUTER_REQUIRED=1 overrides CLARITYBURST_FAIL_OPEN=1", () => {
+    it("should block when both flags set (fail-closed wins)", async () => {
+      // Arrange: Set BOTH flags
+      process.env.CLARITYBURST_FAIL_OPEN = "1";         // wants fail-open
+      process.env.CLARITYBURST_ROUTER_REQUIRED = "1";  // wants fail-closed
 
-      // Mock router to throw (unavailable)
+      // Mock router to throw
       const routerSpy = vi
         .spyOn(routerClient, "routeClarityBurst")
-        .mockRejectedValue(new Error("Router connection timeout"));
+        .mockRejectedValue(new Error("Router unavailable"));
 
       const context: FileSystemContext = {
         stageId: "FILE_SYSTEM_OPS",
-        operation: "read",
+        operation: "write",
         path: "/tmp/file.txt",
         userConfirmed: false,
       };
 
-      // Act: Call applyFileSystemOverrides with read operation
+      // Act
       const result = await applyFileSystemOverrides(context);
 
-      // Assert: Should return PROCEED (read-only bypasses fail-closed)
+      // Assert: Should fail-closed (ROUTER_REQUIRED takes precedence)
+      expect(result).toMatchObject({
+        outcome: "ABSTAIN_CLARIFY",
+        reason: "ROUTER_UNAVAILABLE",
+        contractId: null,
+      });
+
+      routerSpy.mockRestore();
+    });
+  });
+
+  describe("READ-ONLY operations always proceed on router outage", () => {
+    it("should proceed for read operation when router unavailable (no flags)", async () => {
+      // Arrange: No flags set, read-only operation
+      // Mock router to throw
+      const routerSpy = vi
+        .spyOn(routerClient, "routeClarityBurst")
+        .mockRejectedValue(new Error("Router unavailable"));
+
+      const context: FileSystemContext = {
+        stageId: "FILE_SYSTEM_OPS",
+        operation: "read",  // ← READ-ONLY
+        path: "/tmp/file.txt",
+        userConfirmed: false,
+      };
+
+      // Act
+      const result = await applyFileSystemOverrides(context);
+
+      // Assert: Should proceed (read-only bypass)
       expect(result).toMatchObject({
         outcome: "PROCEED",
         contractId: null,
@@ -126,8 +247,8 @@ describe("Router outage fail-closed production flag (CLARITYBURST_ROUTER_REQUIRE
       routerSpy.mockRestore();
     });
 
-    it("should allow stat/ls operations when router unavailable with flag=1", async () => {
-      // Arrange: Set production flag
+    it("should proceed for stat operation when router unavailable with ROUTER_REQUIRED=1", async () => {
+      // Arrange: ROUTER_REQUIRED=1 set, but stat is read-only
       process.env.CLARITYBURST_ROUTER_REQUIRED = "1";
 
       // Mock router to throw
@@ -137,12 +258,12 @@ describe("Router outage fail-closed production flag (CLARITYBURST_ROUTER_REQUIRE
 
       const context: FileSystemContext = {
         stageId: "FILE_SYSTEM_OPS",
-        operation: "stat",
+        operation: "stat",  // ← READ-ONLY
         path: "/tmp",
         userConfirmed: false,
       };
 
-      // Act: Call applyFileSystemOverrides with stat operation
+      // Act
       const result = await applyFileSystemOverrides(context);
 
       // Assert: Should proceed (stat is read-only)
@@ -155,126 +276,12 @@ describe("Router outage fail-closed production flag (CLARITYBURST_ROUTER_REQUIRE
     });
   });
 
-  describe("side-effectful operations like delete/mkdir with flag=1", () => {
-    it("should block delete operation when router unavailable with flag=1", async () => {
-      // Arrange: Set production flag
+  describe("LEGACY: side-effectful operations with flag=1 (OLD behavior, kept for reference)", () => {
+    it("should block when CLARITYBURST_ROUTER_REQUIRED=1 and router unavailable", async () => {
+      // Arrange: Set OLD production flag (now redundant but still works)
       process.env.CLARITYBURST_ROUTER_REQUIRED = "1";
 
-      // Mock router to throw
-      const routerSpy = vi
-        .spyOn(routerClient, "routeClarityBurst")
-        .mockRejectedValue(new Error("Router unavailable"));
-
-      const context: FileSystemContext = {
-        stageId: "FILE_SYSTEM_OPS",
-        operation: "delete",
-        path: "/tmp/file.txt",
-        userConfirmed: false,
-      };
-
-      // Act: Call applyFileSystemOverrides with delete operation
-      const result = await applyFileSystemOverrides(context);
-
-      // Assert: Should block (delete is side-effectful)
-      expect(result).toMatchObject({
-        outcome: "ABSTAIN_CLARIFY",
-        reason: "ROUTER_UNAVAILABLE",
-      });
-
-      routerSpy.mockRestore();
-    });
-
-    it("should block mkdir operation when router unavailable with flag=1", async () => {
-      // Arrange: Set production flag
-      process.env.CLARITYBURST_ROUTER_REQUIRED = "1";
-
-      // Mock router to throw
-      const routerSpy = vi
-        .spyOn(routerClient, "routeClarityBurst")
-        .mockRejectedValue(new Error("Router unavailable"));
-
-      const context: FileSystemContext = {
-        stageId: "FILE_SYSTEM_OPS",
-        operation: "mkdir",
-        path: "/tmp/newdir",
-        userConfirmed: false,
-      };
-
-      // Act: Call applyFileSystemOverrides with mkdir operation
-      const result = await applyFileSystemOverrides(context);
-
-      // Assert: Should block (mkdir is side-effectful)
-      expect(result).toMatchObject({
-        outcome: "ABSTAIN_CLARIFY",
-        reason: "ROUTER_UNAVAILABLE",
-      });
-
-      routerSpy.mockRestore();
-    });
-  });
-
-  describe("edge cases and flag variations", () => {
-    it("should treat flag='0' as unset (fail-open)", async () => {
-      // Arrange: Set flag to '0' (explicitly disabled)
-      process.env.CLARITYBURST_ROUTER_REQUIRED = "0";
-
-      // Mock router to throw
-      const routerSpy = vi
-        .spyOn(routerClient, "routeClarityBurst")
-        .mockRejectedValue(new Error("Router unavailable"));
-
-      const context: FileSystemContext = {
-        stageId: "FILE_SYSTEM_OPS",
-        operation: "write",
-        path: "/tmp/file.txt",
-        userConfirmed: false,
-      };
-
-      // Act: Call applyFileSystemOverrides
-      const result = await applyFileSystemOverrides(context);
-
-      // Assert: Should proceed (flag='0' means not enabled)
-      expect(result).toMatchObject({
-        outcome: "PROCEED",
-        contractId: null,
-      });
-
-      routerSpy.mockRestore();
-    });
-
-    it("should treat flag='true' (non-standard) as unset (fail-open)", async () => {
-      // Arrange: Set flag to non-standard value
-      process.env.CLARITYBURST_ROUTER_REQUIRED = "true";
-
-      // Mock router to throw
-      const routerSpy = vi
-        .spyOn(routerClient, "routeClarityBurst")
-        .mockRejectedValue(new Error("Router unavailable"));
-
-      const context: FileSystemContext = {
-        stageId: "FILE_SYSTEM_OPS",
-        operation: "write",
-        path: "/tmp/file.txt",
-        userConfirmed: false,
-      };
-
-      // Act: Call applyFileSystemOverrides
-      const result = await applyFileSystemOverrides(context);
-
-      // Assert: Should proceed (only '1' enables fail-closed)
-      expect(result).toMatchObject({
-        outcome: "PROCEED",
-        contractId: null,
-      });
-
-      routerSpy.mockRestore();
-    });
-
-    it("should include helpful message in instructions when fail-closed blocks", async () => {
-      // Arrange: Set production flag
-      process.env.CLARITYBURST_ROUTER_REQUIRED = "1";
-
-      // Mock router to throw
+      // Mock router to throw (unavailable)
       const routerSpy = vi
         .spyOn(routerClient, "routeClarityBurst")
         .mockRejectedValue(new Error("Router connection timeout"));
@@ -282,56 +289,20 @@ describe("Router outage fail-closed production flag (CLARITYBURST_ROUTER_REQUIRE
       const context: FileSystemContext = {
         stageId: "FILE_SYSTEM_OPS",
         operation: "write",
-        path: "/tmp/critical.txt",
-        userConfirmed: false,
-      };
-
-      // Act: Call applyFileSystemOverrides
-      const result = await applyFileSystemOverrides(context);
-
-      // Assert: Instructions should guide user
-      if (result.outcome === "ABSTAIN_CLARIFY") {
-        expect(result.instructions).toBeDefined();
-        expect(result.instructions?.toLowerCase()).toContain("router");
-        expect(result.instructions?.toLowerCase()).toContain("unavailable");
-      }
-
-      routerSpy.mockRestore();
-    });
-  });
-
-  describe("router success case with flag=1 (should not be affected)", () => {
-    it("should proceed normally when router is available, regardless of flag", async () => {
-      // Arrange: Set production flag
-      process.env.CLARITYBURST_ROUTER_REQUIRED = "1";
-
-      // Mock router to succeed
-      const routerSpy = vi.spyOn(routerClient, "routeClarityBurst").mockResolvedValue({
-        ok: true,
-        data: {
-          top1: {
-            contract_id: "FS_WRITE_WORKSPACE",
-            score: 0.95,
-          },
-          top2: {
-            contract_id: "FS_READ_FILE",
-            score: 0.8,
-          },
-        },
-      });
-
-      const context: FileSystemContext = {
-        stageId: "FILE_SYSTEM_OPS",
-        operation: "write",
         path: "/tmp/file.txt",
         userConfirmed: false,
       };
 
-      // Act: Call applyFileSystemOverrides with successful router
+      // Act
       const result = await applyFileSystemOverrides(context);
 
-      // Assert: Should proceed (router succeeded, so no outage)
-      expect(result.outcome).toBe("PROCEED");
+      // Assert: Should return ABSTAIN_CLARIFY (fail-closed for side-effectful)
+      expect(result.outcome).toBe("ABSTAIN_CLARIFY");
+      if (result.outcome === "ABSTAIN_CLARIFY") {
+        expect(result.reason).toBe("ROUTER_UNAVAILABLE");
+        expect(result.contractId).toBe(null);
+        expect(result.instructions).toContain("Router unavailable");
+      }
 
       routerSpy.mockRestore();
     });
