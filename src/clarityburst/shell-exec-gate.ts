@@ -24,7 +24,19 @@ export async function gateShellExec(command: string): Promise<{
   reason?: string;
 }> {
   // Early exit: ClarityBurst disabled → proceed (bypass mode)
-  if (!configManager.isEnabled()) {
+  // Wrap in try-catch to handle config errors as fail-closed
+  let enabled: boolean;
+  try {
+    enabled = configManager.isEnabled();
+  } catch (configError) {
+    // Config initialization failed (e.g., missing URL) → treat as router unavailable → BLOCK (fail-closed)
+    return {
+      allowed: false,
+      reason: `ClarityBurst router unavailable (configuration error: ${configError instanceof Error ? configError.message : String(configError)})`,
+    };
+  }
+
+  if (!enabled) {
     return { allowed: true };
   }
 
