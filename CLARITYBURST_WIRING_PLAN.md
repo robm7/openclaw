@@ -16,9 +16,9 @@ No gate is marked done until its Prove step passes. Within each phase, one infle
 
 ## Phase 0 — Make the default safe (DO THIS FIRST, before any wiring)
 
-- [ ] Flip handleRouterOutageFailClosed (decision-override.ts ~lines 92–126) so fail-CLOSED is the default for side-effectful operations; fail-open must require explicit opt-out, not opt-in.
-- [ ] Add startup config validation that refuses to boot in production mode if fail-open is active.
-- [ ] Prove: with no env var set, simulate a router outage and confirm a side-effectful op is BLOCKED.
+- [x] Flip handleRouterOutageFailClosed (decision-override.ts ~lines 92–126) so fail-CLOSED is the default for side-effectful operations; fail-open must require explicit opt-out, not opt-in.
+- [x] Add startup config validation that refuses to boot in production mode if fail-open is active.
+- [x] Prove: with no env var set, simulate a router outage and confirm a side-effectful op is BLOCKED. (Proven: boot guard + outage tests pass; fail-closed is default, fail-open requires explicit opt-out.)
 
 ---
 
@@ -41,7 +41,7 @@ For EACH gate below, create the same 3-item sub-checklist (Narrow Audit / Wire /
 **Priority: HIGHEST** — currently unwired AND fail-open
 
 - [x] Narrow Audit: locate OpenClaw's actual shell-dispatch call site; confirm the gate's behavior on router success / error / timeout.
-- [ ] Wire: insert the gate at that call site; handle all three outcomes (PROCEED / ABSTAIN_CLARIFY / ABSTAIN_CONFIRM).
+- [x] Wire: SHELL_EXEC gate wired at both exec call sites (bash-tools.exec.ts + bash-tools.exec-host-node.ts). Committed b3e40c758.
 - [x] Prove: kill the router mid-call; assert the shell command is BLOCKED. (Satisfied by `shell_exec_gate.prove.phase_1.test.ts` — real call-site integration via createExecTool().execute(); proves block + zero-spawn across both host paths and both outage branches)
 
 ### File System Ops (applyFileSystemOverrides, decision-override.ts:966)
@@ -50,7 +50,10 @@ For EACH gate below, create the same 3-item sub-checklist (Narrow Audit / Wire /
 - [x] Wire: agent's default-branch host write (createHostWriteOperations writeFile, workspaceOnly:false, pi-tools.read.ts) routed through applyFileSystemOpsGateAndWrite.
 - [x] Prove: file_system_ops.write_tool.real_chokepoint.prove.test.ts — real createHostWorkspaceWriteTool().execute() path; Test A blocks + zero-write on router outage (real handleRouterOutageFailClosed, asserted via rejection); Test B positive control proves the fs/promises writeFile spy is live via a real proceed-path write. Committed 98d962189.
 
-**Remaining FILE_SYSTEM_OPS scope (NOT done):** mkdir in createHostWriteOperations (~768/773/785); workspaceOnly:true branch (writeFileWithinRoot ~789); delete/rename/copy agent FS ops; sandbox fs-bridge.ts path (write/mkdirp/remove/rename), only reachable when sandbox mode != "off".
+**FILE_SYSTEM_OPS scope status:**
+
+- DONE (workspaceOnly:false / default branch): writeFile gated via applyFileSystemOpsGateAndWrite (98d962189); standalone mkdir closure AND writeFile-internal parent mkdir gated via applyFileSystemOpsGateAndMkdir, proven by Tests C/D (24f155afe).
+- NOT done: workspaceOnly:true branch (mkdir + writeFileWithinRoot ~789); delete/rename/copy agent FS ops — NOTE: gate functions applyFileSystemOpsGateAndRm / Rename / Copy already EXIST in file-system-ops-gating.ts (from March); they need wiring at the agent chokepoints, not building; sandbox fs-bridge.ts path (write/mkdirp/remove/rename), only reachable when sandbox mode != "off".
 
 ### Tool Dispatch (applyToolDispatchOverrides, decision-override.ts:410)
 
@@ -64,7 +67,7 @@ For EACH gate below, create the same 3-item sub-checklist (Narrow Audit / Wire /
 
 The Prove step in each Phase 1 gate is your adversarial proof. Add one cross-cutting item:
 
-- [ ] Confirm NO existing test is a unit test masquerading as integration coverage — at least one test must invoke a gate at a real call site (the audit found all ~30 existing tests never do).
+- [ ] Confirm NO existing test is a unit test masquerading as integration coverage — at least one test must invoke a gate at a real call site (the audit found all ~30 existing tests never do). **In progress:** real-chokepoint standard established by file_system_ops.write_tool.real_chokepoint.prove.test.ts (98d962189/24f155afe). Two vacuous March tests identified for rewrite — see "Test debt" note in Open Questions.
 
 ---
 
