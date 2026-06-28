@@ -5,6 +5,7 @@
 ## How to use this doc
 
 Every gate goes through the same 3-step cycle:
+
 1. **Narrow Audit** — locate the real call site; confirm behavior on success / error / timeout
 2. **Wire** — insert the gate at that call site; handle all three outcomes (PROCEED / ABSTAIN_CLARIFY / ABSTAIN_CONFIRM)
 3. **Prove** — adversarial test (kill router, simulate outage, etc.) and assert expected behavior
@@ -39,15 +40,17 @@ For EACH gate below, create the same 3-item sub-checklist (Narrow Audit / Wire /
 
 **Priority: HIGHEST** — currently unwired AND fail-open
 
-- [ ] Narrow Audit: locate OpenClaw's actual shell-dispatch call site; confirm the gate's behavior on router success / error / timeout.
+- [x] Narrow Audit: locate OpenClaw's actual shell-dispatch call site; confirm the gate's behavior on router success / error / timeout.
 - [ ] Wire: insert the gate at that call site; handle all three outcomes (PROCEED / ABSTAIN_CLARIFY / ABSTAIN_CONFIRM).
-- [ ] Prove: kill the router mid-call; assert the shell command is BLOCKED.
+- [x] Prove: kill the router mid-call; assert the shell command is BLOCKED. (Satisfied by `shell_exec_gate.prove.phase_1.test.ts` — real call-site integration via createExecTool().execute(); proves block + zero-spawn across both host paths and both outage branches)
 
 ### File System Ops (applyFileSystemOverrides, decision-override.ts:966)
 
-- [ ] Narrow Audit: locate OpenClaw's actual file-system call site; confirm the gate's behavior on router success / error / timeout.
-- [ ] Wire: insert the gate at that call site; handle all three outcomes (PROCEED / ABSTAIN_CLARIFY / ABSTAIN_CONFIRM).
-- [ ] Prove: kill the router mid-call; assert the file-system operation is BLOCKED.
+- [x] Narrow Audit: locate OpenClaw's actual file-system call site; confirm the gate's behavior on router success / error / timeout.
+- [x] Wire: agent's default-branch host write (createHostWriteOperations writeFile, workspaceOnly:false, pi-tools.read.ts) routed through applyFileSystemOpsGateAndWrite.
+- [x] Prove: file_system_ops.write_tool.real_chokepoint.prove.test.ts — real createHostWorkspaceWriteTool().execute() path; Test A blocks + zero-write on router outage (real handleRouterOutageFailClosed, asserted via rejection); Test B positive control proves the fs/promises writeFile spy is live via a real proceed-path write. Committed 98d962189.
+
+**Remaining FILE_SYSTEM_OPS scope (NOT done):** mkdir in createHostWriteOperations (~768/773/785); workspaceOnly:true branch (writeFileWithinRoot ~789); delete/rename/copy agent FS ops; sandbox fs-bridge.ts path (write/mkdirp/remove/rename), only reachable when sandbox mode != "off".
 
 ### Tool Dispatch (applyToolDispatchOverrides, decision-override.ts:410)
 
@@ -128,7 +131,7 @@ For EACH gate below, create the same 3-item sub-checklist (Narrow Audit / Wire /
 
 ## Open Questions
 
-*Note any items that could not be mapped cleanly during document creation.*
+_Note any items that could not be mapped cleanly during document creation._
 
 ### Phase 1 Known Limitation: Capability Filtering
 
@@ -146,3 +149,7 @@ For EACH gate below, create the same 3-item sub-checklist (Narrow Audit / Wire /
 **Tracking:** This limitation is documented, not assumed. Fixing capability sourcing alone won't enable capability-scoped filtering for SHELL_EXEC — the derivation path must also be changed.
 
 **Reference:** See `PHASE_2_CAPABILITY_FILTERING_ANALYSIS.md` in customer_service_agent repo for detailed analysis.
+
+**Phase 1 limitation — ABSTAIN_CONFIRM gap (Phase 1.1):** The host-write path (like SHELL_EXEC) cannot satisfy ABSTAIN_CONFIRM because applyFileSystemOpsGateAndWrite hardcodes userConfirmed:false in its gate context. Contracts with needs_confirmation:true or HIGH/CRITICAL risk_class terminally block on this path until a confirmation flow exists. Gate behavior is correct (blocks safely); confirmation workflow is deferred.
+
+**Test debt — vacuous March FILE_SYSTEM_OPS tests:** Two committed tests do not prove gating and need rewriting to the real-chokepoint standard: (1) file_system_ops.write_tool.gate_integration.tripwire.test.ts — every path passes, no fs.writeFile spy, tests the wrapper in isolation not the real call path; (2) file_system_ops.router_outage.fail_closed.tripwire.test.ts — re-implements fail-closed logic in a local simulateRouterOutage helper and tests the re-implementation, never invoking the real applyFileSystemOverrides. Both should be rewritten to match file_system_ops.write_tool.real_chokepoint.prove.test.ts (spy on real side effects through the full path).
