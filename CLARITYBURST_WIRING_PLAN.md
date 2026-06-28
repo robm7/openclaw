@@ -156,3 +156,19 @@ _Note any items that could not be mapped cleanly during document creation._
 **Phase 1 limitation — ABSTAIN_CONFIRM gap (Phase 1.1):** The host-write path (like SHELL_EXEC) cannot satisfy ABSTAIN_CONFIRM because applyFileSystemOpsGateAndWrite hardcodes userConfirmed:false in its gate context. Contracts with needs_confirmation:true or HIGH/CRITICAL risk_class terminally block on this path until a confirmation flow exists. Gate behavior is correct (blocks safely); confirmation workflow is deferred.
 
 **Test debt — vacuous March FILE_SYSTEM_OPS tests:** Two committed tests do not prove gating and need rewriting to the real-chokepoint standard: (1) file_system_ops.write_tool.gate_integration.tripwire.test.ts — every path passes, no fs.writeFile spy, tests the wrapper in isolation not the real call path; (2) file_system_ops.router_outage.fail_closed.tripwire.test.ts — re-implements fail-closed logic in a local simulateRouterOutage helper and tests the re-implementation, never invoking the real applyFileSystemOverrides. Both should be rewritten to match file_system_ops.write_tool.real_chokepoint.prove.test.ts (spy on real side effects through the full path).
+
+---
+
+## Discovery — Stale Router Deployment (blocks TOOL_DISPATCH)
+
+**Found during TOOL_DISPATCH Narrow Audit (live router probe + router source read).**
+
+The deployed Fly router (`customer-service-agent.fly.dev`) is a stale, divergent build that does NOT match current `customer_service_agent` source. Live probe of 9 real tool actions against the TOOL_DISPATCH_GATE pack returned a constant `DISPATCH_NOOP / 1.000` for ALL inputs (not real classification). Current router source expects `actions`/`id` pack schema and fails LOUD (HTTP 400) on the openclaw `contracts`/`contract_id` schema; it bundles only customer_service + simple_routing packs, neither containing DISPATCH_NOOP (which appears nowhere in current source). Conclusion: deployed binary ≠ current source.
+
+**Safety: INTACT.** Mismatched pack → 400 → gate fails closed. No silent false verdicts. Committed SHELL_EXEC/FS fail-closed property holds.
+
+**Unverified:** End-to-end happy-path classification against the live router for ALL gates (all Prove tests used a MOCKED router). Cannot be trusted until router rebuilt from current source.
+
+**TOOL_DISPATCH gate: BLOCKED** until router classifies its pack correctly.
+
+**Required router work (separate `customer_service_agent` initiative, decision deferred):** (1) align pack schema — router uses `actions`/`id`, openclaw gates use `contracts`/`contract_id`; (2) rebuild + redeploy router from current source; (3) re-run TOOL_DISPATCH probe to confirm real classification; (4) optional: verify live router classifies real SHELL_EXEC/FS actions correctly.
