@@ -6,7 +6,10 @@ import { fileURLToPath } from "node:url";
 import type { ImageSanitizationLimits } from "./image-sanitization.js";
 import type { AnyAgentTool } from "./pi-tools.types.js";
 import type { SandboxFsBridge } from "./sandbox/fs-bridge.js";
-import { applyFileSystemOpsGateAndWrite } from "../clarityburst/file-system-ops-gating.js";
+import {
+  applyFileSystemOpsGateAndWrite,
+  applyFileSystemOpsGateAndMkdir,
+} from "../clarityburst/file-system-ops-gating.js";
 import { SafeOpenError, openFileWithinRoot, writeFileWithinRoot } from "../infra/fs-safe.js";
 import { detectMime } from "../media/mime.js";
 import { sniffMimeFromBase64 } from "../media/sniff-mime-from-base64.js";
@@ -766,12 +769,12 @@ function createHostWriteOperations(root: string, options?: { workspaceOnly?: boo
     return {
       mkdir: async (dir: string) => {
         const resolved = path.resolve(dir);
-        await fs.mkdir(resolved, { recursive: true });
+        await applyFileSystemOpsGateAndMkdir(resolved, true);
       },
       writeFile: async (absolutePath: string, content: string) => {
         const resolved = path.resolve(absolutePath);
         const dir = path.dirname(resolved);
-        await fs.mkdir(dir, { recursive: true });
+        await applyFileSystemOpsGateAndMkdir(dir, true);
         await applyFileSystemOpsGateAndWrite(resolved, content, "utf-8");
       },
     } as const;

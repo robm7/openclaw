@@ -37,12 +37,13 @@ vi.mock("../pack-load.js", () => ({
   loadPackOrAbstain: vi.fn(),
 }));
 
-// Mock fs/promises to spy on writeFile (the exact specifier the gate imports)
+// Mock fs/promises to spy on writeFile and mkdir (the exact specifier the gate imports)
 vi.mock("fs/promises", async (importOriginal) => {
   const actual = await importOriginal<typeof import("fs/promises")>();
   return {
     ...actual,
     writeFile: vi.fn(actual.writeFile),
+    mkdir: vi.fn(actual.mkdir),
   };
 });
 
@@ -115,8 +116,9 @@ describe("FILE_SYSTEM_OPS Gate Real Chokepoint Prove Test", () => {
     // Create a unique tmp directory for each test
     tmpRoot = mkdtempSync(path.join(os.tmpdir(), "fs-ops-gate-test-"));
 
-    // Reset the writeFile spy (already mocked at module level)
+    // Reset the writeFile and mkdir spies (already mocked at module level)
     vi.mocked(fsPromises.writeFile).mockClear();
+    vi.mocked(fsPromises.mkdir).mockClear();
 
     // Setup mock pack to return a valid FILE_SYSTEM_OPS pack
     const mockPack = createMockFileSystemOpsPack();
@@ -206,5 +208,65 @@ describe("FILE_SYSTEM_OPS Gate Real Chokepoint Prove Test", () => {
     // Verify the file was actually written (proves spy is live)
     const writtenContent = await fs.readFile(targetPath, "utf-8");
     expect(writtenContent).toBe(testContent);
+  });
+
+  describe("mkdir gating", () => {
+    it("Test C: mkdir fail-closed (router throws) → gate abstains → fs.mkdir never called", async () => {
+      // ARRANGE: Configure router mock to throw (simulates router outage)
+      const routerError = new Error("Router unavailable (simulated outage)");
+      mockedRouteClarityBurst.mockRejectedValue(routerError);
+
+      // Create the real write tool with workspaceOnly:false to reach the gated mkdir path
+      const writeTool = createHostWorkspaceWriteTool(tmpRoot, { workspaceOnly: false });
+
+      // Target file path in a NEW subdir that doesn't exist yet
+      const newSubdir = path.join(tmpRoot, "new-subdir-c");
+      const targetPath = path.join(newSubdir, "test-file.txt");
+
+      // ACT: Attempt to write through the tool (this calls mkdir first, then writeFile)
+      const executePromise = writeTool.execute(
+        "mkdir-call-1",
+        { path: targetPath, content: "x" },
+        undefined,
+      );
+
+      // ASSERT: The execute call should throw (mkdir gate blocks first)
+      await expect(executePromise).rejects.toThrow();
+
+      // The critical assertions: NEITHER fs.mkdir NOR fs.writeFile should have been called
+      expect(vi.mocked(fsPromises.mkdir)).toHaveBeenCalledTimes(0);
+      expect(vi.mocked(fsPromises.writeFile)).toHaveBeenCalledTimes(0);
+    });
+
+    it("Test D: mkdir positive control (router PROCEEDs) → gate allows → fs.mkdir called", async () => {
+      // ARRANGE: Configure router mock to return PROCEED
+      const proceedResult = createProceedRouteResult();
+      mockedRouteClarityBurst.mockResolvedValue(proceedResult);
+
+      // Create the real write tool with workspaceOnly:false
+      const writeTool = createHostWorkspaceWriteTool(tmpRoot, { workspaceOnly: false });
+
+      // Target file path in a NEW subdir that doesn't exist yet
+      const newSubdir = path.join(tmpRoot, "new-subdir-d");
+      const targetPath = path.join(newSubdir, "test-file.txt");
+      const testContent = "mkdir allowed";
+
+      // ACT: Write through the tool (this calls mkdir first, then writeFile)
+      const result = await writeTool.execute(
+        "mkdir-call-2",
+        { path: targetPath, content: testContent },
+        undefined,
+      );
+
+      // ASSERT: The execute call should succeed
+      expect(result).toBeDefined();
+
+      // The critical assertion: fs.mkdir MUST have been called (≥1)
+      const mkdirSpy = vi.mocked(fsPromises.mkdir);
+      expect(mkdirSpy.mock.calls.length).toBeGreaterThanOrEqual(1);
+
+      // Verify writeFile was also called (proves the full path executed)
+      expect(vi.mocked(fsPromises.writeFile)).toHaveBeenCalled();
+    });
   });
 });
