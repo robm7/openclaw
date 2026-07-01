@@ -12,16 +12,14 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
+import type { OntologyPack } from "../pack-registry.js";
 import {
   deriveAllowedContracts,
   assertNonEmptyAllowedContracts,
   createRestrictedCapabilities,
   type RuntimeCapabilities,
 } from "../allowed-contracts.js";
-import {
-  ClarityBurstAbstainError,
-} from "../errors.js";
-import type { OntologyPack } from "../pack-registry.js";
+import { ClarityBurstAbstainError } from "../errors.js";
 
 /**
  * Mock tool execution function - tracks call count
@@ -53,7 +51,7 @@ function createToolDispatchGatePackWithAllCapabilityRequirements(): OntologyPack
     description: "Test pack with ALL contracts requiring capabilities",
     thresholds: {
       min_confidence_T: 0.55,
-      dominance_margin_Delta: 0.10,
+      dominance_margin_Delta: 0.1,
     },
     contracts: [
       {
@@ -64,6 +62,10 @@ function createToolDispatchGatePackWithAllCapabilityRequirements(): OntologyPack
         needs_confirmation: false,
         deny_by_default: false,
         capability_requirements: ["fs_write"], // Requires capability
+        canonicalPhrases: [],
+        keywordWeights: {},
+        synonymPhrases: {},
+        scoring: { lambdas: { lambda_phrase: 0, lambda_keyword: 0, lambda_semantic: 0 } },
       },
       {
         contract_id: "DISPATCH_SHELL_EXEC",
@@ -73,6 +75,10 @@ function createToolDispatchGatePackWithAllCapabilityRequirements(): OntologyPack
         needs_confirmation: true,
         deny_by_default: false,
         capability_requirements: ["shell"], // Requires capability
+        canonicalPhrases: [],
+        keywordWeights: {},
+        synonymPhrases: {},
+        scoring: { lambdas: { lambda_phrase: 0, lambda_keyword: 0, lambda_semantic: 0 } },
       },
       {
         contract_id: "DISPATCH_NETWORK",
@@ -82,6 +88,10 @@ function createToolDispatchGatePackWithAllCapabilityRequirements(): OntologyPack
         needs_confirmation: false,
         deny_by_default: false,
         capability_requirements: ["network"], // Requires capability
+        canonicalPhrases: [],
+        keywordWeights: {},
+        synonymPhrases: {},
+        scoring: { lambdas: { lambda_phrase: 0, lambda_keyword: 0, lambda_semantic: 0 } },
       },
     ],
     field_schema: {},
@@ -100,30 +110,21 @@ function createToolDispatchGatePackWithAllCapabilityRequirements(): OntologyPack
 function executeToolDispatchWithGatingAndAllowlistCheck(
   pack: OntologyPack,
   capabilities: RuntimeCapabilities,
-  toolExecutor: ReturnType<typeof createMockToolExecutor>
+  toolExecutor: ReturnType<typeof createMockToolExecutor>,
 ): {
   success: true;
   result: string;
 } {
-  try {
-    const allowedContractIds = deriveAllowedContracts(
-      "TOOL_DISPATCH_GATE",
-      pack,
-      capabilities
-    );
+  const allowedContractIds = deriveAllowedContracts("TOOL_DISPATCH_GATE", pack, capabilities);
 
-    // This centralized check ensures NO empty allowlist can bypass
-    // - outcome: "ABSTAIN_CLARIFY"
-    // - reason: "PACK_POLICY_INCOMPLETE"
-    // - contractId: null
-    assertNonEmptyAllowedContracts("TOOL_DISPATCH_GATE", allowedContractIds);
+  // This centralized check ensures NO empty allowlist can bypass
+  // - outcome: "ABSTAIN_CLARIFY"
+  // - reason: "PACK_POLICY_INCOMPLETE"
+  // - contractId: null
+  assertNonEmptyAllowedContracts("TOOL_DISPATCH_GATE", allowedContractIds);
 
-    // If we reach here, allowed contracts exist and we can proceed
-    return toolExecutor.execute();
-  } catch (error) {
-    // Rethrow so caller can verify the error structure
-    throw error;
-  }
+  // If we reach here, allowed contracts exist and we can proceed
+  return toolExecutor.execute();
 }
 
 describe("TOOL_DISPATCH_GATE empty_allowlist → ABSTAIN_CLARIFY tripwire", () => {
@@ -145,27 +146,19 @@ describe("TOOL_DISPATCH_GATE empty_allowlist → ABSTAIN_CLARIFY tripwire", () =
       const allowedContractIds = deriveAllowedContracts(
         "TOOL_DISPATCH_GATE",
         mockPack,
-        restrictedCaps
+        restrictedCaps,
       );
       expect(allowedContractIds).toEqual([]); // Verify precondition: empty
 
       // Act & Assert: Execute should throw ClarityBurstAbstainError with correct structure
       expect(() => {
-        executeToolDispatchWithGatingAndAllowlistCheck(
-          mockPack,
-          restrictedCaps,
-          mockToolExecutor
-        );
+        executeToolDispatchWithGatingAndAllowlistCheck(mockPack, restrictedCaps, mockToolExecutor);
       }).toThrow(ClarityBurstAbstainError);
 
       // Verify exact error structure
       let caughtError: ClarityBurstAbstainError | undefined;
       try {
-        executeToolDispatchWithGatingAndAllowlistCheck(
-          mockPack,
-          restrictedCaps,
-          mockToolExecutor
-        );
+        executeToolDispatchWithGatingAndAllowlistCheck(mockPack, restrictedCaps, mockToolExecutor);
       } catch (error) {
         if (error instanceof ClarityBurstAbstainError) {
           caughtError = error;
@@ -187,7 +180,7 @@ describe("TOOL_DISPATCH_GATE empty_allowlist → ABSTAIN_CLARIFY tripwire", () =
       const allowedContractIds = deriveAllowedContracts(
         "TOOL_DISPATCH_GATE",
         mockPack,
-        restrictedCaps
+        restrictedCaps,
       );
       expect(allowedContractIds).toHaveLength(0);
 
@@ -219,17 +212,13 @@ describe("TOOL_DISPATCH_GATE empty_allowlist → ABSTAIN_CLARIFY tripwire", () =
       const allowedContractIds = deriveAllowedContracts(
         "TOOL_DISPATCH_GATE",
         mockPack,
-        restrictedCaps
+        restrictedCaps,
       );
       expect(allowedContractIds).toHaveLength(0);
 
       // Act: Try to execute, which should throw
       expect(() => {
-        executeToolDispatchWithGatingAndAllowlistCheck(
-          mockPack,
-          restrictedCaps,
-          mockToolExecutor
-        );
+        executeToolDispatchWithGatingAndAllowlistCheck(mockPack, restrictedCaps, mockToolExecutor);
       }).toThrow(ClarityBurstAbstainError);
 
       // Assert: Tool executor was never invoked
