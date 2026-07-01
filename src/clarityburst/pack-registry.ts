@@ -40,6 +40,10 @@ export interface PackContract {
   needs_confirmation: boolean;
   deny_by_default: boolean;
   capability_requirements: string[];
+  canonicalPhrases: string[];
+  keywordWeights: Record<string, number>;
+  synonymPhrases: Record<string, string[]>;
+  scoring: { lambdas: { lambda_phrase: number; lambda_keyword: number; lambda_semantic: number } };
 }
 
 export interface OntologyPack {
