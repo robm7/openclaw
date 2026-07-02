@@ -4,8 +4,8 @@
   "stage_id": "TOOL_DISPATCH_GATE",
   "description": "Controls permission slips for distinct tool action regimes. Governs what categories of operations an agent is allowed to dispatch.",
   "thresholds": {
-    "min_confidence_T": 0.55,
-    "dominance_margin_Delta": 0.1
+    "min_confidence_T": 0.2,
+    "dominance_margin_Delta": 0.05
   },
   "scoring": {
     "enableSemantic": false
