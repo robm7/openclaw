@@ -4,8 +4,8 @@
   "stage_id": "SHELL_EXEC",
   "description": "Controls shell command execution including process spawning, environment configuration, and privilege escalation. Enforces command allowlists and execution context restrictions.",
   "thresholds": {
-    "min_confidence_T": 0,
-    "dominance_margin_Delta": 0
+    "min_confidence_T": 0.05,
+    "dominance_margin_Delta": 0.05
   },
   "scoring": {
     "enableSemantic": false
