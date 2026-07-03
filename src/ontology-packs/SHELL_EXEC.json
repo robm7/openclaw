@@ -26,12 +26,12 @@
         "safe shell command"
       ],
       "keywordWeights": {
-        "run": 0.8,
+        "run": 0.2,
         "read": 0.9,
         "readonly": 1.0,
         "safe": 0.7,
-        "execute": 0.8,
-        "command": 0.6
+        "execute": 0.2,
+        "command": 0.2
       },
       "synonymPhrases": {
         "run": ["execute", "invoke", "launch"],
