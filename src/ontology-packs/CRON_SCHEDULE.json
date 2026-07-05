@@ -4,8 +4,8 @@
   "stage_id": "CRON_SCHEDULE",
   "description": "Controls the scheduling and management of recurring tasks and cron-like job execution. Governs timing constraints, resource allocation, and job lifecycle.",
   "thresholds": {
-    "min_confidence_T": 0,
-    "dominance_margin_Delta": 0
+    "min_confidence_T": 0.05,
+    "dominance_margin_Delta": 0.1
   },
   "scoring": {
     "enableSemantic": false

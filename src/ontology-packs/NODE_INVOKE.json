@@ -7,8 +7,8 @@
     "enableSemantic": false
   },
   "thresholds": {
-    "min_confidence_T": 0,
-    "dominance_margin_Delta": 0
+    "min_confidence_T": 0.05,
+    "dominance_margin_Delta": 0.1
   },
   "contracts": [
     {
@@ -37,7 +37,7 @@
       },
       "synonymPhrases": {
         "require": ["load", "import", "include"],
-        "builtin": ["core", "native", "built-in", "standard"]
+        "builtin": ["core", "built-in", "standard"]
       },
       "scoring": {
         "lambdas": {
@@ -250,8 +250,8 @@
         "dynamic": 0.6
       },
       "synonymPhrases": {
-        "eval": ["evaluate", "execute", "run"],
-        "code": ["script", "expression", "snippet"]
+        "eval": ["evaluate", "execute"],
+        "code": ["expression", "snippet"]
       },
       "scoring": {
         "lambdas": {

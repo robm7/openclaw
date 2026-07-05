@@ -4,8 +4,8 @@
   "stage_id": "FILE_SYSTEM_OPS",
   "description": "Manages all file system operations including reading, writing, and directory manipulation. Enforces path restrictions, scope boundaries, and permission checks.",
   "thresholds": {
-    "min_confidence_T": 0,
-    "dominance_margin_Delta": 0
+    "min_confidence_T": 0.05,
+    "dominance_margin_Delta": 0.1
   },
   "scoring": {
     "enableSemantic": false

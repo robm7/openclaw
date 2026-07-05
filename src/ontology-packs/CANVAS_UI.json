@@ -7,8 +7,8 @@
     "enableSemantic": false
   },
   "thresholds": {
-    "min_confidence_T": 0,
-    "dominance_margin_Delta": 0
+    "min_confidence_T": 0.05,
+    "dominance_margin_Delta": 0.1
   },
   "contracts": [
     {
