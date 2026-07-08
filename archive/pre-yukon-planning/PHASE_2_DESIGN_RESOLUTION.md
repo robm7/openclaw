@@ -3,13 +3,15 @@
 ## Design Point 1: loadPackOrAbstain Failure Handling
 
 ### Signature & Behavior
+
 ```typescript
-export function loadPackOrAbstain(stageId: ClarityBurstStageId): OntologyPack
+export function loadPackOrAbstain(stageId: ClarityBurstStageId): OntologyPack;
 ```
 
 **Return type**: `OntologyPack` (NOT a union with outcome)
 
 **On failure**: **THROWS** `ClarityBurstAbstainError` with:
+
 ```typescript
 {
   stageId: string,
@@ -33,7 +35,7 @@ try {
     // BLOCK: Pack failure → fail closed
     return {
       allowed: false,
-      reason: error.instructions || "Pack validation failed"
+      reason: error.instructions || "Pack validation failed",
     };
   }
   throw error; // Unexpected error
@@ -41,6 +43,7 @@ try {
 ```
 
 **Why this is fail-closed**:
+
 - No pack = cannot govern = MUST block
 - Consistent with Phase 0: "unable to route → block execution"
 - The thrown error contains deterministic `instructions` field for the block reason
@@ -53,20 +56,22 @@ try {
 
 ```typescript
 const routerRes = await routeClarityBurst({
-  stageId: "SHELL_EXEC",            // ← Stage identifier
-  packId: pack.pack_id,              // ← From loaded pack
-  packVersion: pack.pack_version,    // ← From loaded pack
-  allowedContractIds,                // ← Derived from pack (see below)
-  userText: command,                 // ← THE SHELL COMMAND STRING TO ROUTE
-  context: {                         // ← Stage-specific context
+  stageId: "SHELL_EXEC", // ← Stage identifier
+  packId: pack.pack_id, // ← From loaded pack
+  packVersion: pack.pack_version, // ← From loaded pack
+  allowedContractIds, // ← Derived from pack (see below)
+  userText: command, // ← THE SHELL COMMAND STRING TO ROUTE
+  context: {
+    // ← Stage-specific context
     operation: "exec",
-    command: command
+    command: command,
   },
-  pack,                              // ← Include loaded pack for efficiency
+  pack, // ← Include loaded pack for efficiency
 });
 ```
 
 **For SHELL_EXEC gate**:
+
 - `userText`: The raw shell command string (e.g., `"rm -rf /tmp/foo"`)
 - `allowedContractIds`: Must be derived from pack using `deriveAllowedContracts("SHELL_EXEC", pack, caps)`
 - `context`: Provides operation context for router's semantic analysis
@@ -74,6 +79,7 @@ const routerRes = await routeClarityBurst({
 ### Deriving allowedContractIds
 
 From decision-override.ts pattern (lines 2890-2893):
+
 ```typescript
 import { deriveAllowedContracts, createFullCapabilities } from "./capability-filter.js";
 import type { RuntimeCapabilities } from "./capability-filter.js";
@@ -83,6 +89,7 @@ const allowedContractIds = deriveAllowedContracts("SHELL_EXEC", pack, caps);
 ```
 
 **Then validate non-empty**:
+
 ```typescript
 import { assertNonEmptyAllowedContracts } from "./contract-validators.js";
 
@@ -95,7 +102,9 @@ assertNonEmptyAllowedContracts("SHELL_EXEC", allowedContractIds);
 ```typescript
 let routeResult: RouterResult;
 try {
-  routeResult = await routeClarityBurst({ /* input */ });
+  routeResult = await routeClarityBurst({
+    /* input */
+  });
 } catch {
   // Router threw (network failure, timeout, etc.) → fail closed
   routeResult = { ok: false, error: "router_error" };
@@ -106,7 +115,7 @@ if (!routeResult.ok) {
   // BLOCK: Router unavailable → fail closed
   return {
     allowed: false,
-    reason: "The router is unavailable and the operation cannot proceed."
+    reason: "The router is unavailable and the operation cannot proceed.",
   };
 }
 
@@ -115,6 +124,7 @@ const contractId = routeResult.data.top1?.contract_id ?? null;
 ```
 
 **Error composition**: ✅ **CORRECT**
+
 1. routeClarityBurst **throws** (network error, timeout) → catch → set `ok: false`
 2. Check `!routeResult.ok` → BLOCK (fail-closed on router outage)
 3. **The gate does NOT call applyShellExecOverrides** — it implements the logic inline
@@ -248,7 +258,8 @@ export async function gateShellExec(command: string): Promise<{
     // Router returned no contract → BLOCK (routing failure)
     return {
       allowed: false,
-      reason: "Router returned no contract match. The operation cannot proceed without a valid contract.",
+      reason:
+        "Router returned no contract match. The operation cannot proceed without a valid contract.",
     };
   }
 
@@ -273,12 +284,14 @@ export async function gateShellExec(command: string): Promise<{
 ## Key Design Confirmations
 
 ### 1. Pack Loading Abstain → Block
+
 ✅ **Wrapped in try-catch**  
 ✅ **Catches ClarityBurstAbstainError** (thrown on PACK_POLICY_INCOMPLETE)  
 ✅ **Returns `{ allowed: false }`** with error.instructions  
 ✅ **Fail-closed**: No pack = cannot govern = BLOCK
 
 ### 2. Router Input Contract
+
 ✅ **userText: command** (the string to route)  
 ✅ **allowedContractIds**: Derived via `deriveAllowedContracts()`  
 ✅ **Validated non-empty**: Via `assertNonEmptyAllowedContracts()`  
@@ -286,6 +299,7 @@ export async function gateShellExec(command: string): Promise<{
 ✅ **pack**: Included for efficiency
 
 ### 3. Router Outage Flow → Block
+
 ✅ **try-catch around routeClarityBurst()** (catches network errors/throws)  
 ✅ **Check `!routeResult.ok`** (router returned error)  
 ✅ **Returns `{ allowed: false }`** with router error reason  
@@ -293,29 +307,31 @@ export async function gateShellExec(command: string): Promise<{
 ✅ **Phase 0 test path**: Simulated outage → `ok: false` → gate blocks
 
 ### 4. No applyShellExecOverrides Call
+
 ✅ **Gate implements logic inline** (not delegated to decision-override)  
 ✅ **Phases**:
-  1. Load pack (throws on failure)
-  2. Derive + validate contracts (throws if empty)
-  3. Route command (throws/returns ok:false on outage)
-  4. Validate result (mismatch check)
-  5. Return allow/block
+
+1. Load pack (throws on failure)
+2. Derive + validate contracts (throws if empty)
+3. Route command (throws/returns ok:false on outage)
+4. Validate result (mismatch check)
+5. Return allow/block
 
 ---
 
 ## What Changed from Invented Version
 
-| Aspect | Invented (Wrong) | Corrected (Real) |
-|--------|-----------------|------------------|
-| Pack loading | `getClarityOntologyPack()` | `loadPackOrAbstain("SHELL_EXEC")` throws on failure |
-| Pack failure | Not handled | Wrapped in try-catch, returns block |
-| Routing | `getClarityLastRouteResult()` | `await routeClarityBurst({ userText: command, ... })` |
-| Router input | Cached "last result" | Routes THIS command via userText |
-| allowedContracts | Not derived | `deriveAllowedContracts()` + `assertNonEmpty()` |
-| Router error | Not handled | try-catch + `!ok` check → block |
-| Outcome field | `.message` | `.instructions` |
-| Type imports | from router-client | OntologyPack from pack-registry |
-| Imports | runtime-integration.js | pack-load, router-client, etc. |
+| Aspect           | Invented (Wrong)              | Corrected (Real)                                      |
+| ---------------- | ----------------------------- | ----------------------------------------------------- |
+| Pack loading     | `getClarityOntologyPack()`    | `loadPackOrAbstain("SHELL_EXEC")` throws on failure   |
+| Pack failure     | Not handled                   | Wrapped in try-catch, returns block                   |
+| Routing          | `getClarityLastRouteResult()` | `await routeClarityBurst({ userText: command, ... })` |
+| Router input     | Cached "last result"          | Routes THIS command via userText                      |
+| allowedContracts | Not derived                   | `deriveAllowedContracts()` + `assertNonEmpty()`       |
+| Router error     | Not handled                   | try-catch + `!ok` check → block                       |
+| Outcome field    | `.message`                    | `.instructions`                                       |
+| Type imports     | from router-client            | OntologyPack from pack-registry                       |
+| Imports          | runtime-integration.js        | pack-load, router-client, etc.                        |
 
 ---
 
