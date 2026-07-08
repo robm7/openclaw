@@ -13,6 +13,7 @@
 Provision the production and staging Kubernetes infrastructure as specified in the Router Service Production Deployment Architecture. This phase involves setting up the cloud infrastructure, Kubernetes clusters, monitoring stack, and certificate management—all foundational requirements before CI/CD pipeline setup (Phase 3) and application deployment (Phase 4-7).
 
 **Reference Documents:**
+
 - Architecture spec: `plans/ROUTER_SERVICE_PRODUCTION_DEPLOYMENT_ARCHITECTURE.md`
 - Execution strategy: `plans/ROUTER_DEPLOYMENT_EXECUTION_STRATEGY.md`
 
@@ -21,6 +22,7 @@ Provision the production and staging Kubernetes infrastructure as specified in t
 ## Phase 2 Objectives
 
 ### Primary Goals
+
 1. **Kubernetes Cluster:** Provision EKS/GKE clusters for production and staging
 2. **Observability Stack:** Deploy Prometheus, Grafana, and Loki for metrics/logs/alerting
 3. **TLS/HTTPS:** Install cert-manager with Let's Encrypt integration for automatic certificate renewal
@@ -30,6 +32,7 @@ Provision the production and staging Kubernetes infrastructure as specified in t
 7. **Namespace Isolation:** Create namespaces (clarity-router, clarity-router-staging) with RBAC
 
 ### Success Criteria (Phase 2 Completion Gate)
+
 - [ ] Production K8s cluster created with 3 nodes across 3 AZs
 - [ ] Staging K8s cluster created with 2 nodes across 2 AZs
 - [ ] Prometheus deployed and scraping metrics from cluster
@@ -52,6 +55,7 @@ Provision the production and staging Kubernetes infrastructure as specified in t
 **Objective:** Provision primary and secondary Kubernetes clusters with HA configuration
 
 **Requirements (from Architecture Doc - Section 2.1):**
+
 ```
 Production Cluster:
   - Platform: EKS (AWS) or GKE (GCP) — CONFIRM PREFERENCE
@@ -74,6 +78,7 @@ Staging Cluster:
 ```
 
 **Deliverables:**
+
 - [ ] Production cluster running with 3 healthy nodes
 - [ ] Staging cluster running with 2 healthy nodes
 - [ ] `kubectl` context configured for both clusters
@@ -83,6 +88,7 @@ Staging Cluster:
 - [ ] Pod CIDR configured (e.g., 10.1.0.0/16)
 
 **Verification Commands:**
+
 ```bash
 # Check production cluster
 kubectl cluster-info
@@ -104,6 +110,7 @@ kubectl get nodes -L topology.kubernetes.io/zone
 **Requirements (from Architecture Doc - Section 4.1-4.4):**
 
 **Prometheus:**
+
 - Scrape interval: 30 seconds
 - Retention: 15 days (production), 7 days (staging)
 - ServiceMonitor for router pods (port 9090)
@@ -111,6 +118,7 @@ kubectl get nodes -L topology.kubernetes.io/zone
 - AlertmanagerConfig for routing alerts
 
 **Grafana:**
+
 - Dashboards:
   1. Router Health Overview (availability, latency, throughput)
   2. Detailed Performance (errors by stage, latency heatmap)
@@ -119,11 +127,13 @@ kubectl get nodes -L topology.kubernetes.io/zone
 - Alerts configured for SLO violations
 
 **Loki:**
+
 - Log retention: 30 days (prod), 7 days (staging)
 - Labels: job, pod, namespace, environment, stage
 - Query examples for router outages, high latency
 
 **Deliverables:**
+
 - [ ] Prometheus pod running, scraping metrics
 - [ ] Grafana deployed with admin credentials
 - [ ] Loki deployed, receiving log streams
@@ -132,6 +142,7 @@ kubectl get nodes -L topology.kubernetes.io/zone
 - [ ] Monitoring stack accessible via load balancer (optional)
 
 **Verification Commands:**
+
 ```bash
 # Check Prometheus
 kubectl get pods -n prometheus
@@ -154,12 +165,14 @@ kubectl logs -n loki -l app=loki
 **Requirements (from Architecture Doc - Section 2.2, 3):**
 
 **Ingress NGINX:**
+
 - Controller type: ingress-nginx
 - Service type: LoadBalancer (creates AWS ALB/GCP LB)
 - Replicas: 2 (for HA)
 - Resource limits: 200m CPU, 256MB memory
 
 **cert-manager Integration:**
+
 - ClusterIssuer for Let's Encrypt (production)
 - DNS-01 challenge (Route53/Cloud DNS)
 - Auto-renewal 30 days before expiry
@@ -168,6 +181,7 @@ kubectl logs -n loki -l app=loki
   - clarity-router-staging.example.com
 
 **Deliverables:**
+
 - [ ] Ingress NGINX controller deployed
 - [ ] cert-manager deployed with ClusterIssuer
 - [ ] Ingress resource created with TLS
@@ -177,6 +191,7 @@ kubectl logs -n loki -l app=loki
 - [ ] Certificate auto-renewal verified
 
 **Verification Commands:**
+
 ```bash
 # Check Ingress Controller
 kubectl get svc -n ingress-nginx ingress-nginx-controller
@@ -200,6 +215,7 @@ curl -k https://clarity-router.example.com/health
 **Requirements (from Architecture Doc - Section 6.1):**
 
 **ECR (AWS) or GCR (GCP):**
+
 - Repository name: `clarity-router`
 - Image scanning: Enabled (CVE detection)
 - Retention policy:
@@ -210,11 +226,13 @@ curl -k https://clarity-router.example.com/health
 - Cross-region replication (optional for Phase 5+)
 
 **Authentication:**
+
 - IAM role for GitHub Actions CI/CD
 - Docker config for local pushes
 - Service account token for K8s ImagePullSecrets
 
 **Deliverables:**
+
 - [ ] Repository created and accessible
 - [ ] Image scanning enabled
 - [ ] Lifecycle retention policy applied
@@ -223,6 +241,7 @@ curl -k https://clarity-router.example.com/health
 - [ ] Helm values for image pull secrets
 
 **Verification Commands:**
+
 ```bash
 # AWS ECR
 aws ecr describe-repositories --repository-names clarity-router
@@ -242,6 +261,7 @@ gcloud container images scan IMAGE_URL
 **Requirements (from Architecture Doc - Section 2.1, 8.1-8.3):**
 
 **Security Groups (AWS):**
+
 - Ingress:
   - Port 443 (HTTPS) from 0.0.0.0/0
   - Port 22 (SSH) from admin IPs only
@@ -249,6 +269,7 @@ gcloud container images scan IMAGE_URL
 - Egress: Unrestricted (to NLP-Engine and external)
 
 **Network Policies (Kubernetes):**
+
 - Default deny all ingress
 - Allow router pods to receive traffic on port 3001 from Ingress
 - Allow Prometheus scraper to reach port 9090
@@ -256,12 +277,14 @@ gcloud container images scan IMAGE_URL
 - Deny all unexpected egress
 
 **VPC Configuration:**
+
 - CIDR: 10.0.0.0/16
 - Subnets: Public (10.0.0.0/24, 10.0.1.0/24, 10.0.2.0/24) × 3 AZs
 - Private: For worker nodes if desired
 - NAT Gateway: For egress (if using private subnets)
 
 **Deliverables:**
+
 - [ ] VPC created with proper CIDR
 - [ ] Security groups applied to EC2/GKE nodes
 - [ ] NetworkPolicy resources deployed
@@ -270,6 +293,7 @@ gcloud container images scan IMAGE_URL
 - [ ] Isolation between namespaces tested
 
 **Verification Commands:**
+
 ```bash
 # Check Network Policies
 kubectl get networkpolicies -A
@@ -288,24 +312,28 @@ kubectl run -it --rm debug --image=nicolaka/netcat --restart=Never -- nc -zv rou
 **Requirements (from Architecture Doc - Section 6.3):**
 
 **Namespaces:**
+
 - clarity-router (production)
 - clarity-router-staging (staging)
 - monitoring (Prometheus/Grafana/Loki)
 - cert-manager (certificate management)
 
 **RBAC:**
+
 - ServiceAccount `router` with minimal permissions
 - Role for pod management (get, list, watch)
 - RoleBinding to ServiceAccount
 - ClusterRole for cert-manager (global)
 
 **Resource Management:**
+
 - ResourceQuota per namespace:
   - Requests: 6 CPU, 12GB memory (prod)
   - Limits: 12 CPU, 24GB memory (prod)
 - LimitRange for pod resources
 
 **Deliverables:**
+
 - [ ] Namespaces created
 - [ ] ServiceAccounts configured
 - [ ] Roles and RoleBindings applied
@@ -314,6 +342,7 @@ kubectl run -it --rm debug --image=nicolaka/netcat --restart=Never -- nc -zv rou
 - [ ] Pods can only run with defined requests/limits
 
 **Verification Commands:**
+
 ```bash
 # List namespaces
 kubectl get namespaces
@@ -332,16 +361,19 @@ kubectl describe resourcequota clarity-router-quota -n clarity-router
 ## Implementation Strategy
 
 ### Week 1: Infrastructure Foundation
+
 - [ ] 2.1: Provision K8s clusters (EKS/GKE)
 - [ ] 2.5: Configure networking and security groups
 - [ ] 2.6: Create namespaces and RBAC
 
 ### Week 2: Observability & TLS
+
 - [ ] 2.2: Deploy Prometheus + Grafana + Loki
 - [ ] 2.3: Install ingress controller + cert-manager
 - [ ] 2.4: Set up container registry
 
 ### Week 3: Validation & Hardening
+
 - [ ] Verify all components interconnected
 - [ ] Test failover and recovery scenarios (staging)
 - [ ] Security audit (network policies, RBAC)
@@ -352,12 +384,14 @@ kubectl describe resourcequota clarity-router-quota -n clarity-router
 ## Dependencies & Blockers
 
 **External Dependencies:**
+
 - AWS/GCP account with billing enabled
 - Domain name registered (clarity-router.example.com)
 - DNS zone delegated to Route53/Cloud DNS
 - GitHub repository access for CI/CD setup
 
 **Internal Dependencies:**
+
 - Phase 1 Architecture Planning ✅ (COMPLETE)
 - Next: Phase 3 CI/CD Pipeline (after 2.4)
 
@@ -368,6 +402,7 @@ kubectl describe resourcequota clarity-router-quota -n clarity-router
 When Phase 2 is complete:
 
 ✅ **Functional:**
+
 - Both K8s clusters running with all nodes healthy
 - Prometheus scraping 100+ metrics
 - Grafana dashboards accessible and populated
@@ -376,18 +411,21 @@ When Phase 2 is complete:
 - Container registry accepting images
 
 ✅ **Observable:**
+
 - Prometheus dashboard shows cluster metrics
 - Grafana shows node resources, network I/O
 - Loki logs searchable by pod, namespace, stage
 - AlertManager configured
 
 ✅ **Secure:**
+
 - TLS enforced (HTTPS only)
 - Network policies blocking unexpected traffic
 - RBAC restricting pod permissions
 - Audit logging enabled
 
 ✅ **Documented:**
+
 - Cluster access credentials secured
 - Terraform/IaC code version-controlled
 - Runbook for cluster troubleshooting
@@ -398,6 +436,7 @@ When Phase 2 is complete:
 ## Handoff to Phase 3
 
 Upon Phase 2 completion, Phase 3 (CI/CD Pipeline & Automation) can begin:
+
 - GitHub Actions workflow will push images to registry
 - ArgoCD/Flux will deploy to staging/production clusters
 - Certificate management will be automatic via cert-manager
@@ -417,13 +456,13 @@ Upon Phase 2 completion, Phase 3 (CI/CD Pipeline & Automation) can begin:
 
 ## Success Metrics
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| **Cluster Health** | 99.9% node availability | Monitor via Prometheus |
-| **Deployment Speed** | Pod startup <30 seconds | Time to Ready state |
-| **Log Latency** | <1 second ingestion | Loki query response time |
+| Metric                  | Target                             | Measurement               |
+| ----------------------- | ---------------------------------- | ------------------------- |
+| **Cluster Health**      | 99.9% node availability            | Monitor via Prometheus    |
+| **Deployment Speed**    | Pod startup <30 seconds            | Time to Ready state       |
+| **Log Latency**         | <1 second ingestion                | Loki query response time  |
 | **Certificate Renewal** | Auto-renews >30 days before expiry | Monitor cert-manager logs |
-| **Cost** | ~$335/month | AWS/GCP billing dashboard |
+| **Cost**                | ~$335/month                        | AWS/GCP billing dashboard |
 
 ---
 

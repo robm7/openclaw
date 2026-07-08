@@ -119,8 +119,8 @@ clarityburst-docs/
 
 ✅ **Moved to clarityburst-docs/archive/** (35+ phase summaries)
 
-- All PHASE2_*, PHASE3_*, PHASE4_* summaries
-- All FINAL_*, STATUS_*, TASK_*, etc. phase-specific files
+- All PHASE2*\*, PHASE3*_, PHASE4\__ summaries
+- All FINAL*\*, STATUS*_, TASK\__, etc. phase-specific files
 
 ### Moved FROM docs/ Directory (15+ files)
 
@@ -165,7 +165,7 @@ clarityburst-docs/
 
 ✅ **Moved test results**
 
-- compliance-artifacts/security/*.json → compliance/test-results/
+- compliance-artifacts/security/\*.json → compliance/test-results/
 
 ---
 
@@ -217,15 +217,15 @@ These documents were created during reorganization to synthesize information fro
 
 ## Benefits of New Organization
 
-| Aspect | Before | After |
-|--------|--------|-------|
-| **Discovery** | 40+ scattered root files | Organized by purpose in 8 folders |
-| **Navigation** | No clear entry point | Central README hub with pathways |
-| **Audience Focus** | Mixed content | Separate paths for each role |
-| **Artifact Management** | Scattered; hard to track | Grouped semantically |
-| **Maintenance** | Hard to update consistently | Clear relationships; easier to sync |
-| **Onboarding** | Overwhelming; no guidance | 4 guided paths for different needs |
-| **Searchability** | Grep across root | Logical folder structure |
+| Aspect                  | Before                      | After                               |
+| ----------------------- | --------------------------- | ----------------------------------- |
+| **Discovery**           | 40+ scattered root files    | Organized by purpose in 8 folders   |
+| **Navigation**          | No clear entry point        | Central README hub with pathways    |
+| **Audience Focus**      | Mixed content               | Separate paths for each role        |
+| **Artifact Management** | Scattered; hard to track    | Grouped semantically                |
+| **Maintenance**         | Hard to update consistently | Clear relationships; easier to sync |
+| **Onboarding**          | Overwhelming; no guidance   | 4 guided paths for different needs  |
+| **Searchability**       | Grep across root            | Logical folder structure            |
 
 ---
 
@@ -273,7 +273,7 @@ Organization:             No clear hierarchy
 clarityburst-docs/:       75+ organized files
   ├── architecture/       5 + 1 synthesized
   ├── validation/         10+
-  ├── ontology/           5 + 3 synthesized  
+  ├── ontology/           5 + 3 synthesized
   ├── security/           8 + 1 synthesized
   ├── operations/         2
   ├── reference/          4
@@ -301,13 +301,16 @@ All internal links have been maintained:
 
 ```markdown
 # Internal links (documentation)
+
 [Architecture Overview](clarityburst-docs/architecture/OVERVIEW.md)
 
 # Source code links (unchanged)
+
 [Router Logic](src/clarityburst/router-client.ts)
 [Test Runner](scripts/clarityburst-verify.ts)
 
 # Compliance artifacts
+
 [Manifest](clarityburst-docs/compliance/MANIFEST.json)
 ```
 
@@ -375,17 +378,17 @@ ls clarityburst-docs/archive/
 
 ## Summary
 
-| Metric | Value |
-|--------|-------|
-| **Total Documentation Files** | 75+ |
-| **New Hub Documents** | 3 synthesized |
-| **Directory Levels** | 2 (clarityburst-docs + subdirectories) |
-| **Main Categories** | 8 |
-| **Semantic Organization** | By purpose + audience |
-| **Navigation Hub** | ✅ Central README |
-| **Cross-References** | ✅ All working |
-| **Source Code Impact** | ✅ None |
-| **Completion Status** | ✅ **100%** |
+| Metric                        | Value                                  |
+| ----------------------------- | -------------------------------------- |
+| **Total Documentation Files** | 75+                                    |
+| **New Hub Documents**         | 3 synthesized                          |
+| **Directory Levels**          | 2 (clarityburst-docs + subdirectories) |
+| **Main Categories**           | 8                                      |
+| **Semantic Organization**     | By purpose + audience                  |
+| **Navigation Hub**            | ✅ Central README                      |
+| **Cross-References**          | ✅ All working                         |
+| **Source Code Impact**        | ✅ None                                |
+| **Completion Status**         | ✅ **100%**                            |
 
 ---
 

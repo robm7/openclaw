@@ -15,6 +15,7 @@ This guide provides step-by-step instructions to provision production and stagin
 ### Deliverables by End of Subtask 2.1
 
 ✅ **Production Cluster:**
+
 - 3 healthy nodes across 3 Availability Zones
 - Node type: t3.medium (2 vCPU, 4GB RAM)
 - 50GB disk per node (gp3)
@@ -22,6 +23,7 @@ This guide provides step-by-step instructions to provision production and stagin
 - All kubectl contexts configured and operational
 
 ✅ **Staging Cluster:**
+
 - 2 healthy nodes across 2 Availability Zones
 - Node type: t3.small (2 vCPU, 2GB RAM)
 - 30GB disk per node (gp3)
@@ -29,6 +31,7 @@ This guide provides step-by-step instructions to provision production and stagin
 - kubectl contexts configured
 
 ✅ **Networking & Security:**
+
 - VPC with CIDR 10.0.0.0/16
 - Pod CIDR 10.1.0.0/16
 - Security groups configured (ingress 443, 22, 9090)
@@ -36,6 +39,7 @@ This guide provides step-by-step instructions to provision production and stagin
 - IAM roles for worker nodes
 
 ✅ **Verification:**
+
 - All nodes marked Ready status
 - Metrics Server installed and functional
 - CoreDNS operational
@@ -50,15 +54,16 @@ Complete all items before proceeding with cluster provisioning.
 
 ### 1.1 Tools & CLI Installation
 
-| Tool | Version | Purpose | Installation |
-|------|---------|---------|--------------|
-| **AWS CLI** | 2.13+ | AWS resource management | `pip install --upgrade awscli` or [aws.amazon.com/cli](https://aws.amazon.com/cli) |
-| **kubectl** | 1.28+ | Kubernetes cluster management | `curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"` |
-| **eksctl** | 0.160+ | EKS cluster provisioning (AWS only) | `curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" \| tar xz -C /tmp && sudo mv /tmp/eksctl /usr/local/bin` |
-| **Helm** | 3.12+ | Kubernetes package manager | `curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 \| bash` |
-| **gcloud** | Latest | GCP resource management (GKE only) | [cloud.google.com/sdk/docs/install](https://cloud.google.com/sdk/docs/install) |
+| Tool        | Version | Purpose                             | Installation                                                                                                                                                                       |
+| ----------- | ------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AWS CLI** | 2.13+   | AWS resource management             | `pip install --upgrade awscli` or [aws.amazon.com/cli](https://aws.amazon.com/cli)                                                                                                 |
+| **kubectl** | 1.28+   | Kubernetes cluster management       | `curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"`                                                                  |
+| **eksctl**  | 0.160+  | EKS cluster provisioning (AWS only) | `curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" \| tar xz -C /tmp && sudo mv /tmp/eksctl /usr/local/bin` |
+| **Helm**    | 3.12+   | Kubernetes package manager          | `curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 \| bash`                                                                                                 |
+| **gcloud**  | Latest  | GCP resource management (GKE only)  | [cloud.google.com/sdk/docs/install](https://cloud.google.com/sdk/docs/install)                                                                                                     |
 
 **Verification:**
+
 ```bash
 # Verify installed versions
 aws --version
@@ -412,6 +417,7 @@ aws ec2 describe-security-groups \
 ```
 
 **Expected Output:**
+
 ```json
 [
   [443, 443],
@@ -649,6 +655,7 @@ kubectl top nodes
 ```
 
 **Expected Output:**
+
 ```
 NAME                           CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%
 ip-10-0-0-xxx.ec2.internal    45m          2%     156Mi           4%
@@ -938,6 +945,7 @@ kubectl run -it --rm debug --image=nicolaka/netcat --restart=Never -- \
 ### 6.1 Nodes Not Ready
 
 **Check node status:**
+
 ```bash
 kubectl get nodes
 kubectl describe node <node-name>
@@ -945,6 +953,7 @@ kubectl logs -n kube-system -l component=kubelet --tail=50
 ```
 
 **Common solutions:**
+
 - Verify security group allows inter-node communication
 - Check IAM roles have correct policies attached
 - Verify VPC CIDR doesn't conflict with pod CIDR (10.1.0.0/16)
@@ -952,12 +961,14 @@ kubectl logs -n kube-system -l component=kubelet --tail=50
 ### 6.2 Pods Not Scheduling
 
 **Check pending pods:**
+
 ```bash
 kubectl get pods -A --field-selector=status.phase=Pending
 kubectl describe pod <pod-name> -n <namespace>
 ```
 
 **Solutions:**
+
 - Add more nodes via auto-scaling
 - Check resource requests vs node capacity
 - Verify security groups allow pod communication
@@ -965,12 +976,14 @@ kubectl describe pod <pod-name> -n <namespace>
 ### 6.3 DNS Resolution Issues
 
 **Test DNS:**
+
 ```bash
 kubectl run -it --rm debug --image=nicolaka/netcat --restart=Never -- \
   nslookup google.com
 ```
 
 **Check CoreDNS:**
+
 ```bash
 kubectl logs -n kube-system -l k8s-app=kube-dns
 kubectl get svc -n kube-system kube-dns
@@ -979,12 +992,14 @@ kubectl get svc -n kube-system kube-dns
 ### 6.4 High Latency
 
 **Check node resources:**
+
 ```bash
 kubectl top nodes
 kubectl top pods -A
 ```
 
 **Check for evictions:**
+
 ```bash
 kubectl get events -A | grep Evicted
 kubectl get pods -A --field-selector=status.phase=Failed
@@ -1052,23 +1067,23 @@ kubectl get nodes | grep Ready | wc -l
 
 ### AWS EKS - Production Cluster (us-east-1, 3 nodes)
 
-| Component | Unit | Qty | Cost/Unit | Monthly |
-|-----------|------|-----|-----------|---------|
-| EKS Control Plane | per cluster/month | 1 | $73.00 | $73.00 |
-| t3.medium instance-hour | 730 hours/month × 3 nodes | 2,190 | $0.0416 | $91.11 |
-| EBS gp3 storage | per GB/month | 150GB | $0.10 | $15.00 |
-| Data transfer out | per GB | 50 | $0.02 | $1.00 |
-| **Production Subtotal** | | | | **$180.11** |
+| Component               | Unit                      | Qty   | Cost/Unit | Monthly     |
+| ----------------------- | ------------------------- | ----- | --------- | ----------- |
+| EKS Control Plane       | per cluster/month         | 1     | $73.00    | $73.00      |
+| t3.medium instance-hour | 730 hours/month × 3 nodes | 2,190 | $0.0416   | $91.11      |
+| EBS gp3 storage         | per GB/month              | 150GB | $0.10     | $15.00      |
+| Data transfer out       | per GB                    | 50    | $0.02     | $1.00       |
+| **Production Subtotal** |                           |       |           | **$180.11** |
 
 ### AWS EKS - Staging Cluster (us-west-2, 2 nodes)
 
-| Component | Unit | Qty | Cost/Unit | Monthly |
-|-----------|------|-----|-----------|---------|
-| EKS Control Plane | per cluster/month | 1 | $73.00 | $73.00 |
-| t3.small instance-hour | 730 hours/month × 2 nodes | 1,460 | $0.0208 | $30.37 |
-| EBS gp3 storage | per GB/month | 60GB | $0.10 | $6.00 |
-| Data transfer out | per GB | 20 | $0.02 | $0.40 |
-| **Staging Subtotal** | | | | **$109.77** |
+| Component              | Unit                      | Qty   | Cost/Unit | Monthly     |
+| ---------------------- | ------------------------- | ----- | --------- | ----------- |
+| EKS Control Plane      | per cluster/month         | 1     | $73.00    | $73.00      |
+| t3.small instance-hour | 730 hours/month × 2 nodes | 1,460 | $0.0208   | $30.37      |
+| EBS gp3 storage        | per GB/month              | 60GB  | $0.10     | $6.00       |
+| Data transfer out      | per GB                    | 20    | $0.02     | $0.40       |
+| **Staging Subtotal**   |                           |       |           | **$109.77** |
 
 ### **Total Monthly Cost: ~$290/month (for clusters only)**
 
@@ -1095,6 +1110,7 @@ Before proceeding to install monitoring stack:
 **Subtask 2.2: Install Prometheus + Grafana + Loki Stack**
 
 Deliverables:
+
 - Prometheus deployed, scraping metrics from cluster
 - Grafana dashboards configured (Router Health, Performance, Infrastructure)
 - Loki receiving and indexing logs
@@ -1185,12 +1201,14 @@ kubectl port-forward <pod-name> 8080:3001 -n <namespace>
 ### Escalation Path
 
 **For cluster issues:**
+
 1. Check Slack #clarity-router-deploy channel
 2. Review AWS CloudTrail / GCP Cloud Audit Logs
 3. Contact DevOps team lead
 4. Escalate to Cloud infrastructure team if needed
 
 **Documentation:**
+
 - Architecture: `plans/ROUTER_SERVICE_PRODUCTION_DEPLOYMENT_ARCHITECTURE.md`
 - Phase 2 Strategy: `plans/NEXT_TASK_PHASE_2_INFRASTRUCTURE_PROVISIONING.md`
 - This guide: `plans/SUBTASK_2_1_KUBERNETES_CLUSTER_SETUP.md`

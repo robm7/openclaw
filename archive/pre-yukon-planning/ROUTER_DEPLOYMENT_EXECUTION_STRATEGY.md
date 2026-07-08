@@ -9,6 +9,7 @@
 ## Executive Summary
 
 The Router Service production deployment plan has been finalized with a **Kubernetes-based, active-passive HA architecture** targeting:
+
 - **<200ms p99 latency**
 - **99.95% uptime** (max 21.6 min downtime/month)
 - **Automated failover** (primary → standby in <60 seconds)
@@ -20,14 +21,14 @@ The Router Service production deployment plan has been finalized with a **Kubern
 
 ### ✅ Deliverables Completed (Phase 1: Architecture Design)
 
-| Item | Status | Document |
-|------|--------|----------|
-| **1.1 Deployment Architecture** | ✅ | `ROUTER_SERVICE_PRODUCTION_DEPLOYMENT_ARCHITECTURE.md` |
-| **1.2 TLS/HTTPS Strategy** | ✅ | cert-manager + Let's Encrypt (auto-renewal) |
-| **1.3 Kubernetes Manifests** | ✅ | Deployment, Service, ConfigMap, PDB specs |
-| **1.4 Service Discovery & DNS** | ✅ | Route53 failover + CoreDNS (K8s internal) |
-| **1.5 HA/Failover Procedures** | ✅ | Active-passive with health check monitoring |
-| **1.6 SLO/SLA Targets** | ✅ | 99.95% uptime, <200ms p99, <0.1% error rate |
+| Item                            | Status | Document                                               |
+| ------------------------------- | ------ | ------------------------------------------------------ |
+| **1.1 Deployment Architecture** | ✅     | `ROUTER_SERVICE_PRODUCTION_DEPLOYMENT_ARCHITECTURE.md` |
+| **1.2 TLS/HTTPS Strategy**      | ✅     | cert-manager + Let's Encrypt (auto-renewal)            |
+| **1.3 Kubernetes Manifests**    | ✅     | Deployment, Service, ConfigMap, PDB specs              |
+| **1.4 Service Discovery & DNS** | ✅     | Route53 failover + CoreDNS (K8s internal)              |
+| **1.5 HA/Failover Procedures**  | ✅     | Active-passive with health check monitoring            |
+| **1.6 SLO/SLA Targets**         | ✅     | 99.95% uptime, <200ms p99, <0.1% error rate            |
 
 ### Key Architecture Decisions
 
@@ -94,43 +95,41 @@ Phase 4 (Week 6+)     PRODUCTION ROLLOUT (Phase 7)
 ## Phase-by-Phase Breakdown for Implementation
 
 ### Phase 1: Architecture Planning ✅ DONE
+
 **Status:** Complete  
 **Deliverable:** `ROUTER_SERVICE_PRODUCTION_DEPLOYMENT_ARCHITECTURE.md` (48 KB, comprehensive)
 
 ---
 
 ### Phase 2: Infrastructure Provisioning (2-3 weeks)
+
 **Owner:** DevOps / SRE  
 **Start Condition:** After Phase 1 approval  
 **Completion Gate:** Staging cluster ready, all monitoring deployed
 
 #### Subtasks:
+
 - [ ] **2.1** Provision Kubernetes cluster (EKS or GKE)
   - Create cluster with 3 AZs, t3.medium nodes
   - Configure VPC, security groups, IAM roles
   - Install metrics-server, auto-scaler
-  
 - [ ] **2.2** Install observability stack
   - Prometheus (with ServiceMonitor for router)
   - Grafana (dashboards for SLO tracking)
   - Loki (log aggregation)
   - Jaeger (optional: distributed tracing)
-  
 - [ ] **2.3** Configure Ingress + TLS
   - Install ingress-nginx controller
   - Install cert-manager + ClusterIssuer (Let's Encrypt)
   - Create Ingress resource with TLS
-  
 - [ ] **2.4** Set up container registry
   - ECR (AWS) or GCR (GCP) with image retention policy
   - Configure repository scanning (CVE checks)
   - Set up image tagging strategy (v1.2.0, latest, SHA)
-  
 - [ ] **2.5** Network & security
   - VPC CIDR planning (10.0.0.0/16)
   - Network policies (ingress for router, egress to NLP-engine)
   - Security groups (ingress 443, 9090)
-  
 - [ ] **2.6** Namespace isolation
   - Create namespaces: clarity-router (prod), clarity-router-staging
   - Set resource quotas per namespace
@@ -142,37 +141,34 @@ Phase 4 (Week 6+)     PRODUCTION ROLLOUT (Phase 7)
 ---
 
 ### Phase 3: CI/CD Pipeline & GitOps (1-2 weeks)
+
 **Owner:** DevOps / Platform Engineering  
 **Start Condition:** Phase 2 infrastructure ready  
 **Completion Gate:** Automated build & deploy working end-to-end
 
 #### Subtasks:
+
 - [ ] **3.1** GitHub Actions workflow
   - Build Docker image on push to main
   - Run tests (unit, integration)
   - Push to ECR/GCR with tag (SHA, version)
   - Notify deployment pipeline
-  
 - [ ] **3.2** Image tagging & versioning
   - Semantic versioning (v1.2.0)
   - Git SHA tagging (v1.2.0-sha-abc123)
   - `latest` pinned to last stable release
-  
 - [ ] **3.3** GitOps pipeline (ArgoCD or Flux)
   - Repository structure: `/k8s/base`, `/k8s/overlays/{dev,staging,prod}`
   - Automatic sync to staging on every push to main
   - Manual approval gate for production
-  
 - [ ] **3.4** Promotion gates
   - Staging must pass smoke tests before prod approval
   - Manual approval in GitHub (CODEOWNERS check)
   - Slack notification on approval
-  
 - [ ] **3.5** Canary/blue-green deployment
   - RollingUpdate strategy (maxSurge=1, maxUnavailable=0)
   - Prometheus PrometheusRule for auto-rollback
   - Manual canary promotion (5% → 25% → 50% → 100%)
-  
 - [ ] **3.6** Auto-rollback on SLO violation
   - If p99 latency > 300ms for 2 min → rollback
   - If error rate > 5% for 2 min → rollback
@@ -184,35 +180,32 @@ Phase 4 (Week 6+)     PRODUCTION ROLLOUT (Phase 7)
 ---
 
 ### Phase 4: Staging Environment Validation (1 week)
+
 **Owner:** QA / SRE  
 **Start Condition:** Phase 2-3 complete (staging cluster + CI/CD)  
 **Completion Gate:** All validation tests pass, latency baseline established
 
 #### Subtasks:
+
 - [ ] **4.1** Provision staging K8s cluster
   - Deploy to secondary region/zone (us-west-2)
   - Mirror production (same manifests, smaller nodes)
-  
 - [ ] **4.2** Deploy monitoring
   - Prometheus scrape configs for staging router
   - Grafana dashboards (replicate from prod)
-  
 - [ ] **4.3** Load testing
   - 50 req/s for 5 minutes (baseline)
   - Measure latency distribution (p50/p95/p99)
   - Monitor memory/CPU during test
-  
 - [ ] **4.4** SLO validation
   - Verify p99 latency < 200ms baseline
   - Verify error rate < 0.1%
   - Document baseline metrics
-  
 - [ ] **4.5** Failover testing
   - Kill primary pod → traffic routes to standby
   - Kill standby pod → traffic stays on primary
   - Restore pod → no re-balancing
   - Failover detection time < 60 seconds
-  
 - [ ] **4.6** Runbook validation
   - Deploy new version manually (test promotion flow)
   - Rollback manually
@@ -225,36 +218,33 @@ Phase 4 (Week 6+)     PRODUCTION ROLLOUT (Phase 7)
 ---
 
 ### Phase 5: Active-Passive HA Configuration (3-5 days)
+
 **Owner:** SRE  
 **Start Condition:** Phase 4 staging validated  
 **Completion Gate:** Primary + standby both healthy, failover mechanism tested
 
 #### Subtasks:
+
 - [ ] **5.1** Configure primary router instance
   - Deploy router-primary pod (set replica=1 initially)
   - Verify health checks pass
   - Configure Route53 weighted record (weight=100)
-  
 - [ ] **5.2** Configure standby/replica instance
   - Deploy router-standby pod (replica=1)
   - Sync config from primary (ConfigMap)
   - Configure Route53 secondary record (weight=0)
-  
 - [ ] **5.3** Health check monitoring
   - HTTP health check: /health (responds 200)
   - Check interval: 10 seconds
   - Failure threshold: 3 consecutive failures
-  
 - [ ] **5.4** DNS failover mechanism
   - Route53 evaluates health check every 10 seconds
   - TTL: 60 seconds (for fast propagation)
   - Test: Simulate primary failure → DNS switches to standby
-  
 - [ ] **5.5** Failover detection & activation
   - Prometheus alert: "Router primary down"
   - SRE manual: Verify standby health, confirm switch
   - Automate: kubectl patch to promote standby to primary
-  
 - [ ] **5.6** Failover testing (production-like)
   - Kill primary pod in staging (monitor failover time)
   - Synthetic traffic test (client hitting standby)
@@ -266,38 +256,35 @@ Phase 4 (Week 6+)     PRODUCTION ROLLOUT (Phase 7)
 ---
 
 ### Phase 6: Monitoring & Observability (1 week)
+
 **Owner:** SRE / Monitoring Team  
 **Start Condition:** Phase 5 HA configured  
 **Completion Gate:** All dashboards, alerts, runbooks functional
 
 #### Subtasks:
+
 - [ ] **6.1** Prometheus metrics
   - Install ServiceMonitor for router (scrape metrics port 9090)
   - Add recording rules (latency percentiles, error rates)
   - Verify metrics flowing into Prometheus
-  
 - [ ] **6.2** Grafana dashboards
   - Router Health Overview (availability, latency, throughput)
   - Detailed Performance (errors by stage, latency heatmap)
   - Infrastructure Health (node CPU/memory, network I/O)
   - Failover detection frequency
-  
 - [ ] **6.3** Alerting rules
   - Critical: Router unavailable (3 failures)
   - Warning: P99 latency > 200ms (SLO breach)
   - Warning: Error rate > 0.1%
   - Info: Certificate expires in <7 days
-  
 - [ ] **6.4** Distributed tracing
   - OpenTelemetry instrumentation in router
   - Jaeger backend (optional for Phase 5)
   - Trace collection for high-latency requests
-  
 - [ ] **6.5** Log aggregation
   - Loki labels: job, pod, namespace, environment, stage
   - Query examples: router outages, high latency requests
   - Retention: 30 days (prod), 7 days (staging)
-  
 - [ ] **6.6** Incident response playbooks
   - How to diagnose high latency
   - How to diagnose high error rate
@@ -310,41 +297,38 @@ Phase 4 (Week 6+)     PRODUCTION ROLLOUT (Phase 7)
 ---
 
 ### Phase 7: Production Rollout (5-7 days)
+
 **Owner:** DevOps + SRE + Engineering  
 **Start Condition:** Phase 4-6 complete, staging fully validated  
 **Completion Gate:** 100% traffic on production, 48-hour monitoring clean
 
 #### Subtasks:
+
 - [ ] **7.1** Pre-flight checks
   - Image builds successfully
   - All tests pass (unit, integration, load)
   - Staging latency baseline: p99 < 200ms
   - Staging uptime: 99.95%+
   - Production infrastructure ready (health checks OK)
-  
 - [ ] **7.2** Cut over from localhost:3001 to production
   - Update openclaw client: `CLARITYBURST_ROUTER_URL=https://clarity-router.example.com`
   - Rollout to 10% of gateway instances first
   - Monitor for errors (should be none)
-  
 - [ ] **7.3** Update openclaw client config
   - Environment variable injection in deployment manifests
   - Config file updates for static deployments
   - Documentation updated
-  
 - [ ] **7.4** Monitor production metrics (48 hours)
   - Dashboard: Latency, error rate, throughput
   - Alert threshold: P99 < 250ms (5 min)
   - Alert threshold: Error rate < 1%
   - No pod restarts/crashes
-  
 - [ ] **7.5** Gradual traffic migration (canary)
   - 5% traffic (monitor 30 min)
   - 25% traffic (monitor 30 min)
   - 50% traffic (monitor 30 min)
   - 100% traffic (full production)
   - Automatic rollback if SLO violated
-  
 - [ ] **7.6** Post-rollout validation
   - Document actual latency vs baseline
   - Verify failover detection works in prod
@@ -357,11 +341,13 @@ Phase 4 (Week 6+)     PRODUCTION ROLLOUT (Phase 7)
 ---
 
 ### Phase 8: Documentation & Knowledge Transfer (1 week)
+
 **Owner:** SRE + Engineering  
 **Start Condition:** Phase 7 production stabilized (48+ hours)  
 **Completion Gate:** All runbooks, playbooks, video walkthroughs complete
 
 #### Subtasks:
+
 - [ ] **8.1** Operational runbooks
   - Deploy new version (with canary)
   - Rollback procedure
@@ -369,29 +355,24 @@ Phase 4 (Week 6+)     PRODUCTION ROLLOUT (Phase 7)
   - Certificate renewal (manual override)
   - Scaling up/down
   - Node replacement
-  
 - [ ] **8.2** Disaster recovery
   - Cluster recovery (from cluster backup)
   - Data recovery (if applicable)
   - Cross-region failover (future)
-  
 - [ ] **8.3** Scaling policies
   - HPA rules (scale to 6 pods at >80% CPU)
   - Manual scaling steps
   - Cost implications of scaling
-  
 - [ ] **8.4** On-call guide
   - Alert response flowchart
   - Escalation matrix
   - Communication templates
   - SLA breach handling
-  
 - [ ] **8.5** Architecture walkthrough
   - Record 30-min video walkthrough
   - Kubernetes manifests explained
   - Failover mechanism demo
   - Monitoring dashboard tour
-  
 - [ ] **8.6** Archive & audit trail
   - Production manifests version-controlled
   - Deployment logs archived
@@ -431,6 +412,7 @@ Parallel Opportunities: Phase 2 + Phase 3, Phase 4 + Phase 5
 ## Concurrent Work Streams (Recommended)
 
 ### Workstream A: OpenClaw Phase 5 Preparation (NOW)
+
 **Owner:** Core Engineering Team  
 **Timeline:** Week 1-2
 
@@ -446,6 +428,7 @@ Parallel Opportunities: Phase 2 + Phase 3, Phase 4 + Phase 5
 3. **Impact on Router Deployment:** None—these are independent workstreams
 
 ### Workstream B: Router Infrastructure Deployment (NOW, PARALLEL)
+
 **Owner:** DevOps / SRE Team  
 **Timeline:** Week 1-8 (concurrent with OpenClaw work)
 
@@ -461,14 +444,14 @@ Parallel Opportunities: Phase 2 + Phase 3, Phase 4 + Phase 5
 
 ### High-Risk Items & Mitigations
 
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|-----------|
-| **Certificate auto-renewal fails** | Medium | High | Manual override procedure, 30-day alert window |
-| **Latency SLO violation at scale** | Medium | High | Load test staging first, canary rollout (5%) |
-| **Failover takes >60 sec** | Low | High | Health check interval: 10 sec, TTL: 60 sec |
-| **Pod crashes in production** | Low | Medium | Resource limits, readiness/liveness probes |
-| **Data loss on node failure** | Low | High | Kubernetes handles (stateless pods, ConfigMaps) |
-| **DNS propagation delays** | Low | Medium | TTL: 60 sec, manual verification before/after |
+| Risk                               | Probability | Impact | Mitigation                                      |
+| ---------------------------------- | ----------- | ------ | ----------------------------------------------- |
+| **Certificate auto-renewal fails** | Medium      | High   | Manual override procedure, 30-day alert window  |
+| **Latency SLO violation at scale** | Medium      | High   | Load test staging first, canary rollout (5%)    |
+| **Failover takes >60 sec**         | Low         | High   | Health check interval: 10 sec, TTL: 60 sec      |
+| **Pod crashes in production**      | Low         | Medium | Resource limits, readiness/liveness probes      |
+| **Data loss on node failure**      | Low         | High   | Kubernetes handles (stateless pods, ConfigMaps) |
+| **DNS propagation delays**         | Low         | Medium | TTL: 60 sec, manual verification before/after   |
 
 ---
 
@@ -526,19 +509,21 @@ Upon completion of Phase 7, the router should be:
 
 **Document Status:** Ready for Review  
 **Prepared By:** Architecture Team  
-**Date:** February 15, 2026  
+**Date:** February 15, 2026
 
 **Required Approvals:**
+
 - [ ] Engineering Lead
 - [ ] DevOps/SRE Lead
 - [ ] Product/Operations Manager
 - [ ] Security/Compliance Officer
 
 **Approval Signatures:**
-- [ ] ___________________________ Date: ______
-- [ ] ___________________________ Date: ______
-- [ ] ___________________________ Date: ______
-- [ ] ___________________________ Date: ______
+
+- [ ] ************\_\_\_************ Date: **\_\_**
+- [ ] ************\_\_\_************ Date: **\_\_**
+- [ ] ************\_\_\_************ Date: **\_\_**
+- [ ] ************\_\_\_************ Date: **\_\_**
 
 ---
 

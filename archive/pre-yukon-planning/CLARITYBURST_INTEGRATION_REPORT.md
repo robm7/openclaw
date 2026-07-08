@@ -87,14 +87,14 @@ ClarityBurst controls decisions across these stages:
 export async function applyXxxOverrides(context: XxxContext): Promise<OverrideOutcome> {
   // 1. Load pack for stage
   const pack = loadPackOrAbstain(STAGE_ID);
-  
+
   // 2. Derive allowed contracts from runtime capabilities
   const caps = createFullCapabilities();
   const allowedContractIds = deriveAllowedContracts(STAGE_ID, pack, caps);
-  
+
   // 3. Assert allowlist is non-empty (fail-closed)
   assertNonEmptyAllowedContracts(STAGE_ID, allowedContractIds);
-  
+
   // 4. Route through ClarityBurst API
   const routeResult = await routeClarityBurst({
     stageId: STAGE_ID,
@@ -102,9 +102,11 @@ export async function applyXxxOverrides(context: XxxContext): Promise<OverrideOu
     packVersion: pack.pack_version,
     allowedContractIds,
     userText: "",
-    context: { /* stage-specific context */ }
+    context: {
+      /* stage-specific context */
+    },
   });
-  
+
   // 5. Apply local override logic
   const result = applyXxxOverridesImpl(pack, routeResult, context);
   return result;
@@ -182,12 +184,12 @@ interface RuntimeCapabilities {
 
 ```typescript
 interface RouterInput {
-  stageId: string;                      // e.g., "NETWORK_IO"
-  packId: string;                        // e.g., "openclawd.NETWORK_IO"
-  packVersion: string;                   // e.g., "1.0.0"
-  allowedContractIds: string[];          // e.g., ["NET_GET", "NET_POST"]
-  userText: string;                      // Context text (usually empty)
-  context?: Record<string, unknown>;     // Stage-specific context
+  stageId: string; // e.g., "NETWORK_IO"
+  packId: string; // e.g., "openclawd.NETWORK_IO"
+  packVersion: string; // e.g., "1.0.0"
+  allowedContractIds: string[]; // e.g., ["NET_GET", "NET_POST"]
+  userText: string; // Context text (usually empty)
+  context?: Record<string, unknown>; // Stage-specific context
 }
 ```
 
@@ -207,14 +209,14 @@ interface RouterResultOk {
   ok: true;
   data: {
     top1: {
-      contract_id: string;    // e.g., "NET_HTTPS_POST"
-      score: number;          // 0.0-1.0 confidence
+      contract_id: string; // e.g., "NET_HTTPS_POST"
+      score: number; // 0.0-1.0 confidence
     };
     top2: {
-      contract_id: string;    // e.g., "NET_HTTPS_GET"
+      contract_id: string; // e.g., "NET_HTTPS_GET"
       score: number;
     };
-    router_version?: string;  // Optional version identifier
+    router_version?: string; // Optional version identifier
   };
 }
 ```
@@ -224,8 +226,8 @@ interface RouterResultOk {
 ```typescript
 interface RouterResultError {
   ok: false;
-  error: string;              // Error message
-  status?: number;            // HTTP status code if available
+  error: string; // Error message
+  status?: number; // HTTP status code if available
 }
 ```
 
@@ -252,12 +254,7 @@ The router-client handles these error scenarios:
   "stageId": "NETWORK_IO",
   "packId": "openclawd.NETWORK_IO",
   "packVersion": "1.0.0",
-  "allowedContractIds": [
-    "NET_HTTPS_GET",
-    "NET_HTTPS_POST",
-    "NET_HTTPS_PATCH",
-    "NET_HTTPS_DELETE"
-  ],
+  "allowedContractIds": ["NET_HTTPS_GET", "NET_HTTPS_POST", "NET_HTTPS_PATCH", "NET_HTTPS_DELETE"],
   "userText": "",
   "context": {
     "operation": "POST",
@@ -304,10 +301,7 @@ The router-client handles these error scenarios:
   "stageId": "SHELL_EXEC",
   "packId": "openclawd.SHELL_EXEC",
   "packVersion": "1.0.0",
-  "allowedContractIds": [
-    "SHELL_RUN_COMMAND",
-    "SHELL_RUN_SCRIPT"
-  ],
+  "allowedContractIds": ["SHELL_RUN_COMMAND", "SHELL_RUN_SCRIPT"],
   "userText": "run npm test",
   "context": {
     "command": "npm test",
@@ -344,11 +338,7 @@ The router-client handles these error scenarios:
   "stageId": "FILE_SYSTEM_OPS",
   "packId": "openclawd.FILE_SYSTEM_OPS",
   "packVersion": "1.0.0",
-  "allowedContractIds": [
-    "FS_READ_FILE",
-    "FS_WRITE_FILE",
-    "FS_CREATE_DIR"
-  ],
+  "allowedContractIds": ["FS_READ_FILE", "FS_WRITE_FILE", "FS_CREATE_DIR"],
   "userText": "",
   "context": {
     "operation": "write",
@@ -384,11 +374,7 @@ The router-client handles these error scenarios:
   "stageId": "TOOL_DISPATCH_GATE",
   "packId": "openclawd.TOOL_DISPATCH_GATE",
   "packVersion": "1.0.0",
-  "allowedContractIds": [
-    "TOOL_WEB_SEARCH",
-    "TOOL_CALCULATOR",
-    "TOOL_EMAIL"
-  ],
+  "allowedContractIds": ["TOOL_WEB_SEARCH", "TOOL_CALCULATOR", "TOOL_EMAIL"],
   "userText": "search for latest news",
   "context": {
     "toolName": "web_search"
@@ -423,11 +409,7 @@ The router-client handles these error scenarios:
   "stageId": "MEMORY_MODIFY",
   "packId": "openclawd.MEMORY_MODIFY",
   "packVersion": "1.0.0",
-  "allowedContractIds": [
-    "MEM_UPDATE_SESSION",
-    "MEM_ADD_CONTEXT",
-    "MEM_CLEAR_SESSION"
-  ],
+  "allowedContractIds": ["MEM_UPDATE_SESSION", "MEM_ADD_CONTEXT", "MEM_CLEAR_SESSION"],
   "userText": "",
   "context": {
     "operation": "update",
@@ -463,10 +445,7 @@ The router-client handles these error scenarios:
   "stageId": "SUBAGENT_SPAWN",
   "packId": "openclawd.SUBAGENT_SPAWN",
   "packVersion": "1.0.0",
-  "allowedContractIds": [
-    "SUBAGENT_CREATE",
-    "SUBAGENT_DELEGATE"
-  ],
+  "allowedContractIds": ["SUBAGENT_CREATE", "SUBAGENT_DELEGATE"],
   "userText": "",
   "context": {
     "agentType": "research_agent",
@@ -504,7 +483,7 @@ Operation is approved, execution continues.
 ```typescript
 interface ProceedOutcome {
   outcome: "PROCEED";
-  contractId: string | null;  // Routed contract ID
+  contractId: string | null; // Routed contract ID
 }
 ```
 
@@ -517,7 +496,7 @@ interface AbstainConfirmOutcome {
   outcome: "ABSTAIN_CONFIRM";
   reason: "CONFIRM_REQUIRED";
   contractId: string;
-  instructions?: string;  // How to obtain confirmation
+  instructions?: string; // How to obtain confirmation
 }
 ```
 
@@ -534,10 +513,15 @@ Operation blocked pending clarification (fail-closed). Reasons include:
 ```typescript
 interface AbstainClarifyOutcome {
   outcome: "ABSTAIN_CLARIFY";
-  reason: "LOW_DOMINANCE_OR_CONFIDENCE" | "PACK_POLICY_INCOMPLETE" | "router_outage" | "capability_denied" | "ROUTER_UNAVAILABLE";
+  reason:
+    | "LOW_DOMINANCE_OR_CONFIDENCE"
+    | "PACK_POLICY_INCOMPLETE"
+    | "router_outage"
+    | "capability_denied"
+    | "ROUTER_UNAVAILABLE";
   contractId: string | null;
   stageId?: string;
-  instructions?: string;  // Remediation guidance
+  instructions?: string; // Remediation guidance
 }
 ```
 
@@ -548,17 +532,17 @@ interface AbstainClarifyOutcome {
 After router returns top1/top2 matches, local thresholds are applied:
 
 ```typescript
-const minConfidenceT = pack.thresholds.min_confidence_T;        // e.g., 0.55
-const dominanceMarginDelta = pack.thresholds.dominance_margin_Delta;  // e.g., 0.10
+const minConfidenceT = pack.thresholds.min_confidence_T; // e.g., 0.55
+const dominanceMarginDelta = pack.thresholds.dominance_margin_Delta; // e.g., 0.10
 
-const top1Score = routeResult.data.top1.score;  // e.g., 0.92
-const top2Score = routeResult.data.top2.score;  // e.g., 0.17
+const top1Score = routeResult.data.top1.score; // e.g., 0.92
+const top2Score = routeResult.data.top2.score; // e.g., 0.17
 
 // Check confidence: top1 must be at or above threshold
 const lowConfidence = top1Score < minConfidenceT;
 
 // Check dominance: top1 must exceed top2 by margin
-const lowDominance = (top1Score - top2Score) < dominanceMarginDelta;
+const lowDominance = top1Score - top2Score < dominanceMarginDelta;
 
 if (lowConfidence || lowDominance) {
   return { outcome: "ABSTAIN_CLARIFY", reason: "LOW_DOMINANCE_OR_CONFIDENCE" };
@@ -616,8 +600,8 @@ const configManager = new ClarityBurstConfigManager();
 try {
   configManager.initialize();
 } catch (error) {
-  console.error('[ClarityBurst] Failed to initialize configuration');
-  process.exit(1);  // Exits immediately
+  console.error("[ClarityBurst] Failed to initialize configuration");
+  process.exit(1); // Exits immediately
 }
 ```
 
@@ -712,15 +696,15 @@ ClarityBurst includes comprehensive tripwire tests validating:
 
 ## Summary
 
-| Aspect | Details |
-|--------|---------|
-| **Integration Type** | HTTP POST to router service |
-| **Endpoint** | `POST {CLARITYBURST_ROUTER_URL}/api/route` |
-| **Request Timeout** | 100-5000ms (default 1200ms) |
-| **Response Format** | JSON with top1/top2 contract matches + scores |
-| **Decision Points** | 12 gating stages (SHELL_EXEC, NETWORK_IO, FILE_SYSTEM_OPS, etc.) |
-| **Failure Mode** | Fail-closed (blocks operations on uncertainty) |
-| **Config Validation** | Fails fast at startup if invalid |
-| **Pack Validation** | No silent defaults; missing fields block operations |
-| **Threshold Logic** | Confidence + dominance checks per pack definition |
-| **Confirmation Workflow** | HIGH/CRITICAL contracts require user confirmation |
+| Aspect                    | Details                                                          |
+| ------------------------- | ---------------------------------------------------------------- |
+| **Integration Type**      | HTTP POST to router service                                      |
+| **Endpoint**              | `POST {CLARITYBURST_ROUTER_URL}/api/route`                       |
+| **Request Timeout**       | 100-5000ms (default 1200ms)                                      |
+| **Response Format**       | JSON with top1/top2 contract matches + scores                    |
+| **Decision Points**       | 12 gating stages (SHELL_EXEC, NETWORK_IO, FILE_SYSTEM_OPS, etc.) |
+| **Failure Mode**          | Fail-closed (blocks operations on uncertainty)                   |
+| **Config Validation**     | Fails fast at startup if invalid                                 |
+| **Pack Validation**       | No silent defaults; missing fields block operations              |
+| **Threshold Logic**       | Confidence + dominance checks per pack definition                |
+| **Confirmation Workflow** | HIGH/CRITICAL contracts require user confirmation                |

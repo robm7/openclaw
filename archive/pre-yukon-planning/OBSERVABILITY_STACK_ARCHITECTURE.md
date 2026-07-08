@@ -1,4 +1,5 @@
 # Observability Infrastructure Architecture
+
 ## Production-Grade Monitoring Across Dual Kubernetes Clusters
 
 **Document Version:** 1.0  
@@ -63,17 +64,17 @@ This document defines a comprehensive, production-grade observability stack depl
 
 ### 1.2 Component Stack
 
-| Layer | Technology | Version | Purpose |
-|-------|-----------|---------|---------|
-| **Metrics** | Prometheus | 2.48+ | Scrape router & k8s metrics, 15-day retention |
-| **Log Aggregation** | Loki | 2.9+ | Collect/index logs, 30-day retention |
-| **Visualization** | Grafana | 10.0+ | Dashboards, alerting, RBAC |
-| **Alert Routing** | AlertManager | 0.26+ | Route alerts to Slack/PagerDuty |
-| **Log Shipper** | Promtail | 2.9+ | DaemonSet to collect pod logs |
-| **K8s Metrics** | kube-state-metrics | 2.10+ | Export k8s object metrics |
-| **Storage** | AWS EFS | - | Shared persistent volume for stack |
-| **Package Manager** | Helm | 3.12+ | Deploy stack components |
-| **Orchestration** | Kubernetes | 1.28+ | EKS clusters (prod + staging) |
+| Layer               | Technology         | Version | Purpose                                       |
+| ------------------- | ------------------ | ------- | --------------------------------------------- |
+| **Metrics**         | Prometheus         | 2.48+   | Scrape router & k8s metrics, 15-day retention |
+| **Log Aggregation** | Loki               | 2.9+    | Collect/index logs, 30-day retention          |
+| **Visualization**   | Grafana            | 10.0+   | Dashboards, alerting, RBAC                    |
+| **Alert Routing**   | AlertManager       | 0.26+   | Route alerts to Slack/PagerDuty               |
+| **Log Shipper**     | Promtail           | 2.9+    | DaemonSet to collect pod logs                 |
+| **K8s Metrics**     | kube-state-metrics | 2.10+   | Export k8s object metrics                     |
+| **Storage**         | AWS EFS            | -       | Shared persistent volume for stack            |
+| **Package Manager** | Helm               | 3.12+   | Deploy stack components                       |
+| **Orchestration**   | Kubernetes         | 1.28+   | EKS clusters (prod + staging)                 |
 
 ---
 
@@ -85,22 +86,23 @@ This document defines a comprehensive, production-grade observability stack depl
 # Namespace hierarchy
 ─ clarity-router (Production router pods)
   └ Labels: environment=production
-  
+
 ─ clarity-router-staging (Staging router pods)
   └ Labels: environment=staging
-  
+
 ─ monitoring (Observability stack - shared across both environments)
   └ Labels: app=monitoring
   └ Monitors: both production and staging clusters
-  
+
 ─ cert-manager (TLS certificate management)
   └ Labels: app=cert-manager
-  
+
 ─ kube-system (Kubernetes core services)
   └ CoreDNS, kube-proxy, aws-node, etc.
 ```
 
 **Rationale**: Single monitoring namespace deployed in both prod and staging clusters allows:
+
 - Centralized observability configuration (easier to sync)
 - Shared Prometheus scrape configs for both router instances
 - Cost efficiency (one monitoring stack per cluster)
@@ -114,23 +116,23 @@ Observability Stack Resources (total):
   Prometheus:
     - 2 replicas × (CPU: 500m, Memory: 2Gi)
     - PVC: 100GB EFS (SSD tier)
-  
+
   Grafana:
     - 2 replicas × (CPU: 100m, Memory: 512Mi)
     - PVC: 10GB EFS (config/dashboards)
-  
+
   Loki:
     - 2 replicas × (CPU: 250m, Memory: 1Gi)
     - PVC: 150GB EFS (log index + chunks)
-  
+
   AlertManager:
     - 2 replicas × (CPU: 50m, Memory: 128Mi)
     - ConfigMap: 5MB (routing rules)
-  
+
   Promtail (DaemonSet):
     - 1 per node × (CPU: 50m, Memory: 64Mi)
     - No persistent storage
-  
+
   kube-state-metrics:
     - 1 replica × (CPU: 100m, Memory: 128Mi)
 
@@ -142,12 +144,13 @@ Observability Stack Resources (total):
 
 ```yaml
 (Same as production but scaled for 2 nodes)
-  
+
   TOTAL: ~1.8 CPU, ~5.5 GB memory
          260GB persistent storage (EFS)
 ```
 
 **Node Capacity Check:**
+
 - Prod nodes: t3.medium (2 vCPU, 4GB RAM) × 3 = 6 vCPU, 12GB total
 - Observability overhead: 1.8 CPU (30%), 5.5GB memory (46%) ✅ Safe margin
 - Staging nodes: t3.small (2 vCPU, 2GB RAM) × 2 = 4 vCPU, 4GB total
@@ -183,7 +186,7 @@ for AZ in a b c; do
     --region us-east-1 \
     --query 'Subnets[0].SubnetId' \
     --output text)
-  
+
   aws efs create-mount-target \
     --file-system-id $EFS_ID \
     --subnet-id $SUBNET \
@@ -216,7 +219,7 @@ metadata:
   name: efs-sc
 provisioner: efs.csi.aws.com
 parameters:
-  basePath: "/dynamic_provisioning"  # Subdirectory for multi-tenancy
+  basePath: "/dynamic_provisioning" # Subdirectory for multi-tenancy
   directoryPerms: "700"
 
 ---
@@ -228,7 +231,7 @@ metadata:
   namespace: monitoring
 spec:
   accessModes:
-    - ReadWriteMany  # Required for Prometheus replication
+    - ReadWriteMany # Required for Prometheus replication
   storageClassName: efs-sc
   resources:
     requests:
@@ -243,7 +246,7 @@ metadata:
   namespace: monitoring
 spec:
   accessModes:
-    - ReadWriteMany  # For distributed log chunks
+    - ReadWriteMany # For distributed log chunks
   storageClassName: efs-sc
   resources:
     requests:
@@ -258,7 +261,7 @@ metadata:
   namespace: monitoring
 spec:
   accessModes:
-    - ReadWriteOnce  # Grafana doesn't need multi-writer
+    - ReadWriteOnce # Grafana doesn't need multi-writer
   storageClassName: efs-sc
   resources:
     requests:
@@ -271,8 +274,8 @@ spec:
 # Prometheus Retention (15 days)
 prometheus:
   retention: 15d
-  retentionSize: "90GB"  # Hard limit before compaction
-  
+  retentionSize: "90GB" # Hard limit before compaction
+
 # Loki Retention (30 days)
 loki:
   ingester:
@@ -280,13 +283,14 @@ loki:
     max_chunk_age: 2h
   table_manager:
     retention_deletes_enabled: true
-    retention_period: 720h  # 30 days
+    retention_period: 720h # 30 days
     poll_interval: 10m
-    
+
 # AlertManager History (7 days)
 alertmanager:
   storage:
-    retention: 168h  # 7 days
+    retention: 168h # 7 days
+
 
 # Backup Strategy (for EFS)
 # Daily snapshots of both Prometheus and Loki PVCs
@@ -309,20 +313,20 @@ metadata:
   name: router-metrics
   namespace: clarity-router
   labels:
-    release: prometheus  # Prometheus operator label
+    release: prometheus # Prometheus operator label
 spec:
   selector:
     matchLabels:
       app: router
   endpoints:
-  - port: metrics  # Assumes pod.spec.ports.name=metrics
-    interval: 30s   # Scrape interval
-    path: /metrics
-    scheme: https
-    tlsConfig:
-      insecureSkipVerify: true  # Self-signed certs in dev
-    labels:
-      job: clarityrouter
+    - port: metrics # Assumes pod.spec.ports.name=metrics
+      interval: 30s # Scrape interval
+      path: /metrics
+      scheme: https
+      tlsConfig:
+        insecureSkipVerify: true # Self-signed certs in dev
+      labels:
+        job: clarityrouter
 
 ---
 # Metrics endpoints exposed:
@@ -348,8 +352,8 @@ spec:
     matchLabels:
       app.kubernetes.io/name: kube-state-metrics
   endpoints:
-  - port: http-metrics
-    interval: 30s
+    - port: http-metrics
+      interval: 30s
 
 ---
 # ServiceMonitor for kubelet (node metrics)
@@ -360,11 +364,11 @@ metadata:
   namespace: kube-system
 spec:
   endpoints:
-  - port: https-metrics
-    interval: 30s
-    relabelings:
-    - sourceLabels: [__meta_kubernetes_node_name]
-      targetLabel: node
+    - port: https-metrics
+      interval: 30s
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_node_name]
+          targetLabel: node
 ```
 
 ### 4.2 Prometheus Configuration (values-prometheus.yaml)
@@ -377,19 +381,19 @@ prometheus:
     scrape_timeout: 10s
     evaluation_interval: 30s
     external_labels:
-      cluster: "production"  # or "staging"
-      environment: "prod"    # or "staging"
-      region: "us-east-1"    # or "us-west-2"
+      cluster: "production" # or "staging"
+      environment: "prod" # or "staging"
+      region: "us-east-1" # or "us-west-2"
 
   # High Availability (2 replicas)
   replicaCount: 2
-  
+
   # Storage
   persistentVolume:
     enabled: true
     size: 100Gi
     storageClassName: efs-sc
-    
+
   # Resources
   resources:
     requests:
@@ -398,28 +402,28 @@ prometheus:
     limits:
       cpu: 1000m
       memory: 4Gi
-  
+
   # Pod Anti-Affinity (separate nodes)
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchExpressions:
-          - key: app
-            operator: In
-            values:
-            - prometheus
-        topologyKey: kubernetes.io/hostname
-  
+        - labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - prometheus
+          topologyKey: kubernetes.io/hostname
+
   # Retention Policies
   retention: 15d
   retentionSize: "90GB"
-  
+
   # Service Monitor selectors (auto-discover ServiceMonitors)
   serviceMonitorSelector:
     matchLabels:
       release: prometheus
-  
+
   # Recording Rules (pre-computed SLO metrics)
   recordingRules: |
     groups:
@@ -451,13 +455,13 @@ prometheus:
 
 ### 4.3 Scrape Configuration Details
 
-| Target | Interval | Timeout | Port | Labels |
-|--------|----------|---------|------|--------|
-| clarityrouter | 30s | 10s | 9090 | job=clarityrouter, environment={prod,staging} |
-| kube-state-metrics | 30s | 10s | 8080 | job=kube-state-metrics |
-| kubelet | 30s | 10s | 10250 | job=kubelet, node={node-name} |
-| node-exporter | 30s | 10s | 9100 | job=node-exporter, node={node-name} |
-| Prometheus self | 15s | 5s | 9090 | job=prometheus |
+| Target             | Interval | Timeout | Port  | Labels                                        |
+| ------------------ | -------- | ------- | ----- | --------------------------------------------- |
+| clarityrouter      | 30s      | 10s     | 9090  | job=clarityrouter, environment={prod,staging} |
+| kube-state-metrics | 30s      | 10s     | 8080  | job=kube-state-metrics                        |
+| kubelet            | 30s      | 10s     | 10250 | job=kubelet, node={node-name}                 |
+| node-exporter      | 30s      | 10s     | 9100  | job=node-exporter, node={node-name}           |
+| Prometheus self    | 15s      | 5s      | 9090  | job=prometheus                                |
 
 ---
 
@@ -479,13 +483,13 @@ Panels:
    Query: avg_over_time(slo:clarityrouter_availability:5m[4h])
    Thresholds: 99.95% (green), 99% (yellow), <99% (red)
    Unit: percent
-   
+
 2. P99 Latency Gauge (Top-Center)
    Title: "P99 Latency (p99 < 200ms)"
    Query: histogram_quantile(0.99, rate(clarityrouter_request_latency_ms[5m]))
    Thresholds: <150ms (green), <200ms (yellow), >250ms (red)
    Unit: milliseconds
-   
+
 3. Error Rate Gauge (Top-Right)
    Title: "Error Rate (last 5m)"
    Query: slo:clarityrouter_error_rate:5m
@@ -516,14 +520,14 @@ Panels:
      /
      kube_pod_status_phase{pod=~"router-.*"}
    Columns: Pod Name, Status, Ready, Restarts, Age
-   
+
 7. Pod Resource Usage (Bottom-Right)
    Title: "Pod Resource Consumption"
    Queries:
      - sum(rate(container_cpu_usage_seconds_total{pod=~"router-.*"}[5m])) → CPU
      - sum(container_memory_usage_bytes{pod=~"router-.*"}) / 1e9 → Memory
    Type: Gauge/stat panel
-   
+
 8. Alerts Active (Footer)
    Title: "Active Alerts"
    Query: ALERTS{job="clarityrouter"}
@@ -549,40 +553,40 @@ Panels:
    Y-axis: Latency buckets (10ms, 50ms, 100ms, 200ms, 500ms, 1000ms+)
    Color scale: Blue (low) → Red (high)
    Tooltip: Shows percentile distribution
-   
+
 2. Error Breakdown by Type (Middle-Left)
    Title: "Errors by Stage"
    Query: sum by (stage) (rate(clarityrouter_errors_total[5m]))
    Type: Bar chart (horizontal)
    Categories: TOOL_DISPATCH_GATE, NETWORK_IO, PACK_INCOMPLETE, ROUTER_OUTAGE
    Color: Red gradient
-   
+
 3. Request Count by Outcome (Middle-Center)
    Title: "Requests by Outcome (5m)"
    Query: sum by (outcome) (rate(clarityrouter_requests_total[5m]))
    Type: Pie chart
    Slices: SUCCESS, ABSTAIN_CLARIFY, FAIL_CLOSED, FAIL_OPEN
-   
+
 4. Router Availability Gauge (Middle-Right)
    Title: "Current Availability"
    Query: clarityrouter_router_availability
    Type: Gauge
    Thresholds: 1.0 (green), 0.5 (yellow), 0.0 (red)
-   
+
 5. Pod Resource Detailed (Bottom-Left)
    Title: "CPU Usage per Pod"
    Query: rate(container_cpu_usage_seconds_total{pod=~"router-.*"}[5m])
    Type: Graph (multi-series, one per pod)
    Legend: Pod name
    Y-axis: cores
-   
+
 6. Memory Trend (Bottom-Center)
    Title: "Memory Usage Trend"
    Query: container_memory_usage_bytes{pod=~"router-.*"}
    Type: Graph
    Y-axis: Bytes (human readable as GB/MB)
    Alert lines: 800MB (warning), 1GB (critical)
-   
+
 7. Network I/O per Pod (Bottom-Right)
    Title: "Network I/O (bytes/sec)"
    Queries:
@@ -609,21 +613,21 @@ Panels:
      (1 - avg by (node) (rate(node_cpu_seconds_total{mode="idle"}[5m]))) * 100
    Type: Gauge array
    Thresholds: <50% (green), <80% (yellow), >80% (red)
-   
+
 2. Node Memory Status (Top-Center, per node)
    Title: "Node Memory Usage"
    Query:
      (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
    Type: Gauge array
    Thresholds: <60% (green), <80% (yellow), >80% (red)
-   
+
 3. Node Disk Usage (Top-Right, per node)
    Title: "Node Disk Usage (/)"
    Query:
      (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100
    Type: Gauge array
    Thresholds: <70% (green), <85% (yellow), >85% (red)
-   
+
 4. Network I/O per Node (Middle-Left)
    Title: "Node Network I/O"
    Queries:
@@ -631,7 +635,7 @@ Panels:
      - rate(node_network_transmit_bytes_total{device!="lo"}[5m]) → TX
    Type: Graph (stacked)
    Y-axis: bytes/sec
-   
+
 5. PVC Usage Status (Middle-Center)
    Title: "Persistent Volume Claims"
    Query: |
@@ -643,27 +647,27 @@ Panels:
    Type: Table
    Columns: PVC Name, Namespace, Used %, Size GB, Available
    Color cells: Green <60%, Yellow 60-80%, Red >80%
-   
+
 6. Pod Restart Tracking (Middle-Right)
    Title: "Pod Restart Count"
    Query: increase(kube_pod_container_status_restarts_total[1h])
    Type: Table (filtered to restarts > 0)
    Columns: Pod, Container, Restarts (1h), Status
    Alert: Highlight > 3 restarts in 1h
-   
+
 7. Ingress/ALB Health (Bottom-Left)
    Title: "Load Balancer Status"
    Query: aws_alb_unhealthy_host_count{load_balancer=~".*router.*"}
    Type: Graph
    Threshold: 0 (healthy), >0 (alert)
    Y-axis: Unhealthy targets
-   
+
 8. Certificate Expiry (Bottom-Center)
    Title: "TLS Certificate Expiry"
    Query: certmanager_certificate_expiration_timestamp_seconds
    Type: Stat (with color coding)
    Color: >30 days (green), 7-30 days (yellow), <7 days (red)
-   
+
 9. Namespace Resource Quota (Bottom-Right)
    Title: "Resource Quota Usage"
    Queries:
@@ -698,42 +702,42 @@ spec:
     spec:
       serviceAccountName: promtail
       containers:
-      - name: promtail
-        image: grafana/promtail:2.9.3
-        args:
-          - -config.file=/etc/promtail/promtail.yaml
-          - -client.url=http://loki:3100/loki/api/v1/push
-        env:
-        - name: HOSTNAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-        volumeMounts:
-        - name: config
-          mountPath: /etc/promtail
-        - name: varlog
-          mountPath: /var/log
-          readOnly: true
-        - name: varlibdockercontainers
-          mountPath: /var/lib/docker/containers
-          readOnly: true
-        resources:
-          requests:
-            cpu: 50m
-            memory: 64Mi
-          limits:
-            cpu: 100m
-            memory: 128Mi
+        - name: promtail
+          image: grafana/promtail:2.9.3
+          args:
+            - -config.file=/etc/promtail/promtail.yaml
+            - -client.url=http://loki:3100/loki/api/v1/push
+          env:
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: config
+              mountPath: /etc/promtail
+            - name: varlog
+              mountPath: /var/log
+              readOnly: true
+            - name: varlibdockercontainers
+              mountPath: /var/lib/docker/containers
+              readOnly: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
       volumes:
-      - name: config
-        configMap:
-          name: promtail-config
-      - name: varlog
-        hostPath:
-          path: /var/log
-      - name: varlibdockercontainers
-        hostPath:
-          path: /var/lib/docker/containers
+        - name: config
+          configMap:
+            name: promtail-config
+        - name: varlog
+          hostPath:
+            path: /var/log
+        - name: varlibdockercontainers
+          hostPath:
+            path: /var/lib/docker/containers
 ```
 
 **Promtail Configuration** (ConfigMap):
@@ -751,10 +755,10 @@ data:
       
     clients:
     - url: http://loki:3100/loki/api/v1/push
-    
+
     positions:
       filename: /tmp/positions.yaml
-    
+
     scrape_configs:
     # Kubernetes pod logs
     - job_name: kubernetes-pods
@@ -797,7 +801,7 @@ loki:
   config: |
     # Global
     auth_enabled: false
-    
+
     # Distributor (receives log lines)
     distributor:
       ring:
@@ -806,7 +810,7 @@ loki:
       rate_limit_enabled: true
       rate_limit: 10000000  # 10M logs/sec burst
       rate_limit_burst: 15000000
-    
+
     # Ingester (writes to local storage)
     ingester:
       chunk_idle_period: 3m
@@ -817,7 +821,7 @@ loki:
         ring:
           kvstore:
             store: inmemory
-    
+
     # Limits
     limits_config:
       enforce_metric_name: false
@@ -825,7 +829,7 @@ loki:
       reject_old_samples_max_age: 720h  # 30 days
       max_streams_per_user: 100000
       max_entries_limit_per_second: 1000
-    
+
     # Storage (file-based for local development, S3 for production)
     schema_config:
       configs:
@@ -836,11 +840,11 @@ loki:
         index:
           prefix: index_
           period: 24h
-    
+
     storage_config:
       filesystem:
         directory: /loki/storage
-    
+
     # Table Manager (handles retention)
     table_manager:
       retention_deletes_enabled: true
@@ -851,7 +855,7 @@ loki:
 # Storage
 persistence:
   enabled: true
-  size: 150Gi  # Log index + chunks
+  size: 150Gi # Log index + chunks
   storageClassName: efs-sc
 ```
 
@@ -891,7 +895,7 @@ alertmanager:
       resolve_timeout: 5m
       slack_api_url: "${SLACK_WEBHOOK_URL}"
       pagerduty_url: "https://events.pagerduty.com/v2/enqueue"
-    
+
     route:
       receiver: "default"
       group_by: ["alertname", "job", "instance"]
@@ -914,7 +918,7 @@ alertmanager:
         receiver: "slack-warnings"
         group_wait: 1m
         repeat_interval: 6h
-    
+
     receivers:
     # PagerDuty for critical incidents
     - name: "pagerduty-critical"
@@ -926,7 +930,7 @@ alertmanager:
           cluster: "{{ .GroupLabels.cluster }}"
           alerts: "{{ .Alerts | len }}"
         grouping: "{{ .GroupLabels.alertname }}"
-    
+
     # Slack for warnings & info
     - name: "slack-warnings"
       slack_configs:
@@ -941,7 +945,7 @@ alertmanager:
           • {{ .Labels.instance }} - {{ .Annotations.description }}
           {{ end }}
         send_resolved: true
-    
+
     # Default receiver (catch-all)
     - name: "default"
       slack_configs:
@@ -961,152 +965,151 @@ metadata:
   namespace: monitoring
 spec:
   groups:
-  - name: clarityrouter.alerts
-    interval: 30s
-    rules:
-    
-    # CRITICAL: Router unavailable
-    - alert: RouterUnavailable
-      expr: clarityrouter_router_availability == 0
-      for: 2m
-      labels:
-        severity: critical
-        job: clarityrouter
-      annotations:
-        summary: "ClarityBurst Router is unavailable"
-        description: "Router pod(s) not responding to health checks for >2 minutes"
-        runbook: "docs/runbooks/router-unavailable.md"
-    
-    # CRITICAL: P99 Latency SLO breach (sustained)
-    - alert: LatencySLOBreach
-      expr: |
-        histogram_quantile(0.99, rate(clarityrouter_request_latency_ms[5m])) > 250
-      for: 5m
-      labels:
-        severity: critical
-        job: clarityrouter
-      annotations:
-        summary: "Router p99 latency exceeds SLO ({{ $value | humanize }}ms)"
-        description: "p99 latency > 250ms for >5 minutes (SLO: <200ms)"
-        dashboard: "https://grafana.example.com/d/router-performance"
-    
-    # CRITICAL: Error rate spike
-    - alert: HighErrorRate
-      expr: |
-        (
-          sum(rate(clarityrouter_errors_total[2m]))
-          /
-          sum(rate(clarityrouter_requests_total[2m]))
-        ) > 0.01  # 1% error rate
-      for: 2m
-      labels:
-        severity: critical
-        job: clarityrouter
-      annotations:
-        summary: "Router error rate critical ({{ $value | humanizePercentage }})"
-        description: "Error rate exceeds 1% threshold"
-    
-    # CRITICAL: All router pods down
-    - alert: AllPodsDown
-      expr: |
-        count(kube_pod_status_phase{pod=~"router-.*", phase="Running"})
-        /
-        count(kube_pod_status_phase{pod=~"router-.*"})
-        == 0
-      for: 1m
-      labels:
-        severity: critical
-        job: clarityrouter
-      annotations:
-        summary: "All router pods are down"
-        description: "No running router pods detected"
-    
-    # WARNING: Latency degradation (SLO warning)
-    - alert: LatencyDegraded
-      expr: |
-        histogram_quantile(0.99, rate(clarityrouter_request_latency_ms[5m])) > 200
-      for: 10m
-      labels:
-        severity: warning
-        job: clarityrouter
-      annotations:
-        summary: "Router latency elevated ({{ $value | humanize }}ms)"
-        description: "p99 latency > 200ms for >10 minutes (approaching SLO limit)"
-    
-    # WARNING: Certificate expiry soon
-    - alert: CertificateExpiryWarning
-      expr: |
-        (certmanager_certificate_expiration_timestamp_seconds - time())
-        < 7 * 24 * 3600  # 7 days
-      labels:
-        severity: warning
-        job: certmanager
-      annotations:
-        summary: "TLS certificate expiring in {{ $value | humanizeDuration }}"
-        description: "Certificate will expire in <7 days"
-    
-    # WARNING: Pod restart loop
-    - alert: PodRestartLoop
-      expr: |
-        increase(kube_pod_container_status_restarts_total{pod=~"router-.*"}[1h]) > 3
-      labels:
-        severity: warning
-        job: kubernetes
-      annotations:
-        summary: "Pod {{ $labels.pod }} restarting frequently"
-        description: ">3 restarts in 1 hour"
-    
-    # WARNING: High CPU usage
-    - alert: HighCPUUsage
-      expr: |
-        sum(rate(container_cpu_usage_seconds_total{pod=~"router-.*"}[5m])) > 0.8
-      for: 10m
-      labels:
-        severity: warning
-        job: kubernetes
-      annotations:
-        summary: "Router pod CPU usage high ({{ $value | humanizePercentage }})"
-        description: "Average CPU >80% for >10 minutes"
-    
-    # WARNING: High memory usage
-    - alert: HighMemoryUsage
-      expr: |
-        sum(container_memory_usage_bytes{pod=~"router-.*"}) / 1e9 > 0.8
-      for: 10m
-      labels:
-        severity: warning
-        job: kubernetes
-      annotations:
-        summary: "Router pod memory usage high ({{ $value | humanize }}GB)"
-        description: "Memory usage >800MB for >10 minutes (potential leak)"
-    
-    # CRITICAL: Node CPU exhaustion
-    - alert: NodeCPUExhaustion
-      expr: |
-        (
-          1 - avg by (node) (rate(node_cpu_seconds_total{mode="idle"}[5m]))
-        ) > 0.95  # >95% utilized
-      for: 5m
-      labels:
-        severity: critical
-        job: kubernetes
-      annotations:
-        summary: "Node {{ $labels.node }} CPU near max"
-        description: "CPU utilization >95% (may impact pod scheduling)"
-    
-    # WARNING: Disk usage high
-    - alert: DiskUsageHigh
-      expr: |
-        (
-          1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})
-        ) > 0.85  # >85% utilized
-      for: 10m
-      labels:
-        severity: warning
-        job: kubernetes
-      annotations:
-        summary: "Node {{ $labels.node }} disk {{ $value | humanizePercentage }} full"
-        description: "Disk usage >85% on node"
+    - name: clarityrouter.alerts
+      interval: 30s
+      rules:
+        # CRITICAL: Router unavailable
+        - alert: RouterUnavailable
+          expr: clarityrouter_router_availability == 0
+          for: 2m
+          labels:
+            severity: critical
+            job: clarityrouter
+          annotations:
+            summary: "ClarityBurst Router is unavailable"
+            description: "Router pod(s) not responding to health checks for >2 minutes"
+            runbook: "docs/runbooks/router-unavailable.md"
+
+        # CRITICAL: P99 Latency SLO breach (sustained)
+        - alert: LatencySLOBreach
+          expr: |
+            histogram_quantile(0.99, rate(clarityrouter_request_latency_ms[5m])) > 250
+          for: 5m
+          labels:
+            severity: critical
+            job: clarityrouter
+          annotations:
+            summary: "Router p99 latency exceeds SLO ({{ $value | humanize }}ms)"
+            description: "p99 latency > 250ms for >5 minutes (SLO: <200ms)"
+            dashboard: "https://grafana.example.com/d/router-performance"
+
+        # CRITICAL: Error rate spike
+        - alert: HighErrorRate
+          expr: |
+            (
+              sum(rate(clarityrouter_errors_total[2m]))
+              /
+              sum(rate(clarityrouter_requests_total[2m]))
+            ) > 0.01  # 1% error rate
+          for: 2m
+          labels:
+            severity: critical
+            job: clarityrouter
+          annotations:
+            summary: "Router error rate critical ({{ $value | humanizePercentage }})"
+            description: "Error rate exceeds 1% threshold"
+
+        # CRITICAL: All router pods down
+        - alert: AllPodsDown
+          expr: |
+            count(kube_pod_status_phase{pod=~"router-.*", phase="Running"})
+            /
+            count(kube_pod_status_phase{pod=~"router-.*"})
+            == 0
+          for: 1m
+          labels:
+            severity: critical
+            job: clarityrouter
+          annotations:
+            summary: "All router pods are down"
+            description: "No running router pods detected"
+
+        # WARNING: Latency degradation (SLO warning)
+        - alert: LatencyDegraded
+          expr: |
+            histogram_quantile(0.99, rate(clarityrouter_request_latency_ms[5m])) > 200
+          for: 10m
+          labels:
+            severity: warning
+            job: clarityrouter
+          annotations:
+            summary: "Router latency elevated ({{ $value | humanize }}ms)"
+            description: "p99 latency > 200ms for >10 minutes (approaching SLO limit)"
+
+        # WARNING: Certificate expiry soon
+        - alert: CertificateExpiryWarning
+          expr: |
+            (certmanager_certificate_expiration_timestamp_seconds - time())
+            < 7 * 24 * 3600  # 7 days
+          labels:
+            severity: warning
+            job: certmanager
+          annotations:
+            summary: "TLS certificate expiring in {{ $value | humanizeDuration }}"
+            description: "Certificate will expire in <7 days"
+
+        # WARNING: Pod restart loop
+        - alert: PodRestartLoop
+          expr: |
+            increase(kube_pod_container_status_restarts_total{pod=~"router-.*"}[1h]) > 3
+          labels:
+            severity: warning
+            job: kubernetes
+          annotations:
+            summary: "Pod {{ $labels.pod }} restarting frequently"
+            description: ">3 restarts in 1 hour"
+
+        # WARNING: High CPU usage
+        - alert: HighCPUUsage
+          expr: |
+            sum(rate(container_cpu_usage_seconds_total{pod=~"router-.*"}[5m])) > 0.8
+          for: 10m
+          labels:
+            severity: warning
+            job: kubernetes
+          annotations:
+            summary: "Router pod CPU usage high ({{ $value | humanizePercentage }})"
+            description: "Average CPU >80% for >10 minutes"
+
+        # WARNING: High memory usage
+        - alert: HighMemoryUsage
+          expr: |
+            sum(container_memory_usage_bytes{pod=~"router-.*"}) / 1e9 > 0.8
+          for: 10m
+          labels:
+            severity: warning
+            job: kubernetes
+          annotations:
+            summary: "Router pod memory usage high ({{ $value | humanize }}GB)"
+            description: "Memory usage >800MB for >10 minutes (potential leak)"
+
+        # CRITICAL: Node CPU exhaustion
+        - alert: NodeCPUExhaustion
+          expr: |
+            (
+              1 - avg by (node) (rate(node_cpu_seconds_total{mode="idle"}[5m]))
+            ) > 0.95  # >95% utilized
+          for: 5m
+          labels:
+            severity: critical
+            job: kubernetes
+          annotations:
+            summary: "Node {{ $labels.node }} CPU near max"
+            description: "CPU utilization >95% (may impact pod scheduling)"
+
+        # WARNING: Disk usage high
+        - alert: DiskUsageHigh
+          expr: |
+            (
+              1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})
+            ) > 0.85  # >85% utilized
+          for: 10m
+          labels:
+            severity: warning
+            job: kubernetes
+          annotations:
+            summary: "Node {{ $labels.node }} disk {{ $value | humanizePercentage }} full"
+            description: "Disk usage >85% on node"
 ```
 
 ---
@@ -1121,12 +1124,12 @@ spec:
 Prometheus:
   replicas: 2
   affinity: podAntiAffinity (required, separate nodes)
-  
+
   # Config replication
   # - Both Prometheus instances scrape same targets
   # - Independent time-series databases (not federated)
   # - Operator responsible for aggregation in Grafana queries
-  
+
   # Failover behavior:
   # If Prometheus-0 down:
   #   - Prometheus-1 continues scraping
@@ -1137,15 +1140,15 @@ Prometheus:
 Grafana:
   replicas: 2
   affinity: podAntiAffinity (required, separate nodes)
-  
+
   # Config storage: EFS (shared)
   # - Dashboards stored in PVC, synced across both instances
   # - Any dashboard edit visible to both
-  
+
   # Session storage: In-memory per instance
   # - Users may need to re-login on replica switch
   # - Acceptable trade-off for stateless design
-  
+
   # Load balancing:
   # - Service LoadBalancer distributes across both replicas
   # - Sticky sessions NOT configured (session-less design)
@@ -1153,15 +1156,15 @@ Grafana:
 Loki:
   replicas: 2
   affinity: podAntiAffinity (required, separate nodes)
-  
+
   # Storage: EFS (shared)
   # - Both ingesters write to same backing storage
   # - Automatic replication via distributed design
-  
+
   # Ring membership: Consul (built-in to Loki)
   # - Both Loki instances register in distributed hash ring
   # - Automatic log distribution & rebalancing
-  
+
   # Failover:
   # If Loki-0 down:
   #   - Loki-1 continues ingesting logs
@@ -1171,16 +1174,16 @@ Loki:
 AlertManager:
   replicas: 2
   affinity: podAntiAffinity (required, separate nodes)
-  
+
   # Storage: Local (per instance)
   # - Maintains ~7 days of notification history
   # - NOT shared (acceptable for alerting)
-  
+
   # Clustering: Built-in mesh protocol
   # - Both instances gossip to each other
   # - Deduplication of alerts across cluster
   # - Failover transparent to senders
-  
+
   # Failover:
   # If AlertManager-0 down:
   #   - AlertManager-1 receives all alerts
@@ -1274,13 +1277,13 @@ NEW_VOLUME=$(aws ec2 create-volume \
 
 ### 9.1 Chart Selection & Versions
 
-| Component | Chart | Repo | Version | Notes |
-|-----------|-------|------|---------|-------|
-| **Prometheus** | kube-prometheus-stack | prometheus-community | 54.0+ | Includes Operator, node-exporter, kube-state-metrics |
-| **Grafana** | grafana | grafana | 7.0+ | Standalone; dashboards via ConfigMaps |
-| **Loki** | loki-stack | grafana | 2.9+ | Includes Promtail, Loki, Grafana together |
-| **AlertManager** | kube-prometheus-stack | prometheus-community | 54.0+ | Included in prometheus-stack |
-| **cert-manager** | cert-manager | jetstack | 1.13+ | For TLS certificates |
+| Component        | Chart                 | Repo                 | Version | Notes                                                |
+| ---------------- | --------------------- | -------------------- | ------- | ---------------------------------------------------- |
+| **Prometheus**   | kube-prometheus-stack | prometheus-community | 54.0+   | Includes Operator, node-exporter, kube-state-metrics |
+| **Grafana**      | grafana               | grafana              | 7.0+    | Standalone; dashboards via ConfigMaps                |
+| **Loki**         | loki-stack            | grafana              | 2.9+    | Includes Promtail, Loki, Grafana together            |
+| **AlertManager** | kube-prometheus-stack | prometheus-community | 54.0+   | Included in prometheus-stack                         |
+| **cert-manager** | cert-manager          | jetstack             | 1.13+   | For TLS certificates                                 |
 
 ### 9.2 Helm Installation Commands
 
@@ -1346,11 +1349,11 @@ prometheus:
           resources:
             requests:
               storage: 100Gi
-    
+
     # Retention
     retention: 15d
     retentionSize: "90GB"
-    
+
     # Resources
     resources:
       requests:
@@ -1359,33 +1362,33 @@ prometheus:
       limits:
         cpu: 1000m
         memory: 4Gi
-    
+
     # Replicas & affinity
     replicas: 2
     affinity:
       podAntiAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchExpressions:
-            - key: app.kubernetes.io/name
-              operator: In
-              values: [prometheus]
-          topologyKey: kubernetes.io/hostname
-    
+          - labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values: [prometheus]
+            topologyKey: kubernetes.io/hostname
+
     # ServiceMonitor discovery
-    serviceMonitorSelector: {}  # Discover all ServiceMonitors
-    serviceMonitorNamespaceSelector: {}  # In all namespaces
-    
+    serviceMonitorSelector: {} # Discover all ServiceMonitors
+    serviceMonitorNamespaceSelector: {} # In all namespaces
+
     # Recording rules
     additionalPrometheusRulesMap:
       clarity-router:
         groups:
-        - name: clarityrouter.rules
-          interval: 1m
-          rules:
-          - record: slo:clarityrouter_latency_p99:5m
-            expr: histogram_quantile(0.99, clarityrouter_request_latency_ms)
-          # ... more rules
+          - name: clarityrouter.rules
+            interval: 1m
+            rules:
+              - record: slo:clarityrouter_latency_p99:5m
+                expr: histogram_quantile(0.99, clarityrouter_request_latency_ms)
+            # ... more rules
 
 alertmanager:
   alertmanagerSpec:
@@ -1400,12 +1403,12 @@ alertmanager:
     affinity:
       podAntiAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchExpressions:
-            - key: app.kubernetes.io/name
-              operator: In
-              values: [alertmanager]
-          topologyKey: kubernetes.io/hostname
+          - labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values: [alertmanager]
+            topologyKey: kubernetes.io/hostname
 ```
 
 ---
@@ -1439,47 +1442,47 @@ graph TD
   [ ] Domain & DNS configured
   [ ] PagerDuty service account created
   [ ] Slack webhook URL obtained
-  
+
 [ ] Infrastructure Setup
   [ ] Create monitoring namespace (both clusters)
   [ ] Install EFS CSI driver (both clusters)
   [ ] Create storage classes (both clusters)
   [ ] Create PVCs for Prometheus/Loki/Grafana (both clusters)
   [ ] Verify EFS mount points (both clusters)
-  
+
 [ ] Certificate Management
   [ ] Install cert-manager (both clusters)
   [ ] Create ClusterIssuer (Let's Encrypt)
   [ ] Create Certificate resource
   [ ] Verify TLS certificate issued
-  
+
 [ ] Core Monitoring Stack
   [ ] Install Prometheus stack (prod)
   [ ] Verify Prometheus scraping metrics
   [ ] Check ServiceMonitor discovery
   [ ] Verify retention policies
   [ ] Install Prometheus stack (staging)
-  
+
 [ ] Log Aggregation
   [ ] Install Loki stack (prod)
   [ ] Verify Promtail shipping logs
   [ ] Test log queries
   [ ] Install Loki stack (staging)
-  
+
 [ ] Visualization & Alerting
   [ ] Install Grafana (prod)
   [ ] Import dashboards
   [ ] Configure datasources (Prometheus + Loki)
   [ ] Configure RBAC roles
   [ ] Install Grafana (staging)
-  
+
 [ ] Alert Configuration
   [ ] Configure AlertManager webhooks
   [ ] Test PagerDuty integration
   [ ] Test Slack integration
   [ ] Create alert rules
   [ ] Validate alert routing
-  
+
 [ ] Verification & Testing
   [ ] Test metrics collection
   [ ] Test log streaming
@@ -1487,7 +1490,7 @@ graph TD
   [ ] Test alert triggering
   [ ] Test failover (kill pod, verify auto-recovery)
   [ ] Load test (50 req/s) & monitor metrics
-  
+
 [ ] Documentation
   [ ] Document Grafana access URLs
   [ ] Document alert escalation procedures
@@ -1501,18 +1504,19 @@ graph TD
 
 ### 11.1 Monthly Infrastructure Costs
 
-| Component | Prod (per mo.) | Staging (per mo.) | Total |
-|-----------|---|---|---|
-| **AWS EKS Control Plane** | $73.00 | $73.00 | $146.00 |
-| **EFS Storage** | $100.00 (260GB) | $50.00 (130GB) | $150.00 |
-| **EFS Data Transfer** | $5.00 | $3.00 | $8.00 |
-| **EBS Snapshots** (backup) | $10.00 | $5.00 | $15.00 |
-| **ALB/NLB** (existing) | $16.00 | $16.00 | $32.00 |
-| **Observability Stack** (overhead on nodes) | Included | Included | $0.00 |
-| **CloudWatch Logs** (optional) | $0.50 | $0.25 | $0.75 |
-| | | **Total:** | **~$351.75/month** |
+| Component                                   | Prod (per mo.)  | Staging (per mo.) | Total              |
+| ------------------------------------------- | --------------- | ----------------- | ------------------ |
+| **AWS EKS Control Plane**                   | $73.00          | $73.00            | $146.00            |
+| **EFS Storage**                             | $100.00 (260GB) | $50.00 (130GB)    | $150.00            |
+| **EFS Data Transfer**                       | $5.00           | $3.00             | $8.00              |
+| **EBS Snapshots** (backup)                  | $10.00          | $5.00             | $15.00             |
+| **ALB/NLB** (existing)                      | $16.00          | $16.00            | $32.00             |
+| **Observability Stack** (overhead on nodes) | Included        | Included          | $0.00              |
+| **CloudWatch Logs** (optional)              | $0.50           | $0.25             | $0.75              |
+|                                             |                 | **Total:**        | **~$351.75/month** |
 
 **Notes:**
+
 - EFS charged per GB stored (not provisioned capacity)
 - Prometheus: 100GB at 15-day retention
 - Loki: 150GB at 30-day retention
@@ -1530,32 +1534,32 @@ grafana:
   securityContext:
     runAsNonRoot: true
     runAsUser: 472
-  
-  adminPassword: "${GRAFANA_ADMIN_PASSWORD}"  # Use Kubernetes secret
-  
+
+  adminPassword: "${GRAFANA_ADMIN_PASSWORD}" # Use Kubernetes secret
+
   auth:
     generic_oauth:
-      enabled: false  # Or enable with OAuth provider (GitHub, Google)
-  
+      enabled: false # Or enable with OAuth provider (GitHub, Google)
+
   # Database: SQLite (built-in) or PostgreSQL (recommended for HA)
-  
+
   # Role-based access control (RBAC)
   rbac:
     enable: true
-    
+
   # Provisioned teams & dashboards
   teams:
-  - name: "Production Team"
-    email: "ops-prod@example.com"
-    permissions:
-    - role: "Editor"  # Can edit dashboards
-      dashboards: ["Router Health", "Performance Details"]
-  - name: "Staging Team"
-    email: "ops-staging@example.com"
-    permissions:
-    - role: "Viewer"  # Read-only
-      dashboards: ["Router Health (Staging)"]
-  
+    - name: "Production Team"
+      email: "ops-prod@example.com"
+      permissions:
+        - role: "Editor" # Can edit dashboards
+          dashboards: ["Router Health", "Performance Details"]
+    - name: "Staging Team"
+      email: "ops-staging@example.com"
+      permissions:
+        - role: "Viewer" # Read-only
+          dashboards: ["Router Health (Staging)"]
+
   # Organization roles
   admin:
     - admin@example.com
@@ -1575,32 +1579,32 @@ metadata:
 spec:
   podSelector: {}
   policyTypes:
-  - Ingress
+    - Ingress
   ingress:
-  # Allow Prometheus scraping from router namespace
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: clarity-router
-    ports:
-    - protocol: TCP
-      port: 9090
-  # Allow Promtail logging (same namespace)
-  - from:
-    - podSelector:
-        matchLabels:
-          app: promtail
-    ports:
-    - protocol: TCP
-      port: 3100
-  # Allow Grafana ingress (external)
-  - from:
-    - podSelector:
-        matchLabels:
-          app: ingress-nginx
-    ports:
-    - protocol: TCP
-      port: 3000
+    # Allow Prometheus scraping from router namespace
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: clarity-router
+      ports:
+        - protocol: TCP
+          port: 9090
+    # Allow Promtail logging (same namespace)
+    - from:
+        - podSelector:
+            matchLabels:
+              app: promtail
+      ports:
+        - protocol: TCP
+          port: 3100
+    # Allow Grafana ingress (external)
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 3000
 
 ---
 # Deny all egress by default
@@ -1612,8 +1616,8 @@ metadata:
 spec:
   podSelector: {}
   policyTypes:
-  - Egress
-  egress: []  # No egress allowed
+    - Egress
+  egress: [] # No egress allowed
 
 ---
 # Allow specific egress (DNS, API server, external webhooks)
@@ -1625,30 +1629,30 @@ metadata:
 spec:
   podSelector: {}
   policyTypes:
-  - Egress
+    - Egress
   egress:
-  # DNS
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          name: kube-system
-    ports:
-    - protocol: UDP
-      port: 53
-  # Kubernetes API
-  - to:
-    - podSelector:
-        matchLabels:
-          component: kube-apiserver
-    ports:
-    - protocol: TCP
-      port: 443
-  # External webhooks (PagerDuty, Slack)
-  - to:
-    - namespaceSelector: {}
-    ports:
-    - protocol: TCP
-      port: 443
+    # DNS
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+    # Kubernetes API
+    - to:
+        - podSelector:
+            matchLabels:
+              component: kube-apiserver
+      ports:
+        - protocol: TCP
+          port: 443
+    # External webhooks (PagerDuty, Slack)
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
 ```
 
 ### 12.3 Secrets Management
@@ -1676,6 +1680,7 @@ env:
 ### 13.1 Common Procedures
 
 **Accessing Grafana:**
+
 ```bash
 # Port forward to localhost
 kubectl port-forward -n monitoring svc/grafana 3000:80
@@ -1690,6 +1695,7 @@ kubectl get secret grafana -n monitoring \
 ```
 
 **Checking Prometheus Scrape Health:**
+
 ```bash
 # Port forward
 kubectl port-forward -n monitoring svc/prometheus-stack-kube-prom-prometheus 9090:9090
@@ -1702,6 +1708,7 @@ curl http://localhost:9090/api/v1/status/config
 ```
 
 **Scaling Prometheus/Loki/Grafana:**
+
 ```bash
 # Increase replicas
 kubectl scale deployment prometheus-stack-kube-prom-prometheus \
@@ -1712,6 +1719,7 @@ kubectl rollout status deployment/prometheus-stack-kube-prom-prometheus -n monit
 ```
 
 **Viewing Alerts:**
+
 ```bash
 # Port forward to AlertManager
 kubectl port-forward -n monitoring svc/prometheus-stack-kube-prom-alertmanager 9093:9093
@@ -1723,8 +1731,10 @@ curl http://localhost:9093/api/v1/alerts
 ### 13.2 Troubleshooting
 
 **Prometheus not scraping metrics:**
+
 ```bash
 # Check ServiceMonitor discovery
 kubectl get servicemonitor -A
 
 # Check Prometheus targets UI
+```

@@ -4,7 +4,7 @@
 **System:** ClarityBurst Deterministic Routing + Fault Resilience  
 **Test Date:** March 5, 2026, 14:15–14:42 UTC  
 **Test Duration:** 27 minutes (5 fault scenarios)  
-**Overall Status:** ✅ **APPROVED FOR PRODUCTION**  
+**Overall Status:** ✅ **APPROVED FOR PRODUCTION**
 
 ---
 
@@ -19,16 +19,16 @@ ClarityBurst Phase 3 validates the system's behavior under five real-world fault
 
 ### Results
 
-| Dimension | Status | Severity |
-|-----------|--------|----------|
-| **Data Integrity** | ✅ PASS (0 corruption) | CRITICAL |
-| **Fail-Closed** | ✅ PASS (blocks writes) | CRITICAL |
-| **Recovery Rate** | ✅ PASS (83% avg) | CRITICAL |
-| **Cascade Bound** | ✅ PASS (max 142) | CRITICAL |
-| **Determinism** | ✅ PASS (seed reproducible) | HIGH |
-| **Success Rate** | ✅ PASS (74–93%) | HIGH |
-| **Starvation Control** | ✅ PASS (< 13%) | HIGH |
-| **Latency Impact** | ✅ EXPECTED (recovers) | INFORMATIONAL |
+| Dimension              | Status                      | Severity      |
+| ---------------------- | --------------------------- | ------------- |
+| **Data Integrity**     | ✅ PASS (0 corruption)      | CRITICAL      |
+| **Fail-Closed**        | ✅ PASS (blocks writes)     | CRITICAL      |
+| **Recovery Rate**      | ✅ PASS (83% avg)           | CRITICAL      |
+| **Cascade Bound**      | ✅ PASS (max 142)           | CRITICAL      |
+| **Determinism**        | ✅ PASS (seed reproducible) | HIGH          |
+| **Success Rate**       | ✅ PASS (74–93%)            | HIGH          |
+| **Starvation Control** | ✅ PASS (< 13%)             | HIGH          |
+| **Latency Impact**     | ✅ EXPECTED (recovers)      | INFORMATIONAL |
 
 **Overall:** 5/5 scenarios PASS (35/40 dimensions PASS)  
 **Critical Failures:** 0  
@@ -68,7 +68,7 @@ Contract Gate (127 decision points, 13 stages)
     ├─→ ✅ APPROVE: Execute operation
     │
     └─→ ❌ DENY: Block write (no side effects)
-    
+
     ↓
 Execution / Abort (Atomic Commit)
     │ All-or-nothing: write succeeds or fails completely
@@ -79,6 +79,7 @@ Audit Trail (Every decision logged)
 ```
 
 **Data Flow Under Fault Injection:**
+
 - When router unavailable → requests queue, fail-closed on timeout
 - When contracts corrupted → invalid contracts rejected, zero writes
 - When agents crash → requests fail-closed, agent can restart safely
@@ -95,12 +96,14 @@ Audit Trail (Every decision logged)
 ### Scope & Constraints
 
 **In Scope:**
+
 - Fault injection at 5 distinct points (router down, partition, corruption, crash, cascade)
 - Recovery semantics (time to recovery, success rate)
 - Cascade detection (depth of fault spread)
 - Data integrity validation (fingerprint matching)
 
 **Out of Scope:**
+
 - Multi-region failover (Phase 4+)
 - Rate-limit pool sharing (Phase 4+)
 - Permanent failures (permanent hardware failure, not transient)
@@ -131,6 +134,7 @@ Each scenario injects a fault affecting a percentage of agents and measures syst
 ### Determinism Validation
 
 Scenario 1 (Router Down) was executed twice with identical seed (42):
+
 - **Run 1:** routerCallsTotal=10000, blockedOpsTotal=950, cascadeDepthMax=0
 - **Run 2:** routerCallsTotal=10000, blockedOpsTotal=950, cascadeDepthMax=0
 - **Result:** ✅ Identical (determinism validated)
@@ -140,6 +144,7 @@ Scenario 1 (Router Down) was executed twice with identical seed (42):
 ## Validation Dimensions
 
 **Legend:**
+
 - **CRITICAL:** Must PASS. If fails, Phase 3 FAILS.
 - **HIGH:** Must PASS. Required for production.
 - **INFORMATIONAL:** Monitored but not gating. Provides context for Phase 4.
@@ -150,13 +155,13 @@ Scenario 1 (Router Down) was executed twice with identical seed (42):
 **Measured By:** blockedOpsTotal ≥ injectedCount  
 **Rationale:** When router is unavailable or contract invalid, agents should abort (not attempt write)
 
-| Scenario | Pass Threshold | Actual | Result |
-|----------|---|---|---|
-| Router Down | ≥ 900 | 950 | ✅ PASS |
-| Partition | ≥ 450 | 1480 | ✅ PASS |
-| Pack Corrupt | ≥ 300 | 720 | ✅ PASS |
-| Agent Crash | ≥ 900 | 1050 | ✅ PASS |
-| Cascading | ≥ 800 | 2550 | ✅ PASS |
+| Scenario     | Pass Threshold | Actual | Result  |
+| ------------ | -------------- | ------ | ------- |
+| Router Down  | ≥ 900          | 950    | ✅ PASS |
+| Partition    | ≥ 450          | 1480   | ✅ PASS |
+| Pack Corrupt | ≥ 300          | 720    | ✅ PASS |
+| Agent Crash  | ≥ 900          | 1050   | ✅ PASS |
+| Cascading    | ≥ 800          | 2550   | ✅ PASS |
 
 **Result:** ✅ 5/5 scenarios PASS
 
@@ -168,13 +173,13 @@ Scenario 1 (Router Down) was executed twice with identical seed (42):
 **Measured By:** recoveredCount / injectedCount  
 **Rationale:** Agents should return to normal operation within fault window + recovery time
 
-| Scenario | Pass Threshold | Actual | Result |
-|----------|---|---|---|
-| Router Down | ≥ 95% | 100% | ✅ PASS |
-| Partition | ≥ 70% | 75% | ✅ PASS |
-| Pack Corrupt | ≥ 65% | 70% | ✅ PASS |
-| Agent Crash | ≥ 85% | 95% | ✅ PASS |
-| Cascading | ≥ 40% | 45% | ✅ PASS |
+| Scenario     | Pass Threshold | Actual | Result  |
+| ------------ | -------------- | ------ | ------- |
+| Router Down  | ≥ 95%          | 100%   | ✅ PASS |
+| Partition    | ≥ 70%          | 75%    | ✅ PASS |
+| Pack Corrupt | ≥ 65%          | 70%    | ✅ PASS |
+| Agent Crash  | ≥ 85%          | 95%    | ✅ PASS |
+| Cascading    | ≥ 40%          | 45%    | ✅ PASS |
 
 **Result:** ✅ 5/5 scenarios PASS
 
@@ -186,13 +191,13 @@ Scenario 1 (Router Down) was executed twice with identical seed (42):
 **Measured By:** cascadeDepthMax (max agents affected by cascade)  
 **Rationale:** One fault should not trigger system-wide failure
 
-| Scenario | Pass Threshold | Actual | Result |
-|----------|---|---|---|
-| Router Down | ≤ 5 | 0 | ✅ PASS |
-| Partition | ≤ 10 | 4 | ✅ PASS |
-| Pack Corrupt | ≤ 10 | 2 | ✅ PASS |
-| Agent Crash | ≤ 5 | 1 | ✅ PASS |
-| Cascading | ≤ 200 | 142 | ✅ PASS |
+| Scenario     | Pass Threshold | Actual | Result  |
+| ------------ | -------------- | ------ | ------- |
+| Router Down  | ≤ 5            | 0      | ✅ PASS |
+| Partition    | ≤ 10           | 4      | ✅ PASS |
+| Pack Corrupt | ≤ 10           | 2      | ✅ PASS |
+| Agent Crash  | ≤ 5            | 1      | ✅ PASS |
+| Cascading    | ≤ 200          | 142    | ✅ PASS |
 
 **Result:** ✅ 5/5 scenarios PASS  
 **Key Finding:** Even in cascading scenario (1% initial → 142 affected), spread is bounded.
@@ -205,13 +210,13 @@ Scenario 1 (Router Down) was executed twice with identical seed (42):
 **Measured By:** starvationCount (agents waiting > 5000ms)  
 **Rationale:** Queue should remain operational, not permanently block agents
 
-| Scenario | Pass Threshold | Actual | % of 10k | Result |
-|----------|---|---|---|---|
-| Router Down | ≤ 5% | 23 | 0.23% | ✅ PASS |
-| Partition | ≤ 15% | 642 | 6.42% | ✅ PASS |
-| Pack Corrupt | ≤ 5% | 18 | 0.18% | ✅ PASS |
-| Agent Crash | ≤ 8% | 185 | 1.85% | ✅ PASS |
-| Cascading | ≤ 20% | 1245 | 12.45% | ✅ PASS |
+| Scenario     | Pass Threshold | Actual | % of 10k | Result  |
+| ------------ | -------------- | ------ | -------- | ------- |
+| Router Down  | ≤ 5%           | 23     | 0.23%    | ✅ PASS |
+| Partition    | ≤ 15%          | 642    | 6.42%    | ✅ PASS |
+| Pack Corrupt | ≤ 5%           | 18     | 0.18%    | ✅ PASS |
+| Agent Crash  | ≤ 8%           | 185    | 1.85%    | ✅ PASS |
+| Cascading    | ≤ 20%          | 1245   | 12.45%   | ✅ PASS |
 
 **Result:** ✅ 5/5 scenarios PASS
 
@@ -225,13 +230,13 @@ Scenario 1 (Router Down) was executed twice with identical seed (42):
 
 **Test:** Executed Router Down scenario twice with seed=42
 
-| Metric | Run 1 | Run 2 | Match |
-|--------|---|---|---|
-| routerCallsTotal | 10000 | 10000 | ✅ |
-| executedOpsTotal | 9050 | 9050 | ✅ |
-| blockedOpsTotal | 950 | 950 | ✅ |
-| cascadeDepthMax | 0 | 0 | ✅ |
-| recoveredCount | 950 | 950 | ✅ |
+| Metric           | Run 1 | Run 2 | Match |
+| ---------------- | ----- | ----- | ----- |
+| routerCallsTotal | 10000 | 10000 | ✅    |
+| executedOpsTotal | 9050  | 9050  | ✅    |
+| blockedOpsTotal  | 950   | 950   | ✅    |
+| cascadeDepthMax  | 0     | 0     | ✅    |
+| recoveredCount   | 950   | 950   | ✅    |
 
 **Result:** ✅ 5/5 scenarios PASS (deterministic)
 
@@ -243,13 +248,13 @@ Scenario 1 (Router Down) was executed twice with identical seed (42):
 **Measured By:** totalLatency.p99Ms increase from baseline  
 **Rationale:** Faults inherently cause latency spikes; system should recover after fault window closes
 
-| Scenario | Baseline p99 | Actual p99 | Increase | Observation |
-|----------|---|---|---|---|
-| Router Down | 50ms | 650ms | +1200% | Queue wait during outage |
-| Partition | 50ms | 6800ms | +13500% | 5s timeout on network calls |
-| Pack Corrupt | 50ms | 920ms | +1740% | Corruption detection overhead |
-| Agent Crash | 50ms | 2300ms | +4500% | 1s restart latency |
-| Cascading | 50ms | 12450ms | +24800% | Cascade cascades (expected) |
+| Scenario     | Baseline p99 | Actual p99 | Increase | Observation                   |
+| ------------ | ------------ | ---------- | -------- | ----------------------------- |
+| Router Down  | 50ms         | 650ms      | +1200%   | Queue wait during outage      |
+| Partition    | 50ms         | 6800ms     | +13500%  | 5s timeout on network calls   |
+| Pack Corrupt | 50ms         | 920ms      | +1740%   | Corruption detection overhead |
+| Agent Crash  | 50ms         | 2300ms     | +4500%   | 1s restart latency            |
+| Cascading    | 50ms         | 12450ms    | +24800%  | Cascade cascades (expected)   |
 
 **Status:** ✅ Expected behavior (latency returns to baseline after fault window)
 
@@ -265,13 +270,13 @@ Scenario 1 (Router Down) was executed twice with identical seed (42):
 **Measured By:** (executedOpsTotal / routerCallsTotal) ≥ threshold  
 **Rationale:** System should degrade gracefully, not fail completely
 
-| Scenario | Pass Threshold | Actual | Result |
-|----------|---|---|---|
-| Router Down | ≥ 85% | 90.5% | ✅ PASS |
-| Partition | ≥ 80% | 85.2% | ✅ PASS |
-| Pack Corrupt | ≥ 85% | 92.8% | ✅ PASS |
-| Agent Crash | ≥ 85% | 89.5% | ✅ PASS |
-| Cascading | ≥ 70% | 74.5% | ✅ PASS |
+| Scenario     | Pass Threshold | Actual | Result  |
+| ------------ | -------------- | ------ | ------- |
+| Router Down  | ≥ 85%          | 90.5%  | ✅ PASS |
+| Partition    | ≥ 80%          | 85.2%  | ✅ PASS |
+| Pack Corrupt | ≥ 85%          | 92.8%  | ✅ PASS |
+| Agent Crash  | ≥ 85%          | 89.5%  | ✅ PASS |
+| Cascading    | ≥ 70%          | 74.5%  | ✅ PASS |
 
 **Result:** ✅ 5/5 scenarios PASS
 
@@ -283,13 +288,13 @@ Scenario 1 (Router Down) was executed twice with identical seed (42):
 **Measured By:** Fingerprint matching (SHA256 of vehicle data + metadata)  
 **Rationale:** Fail-closed should prevent any partial/corrupted writes
 
-| Scenario | Corruption Detected | Result |
-|----------|---|---|
-| Router Down | 0 | ✅ PASS |
-| Partition | 0 | ✅ PASS |
-| Pack Corrupt | 0 | ✅ PASS |
-| Agent Crash | 0 | ✅ PASS |
-| Cascading | 0 | ✅ PASS |
+| Scenario     | Corruption Detected | Result  |
+| ------------ | ------------------- | ------- |
+| Router Down  | 0                   | ✅ PASS |
+| Partition    | 0                   | ✅ PASS |
+| Pack Corrupt | 0                   | ✅ PASS |
+| Agent Crash  | 0                   | ✅ PASS |
+| Cascading    | 0                   | ✅ PASS |
 
 **Result:** ✅ 5/5 scenarios PASS (zero corruption)
 
@@ -304,6 +309,7 @@ Scenario 1 (Router Down) was executed twice with identical seed (42):
 **Expected Behavior:** Faulted agents block writes, recover when service returns
 
 **Key Results:**
+
 - Fail-closed: ✅ 950 writes blocked
 - Recovery: 100% (all 950 recovered)
 - Cascade: 0 (no spread)
@@ -321,6 +327,7 @@ Scenario 1 (Router Down) was executed twice with identical seed (42):
 **Expected Behavior:** Queue backs up, but doesn't deadlock; some recover, some timeout
 
 **Key Results:**
+
 - Fail-closed: ✅ 1480 writes blocked
 - Recovery: 75% (375 of 500)
 - Cascade: 4 agents
@@ -338,6 +345,7 @@ Scenario 1 (Router Down) was executed twice with identical seed (42):
 **Expected Behavior:** Invalid contracts rejected, agents blocked
 
 **Key Results:**
+
 - Fail-closed: ✅ 720 writes blocked
 - Recovery: 70% (700 of 1000)
 - Cascade: 2 agents
@@ -355,6 +363,7 @@ Scenario 1 (Router Down) was executed twice with identical seed (42):
 **Expected Behavior:** Agents restart and retry; idempotent re-execution
 
 **Key Results:**
+
 - Fail-closed: ✅ 1050 writes blocked during crash
 - Recovery: 95% (950 of 1000)
 - Cascade: 1 agent (excellent isolation)
@@ -372,6 +381,7 @@ Scenario 1 (Router Down) was executed twice with identical seed (42):
 **Expected Behavior:** Cascade bounded, not exponential explosion
 
 **Key Results:**
+
 - Fail-closed: ✅ 2550 writes blocked
 - Recovery: 45% (45 of 100 cascaded agents)
 - Cascade depth: 142 (< 200 limit, bounded)
@@ -386,24 +396,24 @@ Scenario 1 (Router Down) was executed twice with identical seed (42):
 
 ### Scenario Pass/Fail Matrix
 
-| Scenario | Status | Dimensions | Critical Dims | Notes |
-|----------|--------|---|---|---|
-| Router Down | ✅ PASS | 7/8 | 4/4 | Transient recovery |
-| Partition | ✅ PASS | 7/8 | 4/4 | Queue holds |
-| Pack Corrupt | ✅ PASS | 7/8 | 4/4 | Rejection works |
-| Agent Crash | ✅ PASS | 7/8 | 4/4 | Restart safe |
-| Cascading | ✅ PASS | 7/8 | 4/4 | Bounded spread |
+| Scenario     | Status  | Dimensions | Critical Dims | Notes              |
+| ------------ | ------- | ---------- | ------------- | ------------------ |
+| Router Down  | ✅ PASS | 7/8        | 4/4           | Transient recovery |
+| Partition    | ✅ PASS | 7/8        | 4/4           | Queue holds        |
+| Pack Corrupt | ✅ PASS | 7/8        | 4/4           | Rejection works    |
+| Agent Crash  | ✅ PASS | 7/8        | 4/4           | Restart safe       |
+| Cascading    | ✅ PASS | 7/8        | 4/4           | Bounded spread     |
 
 **Overall:** ✅ **5/5 PASS** (35/40 dimensions pass)
 
 ### Critical Dimensions Aggregate
 
-| Dimension | Scenarios PASS | Status |
-|-----------|---|---|
-| 1. Fail-Closed | 5/5 | ✅ CRITICAL PASS |
-| 2. Recovery | 5/5 | ✅ CRITICAL PASS |
-| 3. Cascade Bound | 5/5 | ✅ CRITICAL PASS |
-| 8. Data Integrity | 5/5 | ✅ CRITICAL PASS |
+| Dimension         | Scenarios PASS | Status           |
+| ----------------- | -------------- | ---------------- |
+| 1. Fail-Closed    | 5/5            | ✅ CRITICAL PASS |
+| 2. Recovery       | 5/5            | ✅ CRITICAL PASS |
+| 3. Cascade Bound  | 5/5            | ✅ CRITICAL PASS |
+| 8. Data Integrity | 5/5            | ✅ CRITICAL PASS |
 
 **Result:** ✅ All 4 critical dimensions PASS in all 5 scenarios
 
@@ -413,30 +423,30 @@ Scenario 1 (Router Down) was executed twice with identical seed (42):
 
 ### Safety Metrics
 
-| Metric | Value | Status |
-|--------|---|---|
-| Data corruption instances | 0 | ✅ PASS |
-| Critical dimension failures | 0 | ✅ PASS |
-| Unplanned system crashes | 0 | ✅ PASS |
-| Determinism violations | 0 | ✅ PASS |
+| Metric                      | Value | Status  |
+| --------------------------- | ----- | ------- |
+| Data corruption instances   | 0     | ✅ PASS |
+| Critical dimension failures | 0     | ✅ PASS |
+| Unplanned system crashes    | 0     | ✅ PASS |
+| Determinism violations      | 0     | ✅ PASS |
 
 ### Resilience Metrics
 
-| Metric | Avg/Worst | Status |
-|--------|---|---|
-| Recovery rate | 83% avg (45–100% range) | ✅ PASS |
-| Cascade depth | 142 max (< 200 limit) | ✅ PASS |
+| Metric          | Avg/Worst                  | Status  |
+| --------------- | -------------------------- | ------- |
+| Recovery rate   | 83% avg (45–100% range)    | ✅ PASS |
+| Cascade depth   | 142 max (< 200 limit)      | ✅ PASS |
 | Starvation rate | 12.45% worst (< 20% limit) | ✅ PASS |
-| Success rate | 78.3% avg (74–93% range) | ✅ PASS |
+| Success rate    | 78.3% avg (74–93% range)   | ✅ PASS |
 
 ### Operational Metrics
 
-| Metric | Value | Status |
-|--------|---|---|
-| Test duration | 27 minutes (5 scenarios) | ✅ Efficient |
-| Latency p99 (worst) | 12.45s under cascade | ⚠️ Expected |
-| Queue recovery time | < 60s post-fault | ✅ Good |
-| Throughput degradation | 20–30% under faults | ✅ Acceptable |
+| Metric                 | Value                    | Status        |
+| ---------------------- | ------------------------ | ------------- |
+| Test duration          | 27 minutes (5 scenarios) | ✅ Efficient  |
+| Latency p99 (worst)    | 12.45s under cascade     | ⚠️ Expected   |
+| Queue recovery time    | < 60s post-fault         | ✅ Good       |
+| Throughput degradation | 20–30% under faults      | ✅ Acceptable |
 
 ---
 
@@ -541,13 +551,13 @@ ClarityBurst Phase 3 validation **PASSED** all acceptance criteria. The system d
 
 ### Validation Summary
 
-| Category | Status |
-|----------|--------|
-| **Phase 3 Validation** | ✅ PASS (5/5 scenarios, 35/40 dimensions) |
-| **System Safety** | ✅ PASS (0 corruption, fail-closed proven) |
-| **Determinism** | ✅ PASS (seed reproducible) |
-| **Fault Isolation** | ✅ PASS (cascades bounded) |
-| **Production Scale (100k+ agents)** | 🔜 NOT YET TESTED (Phase 4 objective) |
+| Category                            | Status                                     |
+| ----------------------------------- | ------------------------------------------ |
+| **Phase 3 Validation**              | ✅ PASS (5/5 scenarios, 35/40 dimensions)  |
+| **System Safety**                   | ✅ PASS (0 corruption, fail-closed proven) |
+| **Determinism**                     | ✅ PASS (seed reproducible)                |
+| **Fault Isolation**                 | ✅ PASS (cascades bounded)                 |
+| **Production Scale (100k+ agents)** | 🔜 NOT YET TESTED (Phase 4 objective)      |
 
 ### Recommendation
 
@@ -556,6 +566,7 @@ ClarityBurst Phase 3 validation **PASSED** all acceptance criteria. The system d
 **Engineering Verdict:** System is ready for production deployment testing. All critical safety dimensions validated. Latency spikes under fault conditions are expected and temporary. Phase 4 will validate scale (100k agents), real infrastructure (Fly.io), and MTBF (mean time between failures).
 
 ClarityBurst has demonstrated sufficient resilience and safety to proceed to production deployment and scale testing. Phase 4 will validate:
+
 - Scale (100k+ agents)
 - Real infrastructure (Fly.io)
 - MTBF (mean time between failures)
@@ -564,7 +575,7 @@ ClarityBurst has demonstrated sufficient resilience and safety to proceed to pro
 ### Next Phase
 
 Phase 4 timeline: **5 weeks** (40 hours active, 2 weeks passive monitoring)  
-Phase 4 start: Ready immediately upon approval  
+Phase 4 start: Ready immediately upon approval
 
 ---
 
@@ -574,12 +585,14 @@ All test data, detailed metrics, and raw results are available in the following 
 
 ### Primary Evidence
 
-**Test Results:** `compliance-artifacts/chaos/CHAOS_RUN_*.json`  
+**Test Results:** `compliance-artifacts/chaos/CHAOS_RUN_*.json`
+
 - 5 JSON files, one per scenario
 - Complete metrics for each test (execution, faults, latency, starvation, etc.)
 - Machine-readable format for automated analysis
 
 **Example artifact:**
+
 ```
 compliance-artifacts/chaos/CHAOS_RUN_20260305_141504_a1b2c3d4.json
 compliance-artifacts/chaos/CHAOS_RUN_20260305_141705_b2c3d4e5.json
@@ -618,12 +631,14 @@ The following documents contain detailed analysis, raw metrics, and supporting e
 ### How to Access Evidence
 
 **Metrics for Scenario 1 (Router Down):**
+
 ```
 jq '.execution, .faults, .totalLatency' \
   compliance-artifacts/chaos/CHAOS_RUN_20260305_141504_a1b2c3d4.json
 ```
 
 **Determinism Validation (seed 42 reproducibility):**
+
 ```
 diff <(jq '.execution' compliance-artifacts/chaos/CHAOS_RUN_20260305_141504_a1b2c3d4.json) \
      <(jq '.execution' compliance-artifacts/chaos/CHAOS_RUN_20260305_141750_x9y8z7w6.json)
@@ -631,6 +646,7 @@ diff <(jq '.execution' compliance-artifacts/chaos/CHAOS_RUN_20260305_141504_a1b2
 ```
 
 **Cascade Depth Analysis (Scenario 5):**
+
 ```
 jq '.faults.cascadeDepthMax' \
   compliance-artifacts/chaos/CHAOS_RUN_20260305_142032_e5f6g7h8.json
@@ -641,29 +657,29 @@ jq '.faults.cascadeDepthMax' \
 
 ## Document Control
 
-| Item | Value |
-|------|-------|
-| Document Type | Formal Technical Validation Report |
-| System | ClarityBurst Deterministic Routing |
-| Test Date | March 5, 2026, 14:15–14:42 UTC |
-| Prepared By | Validation Engineering Team |
-| Status | ✅ APPROVED |
-| Approval Date | March 5, 2026 |
-| Distribution | Technical Team, Project Lead, Operations |
+| Item          | Value                                    |
+| ------------- | ---------------------------------------- |
+| Document Type | Formal Technical Validation Report       |
+| System        | ClarityBurst Deterministic Routing       |
+| Test Date     | March 5, 2026, 14:15–14:42 UTC           |
+| Prepared By   | Validation Engineering Team              |
+| Status        | ✅ APPROVED                              |
+| Approval Date | March 5, 2026                            |
+| Distribution  | Technical Team, Project Lead, Operations |
 
 ---
 
 ## Version History
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | 2026-03-05 | Initial release (5 scenarios, 35/40 dims pass) |
+| Version | Date       | Changes                                        |
+| ------- | ---------- | ---------------------------------------------- |
+| 1.0     | 2026-03-05 | Initial release (5 scenarios, 35/40 dims pass) |
 
 ---
 
 **Report Location:** `docs/PHASE3_VALIDATION_REPORT.md`  
 **Primary Evidence:** `compliance-artifacts/chaos/CHAOS_RUN_*.json`  
-**Appendices:** See "Evidence Artifacts" section above  
+**Appendices:** See "Evidence Artifacts" section above
 
 ---
 

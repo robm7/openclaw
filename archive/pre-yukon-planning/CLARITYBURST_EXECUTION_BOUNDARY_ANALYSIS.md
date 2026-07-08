@@ -14,7 +14,7 @@ ClarityBurst is **already positioned at execution boundaries**, not upstream in 
 
 1. **Execution-boundary interception is the dominant pattern** (88% of implemented gates)
 2. **No central execution gateway exists**—instead, OpenClaw uses **12 distributed execution-boundary gates**, one per capability stage
-3. **ClarityBurst preserves autonomy** by regulating *execution*, not *tool selection* or *reasoning*
+3. **ClarityBurst preserves autonomy** by regulating _execution_, not _tool selection_ or _reasoning_
 4. **Three interception types are active:**
    - **Execution-boundary** (primary): `applyShellExecOverrides()`, `applyMemoryModifyOverrides()`, etc.
    - **Prompt/input** (secondary): Router context assembly with allowed contract IDs
@@ -23,7 +23,7 @@ ClarityBurst is **already positioned at execution boundaries**, not upstream in 
 
 ### Key Fit Finding
 
-**ClarityBurst's current placement is optimal**: It intercepts at execution boundaries (not reasoning), governs 12 execution classes, and preserves OpenClaw's autonomous planning by only constraining *what actions execute*, not *which tools the LLM considers*.
+**ClarityBurst's current placement is optimal**: It intercepts at execution boundaries (not reasoning), governs 12 execution classes, and preserves OpenClaw's autonomous planning by only constraining _what actions execute_, not _which tools the LLM considers_.
 
 ---
 
@@ -102,7 +102,7 @@ Specific Tool Handler Begins
 
 ### Key Insight: No Central Gateway
 
-OpenClaw does **not** have one unified execution dispatcher. Instead, each capability area (shell, network, file system, etc.) has its own **execution-boundary gate** that checks policy *immediately before the actual side effect*.
+OpenClaw does **not** have one unified execution dispatcher. Instead, each capability area (shell, network, file system, etc.) has its own **execution-boundary gate** that checks policy _immediately before the actual side effect_.
 
 This distributed design means:
 
@@ -116,20 +116,20 @@ This distributed design means:
 
 ### Complete Catalog of ClarityBurst Gates
 
-| **Stage ID** | **File Location** | **Main Gate Function** | **Call Site** | **Interception Type** | **Boundary Crossed** |
-|---|---|---|---|---|---|
-| **TOOL_DISPATCH_GATE** | decision-override.ts:319 | `applyToolDispatchOverrides()` | pi-embedded-subscribe | Execution-Boundary | Tool execution initiation |
-| **SHELL_EXEC** | decision-override.ts:473 | `applyShellExecOverrides()` | bash-tools.exec.ts:~line varies | Execution-Boundary | Process spawn (runExecProcess) |
-| **SUBAGENT_SPAWN** | decision-override.ts:1346 | `applySubagentSpawnOverrides()` | subagent-spawn.ts | Execution-Boundary | New agent session spawn |
-| **MEMORY_MODIFY** | decision-override.ts:1176 | `applyMemoryModifyOverrides()` | hooks/bundled/session-memory/handler.ts:~310 | Commit-Point + Execution-Boundary | fs.writeFile() to memory file |
-| **MESSAGE_EMIT** | decision-override.ts:2253 | `applyMessageEmitOverrides()` | web/outbound.ts:97 | Execution-Boundary | Channel send (HTTP/API) |
-| **NETWORK_IO** | decision-override.ts:~930 | `applyNetworkIOOverrides()` | (inferred: not yet wired in visible code) | Execution-Boundary | fetch() / HTTP request |
-| **FILE_SYSTEM_OPS** | decision-override.ts:729 | `applyFileSystemOverrides()` | (inferred: not yet wired) | Execution-Boundary | fs.* operations |
-| **NODE_INVOKE** | decision-override.ts:~600 | `applyNodeInvokeOverrides()` | tools/node-invoke-guard.ts:115 | Execution-Boundary | callGatewayTool("node.invoke") |
-| **BROWSER_AUTOMATE** | decision-override.ts:1863 | `applyBrowserAutomateOverrides()` | (inferred: browser tool handlers) | Execution-Boundary | Playwright operations |
-| **CRON_SCHEDULE** | decision-override.ts:2058 | `applyCronScheduleOverrides()` | cron-dispatch-checker.ts | Execution-Boundary | Cron task registration |
-| **CANVAS_UI** | decision-override.ts | `applyCanvasUIOverrides()` | canvas tool handlers | Execution-Boundary | Canvas state mutations |
-| **MEDIA_GENERATE** | decision-override.ts | `applyMediaGenerateOverrides()` | media generation handler | Execution-Boundary | Media file generation |
+| **Stage ID**           | **File Location**         | **Main Gate Function**            | **Call Site**                                | **Interception Type**             | **Boundary Crossed**           |
+| ---------------------- | ------------------------- | --------------------------------- | -------------------------------------------- | --------------------------------- | ------------------------------ |
+| **TOOL_DISPATCH_GATE** | decision-override.ts:319  | `applyToolDispatchOverrides()`    | pi-embedded-subscribe                        | Execution-Boundary                | Tool execution initiation      |
+| **SHELL_EXEC**         | decision-override.ts:473  | `applyShellExecOverrides()`       | bash-tools.exec.ts:~line varies              | Execution-Boundary                | Process spawn (runExecProcess) |
+| **SUBAGENT_SPAWN**     | decision-override.ts:1346 | `applySubagentSpawnOverrides()`   | subagent-spawn.ts                            | Execution-Boundary                | New agent session spawn        |
+| **MEMORY_MODIFY**      | decision-override.ts:1176 | `applyMemoryModifyOverrides()`    | hooks/bundled/session-memory/handler.ts:~310 | Commit-Point + Execution-Boundary | fs.writeFile() to memory file  |
+| **MESSAGE_EMIT**       | decision-override.ts:2253 | `applyMessageEmitOverrides()`     | web/outbound.ts:97                           | Execution-Boundary                | Channel send (HTTP/API)        |
+| **NETWORK_IO**         | decision-override.ts:~930 | `applyNetworkIOOverrides()`       | (inferred: not yet wired in visible code)    | Execution-Boundary                | fetch() / HTTP request         |
+| **FILE_SYSTEM_OPS**    | decision-override.ts:729  | `applyFileSystemOverrides()`      | (inferred: not yet wired)                    | Execution-Boundary                | fs.\* operations               |
+| **NODE_INVOKE**        | decision-override.ts:~600 | `applyNodeInvokeOverrides()`      | tools/node-invoke-guard.ts:115               | Execution-Boundary                | callGatewayTool("node.invoke") |
+| **BROWSER_AUTOMATE**   | decision-override.ts:1863 | `applyBrowserAutomateOverrides()` | (inferred: browser tool handlers)            | Execution-Boundary                | Playwright operations          |
+| **CRON_SCHEDULE**      | decision-override.ts:2058 | `applyCronScheduleOverrides()`    | cron-dispatch-checker.ts                     | Execution-Boundary                | Cron task registration         |
+| **CANVAS_UI**          | decision-override.ts      | `applyCanvasUIOverrides()`        | canvas tool handlers                         | Execution-Boundary                | Canvas state mutations         |
+| **MEDIA_GENERATE**     | decision-override.ts      | `applyMediaGenerateOverrides()`   | media generation handler                     | Execution-Boundary                | Media file generation          |
 
 ### Execution Boundary Definitions (Where ClarityBurst Actually Intercepts)
 
@@ -194,13 +194,14 @@ if (host === "gateway" && !bypassApprovals) {
     // ... other params
   });
   if (gatewayResult.pendingResult) {
-    return gatewayResult.pendingResult;  // BLOCKED
+    return gatewayResult.pendingResult; // BLOCKED
   }
   execCommandOverride = gatewayResult.execCommandOverride;
 }
 
 // ... later, line 471
-const run = await runExecProcess({  // ← ACTUAL EXECUTION (only reached if not blocked)
+const run = await runExecProcess({
+  // ← ACTUAL EXECUTION (only reached if not blocked)
   command: params.command,
   execCommand: execCommandOverride,
   // ... other params
@@ -217,7 +218,7 @@ const run = await runExecProcess({  // ← ACTUAL EXECUTION (only reached if not
 - Effect: Routes user intent through allowed contract IDs to pick the best contract
 - Code location: [`router-client.ts:139`](src/clarityburst/router-client.ts:139)
 
-**Why it's secondary**: The router constrains the *semantics* of what action will be taken (which contract is matched), but the execution boundary gate makes the final allow/deny decision.
+**Why it's secondary**: The router constrains the _semantics_ of what action will be taken (which contract is matched), but the execution boundary gate makes the final allow/deny decision.
 
 ### 3. Commit-Point Interception (4% of gates)
 
@@ -235,13 +236,13 @@ const run = await runExecProcess({  // ← ACTUAL EXECUTION (only reached if not
 // From: hooks/bundled/session-memory/handler.ts (line 172+)
 const saveSessionToMemory: HookHandler = async (event) => {
   // ... build memory content ...
-  
+
   // [GATE HAPPENS HERE in integration, before write]
   // const gateResult = await applyMemoryModifyOverrides({...});
   // if (gateResult.outcome !== "PROCEED") throw error;
-  
+
   // Actual commit point:
-  await fs.writeFile(memoryFilePath, entry, "utf-8");  // ← Commit
+  await fs.writeFile(memoryFilePath, entry, "utf-8"); // ← Commit
 };
 ```
 
@@ -251,17 +252,17 @@ const saveSessionToMemory: HookHandler = async (event) => {
 
 ### Complete Execution Boundaries Mapped to ClarityBurst Gates
 
-| **Boundary Description** | **Exact File:Line** | **Function Called** | **Gate Function** | **Gate Location** | **Fail Behavior** |
-|---|---|---|---|---|---|
-| Process spawn (shell) | bash-tools.exec-runtime.ts:~270 | `runExecProcess()` | `applyShellExecOverrides()` | decision-override.ts:473 | ABSTAIN_CONFIRM or ABSTAIN_CLARIFY → throw error |
-| Subagent spawn | subagent-spawn.ts:~??? | `spawnSubagentDirect()` | `applySubagentSpawnOverrides()` | decision-override.ts:1346 | ABSTAIN_CLARIFY → throw ClarityBurstAbstainError |
-| Node remote invoke | tools/gateway.ts:??? | `callGatewayTool("node.invoke")` | `applyNodeInvokeOverrides()` | tools/node-invoke-guard.ts:115 | ABSTAIN_CONFIRM/CLARIFY → throw NodeInvokeBlockedError |
-| Memory write (hook) | hooks/.../handler.ts:309 | `fs.writeFile()` | `applyMemoryModifyOverrides()` | hooks/session-memory integration | ABSTAIN_CLARIFY → skip write, log error |
-| Message send | web/outbound.ts:~??? | `channel.send()` | `applyMessageEmitOverrides()` | web/outbound.ts:97 | Block or require confirmation |
-| HTTP fetch | (inferred) | `fetch()` | `applyNetworkIOOverrides()` | decision-override.ts:~930 | Fail-open or fail-closed (router mode) |
-| File system ops | (inferred) | `fs.readFile()` / `fs.writeFile()` | `applyFileSystemOverrides()` | decision-override.ts:729 | Fail-open or fail-closed |
-| Browser navigate | browser tool | Playwright ops | `applyBrowserAutomateOverrides()` | decision-override.ts:1863 | Block execution |
-| Cron register | cron-dispatch-checker.ts | Register task | `applyCronScheduleOverrides()` | decision-override.ts:2058 | Block registration |
+| **Boundary Description** | **Exact File:Line**             | **Function Called**                | **Gate Function**                 | **Gate Location**                | **Fail Behavior**                                      |
+| ------------------------ | ------------------------------- | ---------------------------------- | --------------------------------- | -------------------------------- | ------------------------------------------------------ |
+| Process spawn (shell)    | bash-tools.exec-runtime.ts:~270 | `runExecProcess()`                 | `applyShellExecOverrides()`       | decision-override.ts:473         | ABSTAIN_CONFIRM or ABSTAIN_CLARIFY → throw error       |
+| Subagent spawn           | subagent-spawn.ts:~???          | `spawnSubagentDirect()`            | `applySubagentSpawnOverrides()`   | decision-override.ts:1346        | ABSTAIN_CLARIFY → throw ClarityBurstAbstainError       |
+| Node remote invoke       | tools/gateway.ts:???            | `callGatewayTool("node.invoke")`   | `applyNodeInvokeOverrides()`      | tools/node-invoke-guard.ts:115   | ABSTAIN_CONFIRM/CLARIFY → throw NodeInvokeBlockedError |
+| Memory write (hook)      | hooks/.../handler.ts:309        | `fs.writeFile()`                   | `applyMemoryModifyOverrides()`    | hooks/session-memory integration | ABSTAIN_CLARIFY → skip write, log error                |
+| Message send             | web/outbound.ts:~???            | `channel.send()`                   | `applyMessageEmitOverrides()`     | web/outbound.ts:97               | Block or require confirmation                          |
+| HTTP fetch               | (inferred)                      | `fetch()`                          | `applyNetworkIOOverrides()`       | decision-override.ts:~930        | Fail-open or fail-closed (router mode)                 |
+| File system ops          | (inferred)                      | `fs.readFile()` / `fs.writeFile()` | `applyFileSystemOverrides()`      | decision-override.ts:729         | Fail-open or fail-closed                               |
+| Browser navigate         | browser tool                    | Playwright ops                     | `applyBrowserAutomateOverrides()` | decision-override.ts:1863        | Block execution                                        |
+| Cron register            | cron-dispatch-checker.ts        | Register task                      | `applyCronScheduleOverrides()`    | decision-override.ts:2058        | Block registration                                     |
 
 ### Key Observation: Fail Behavior Variance
 
@@ -289,8 +290,8 @@ Rate each interception point on:
 - **Location**: [`bash-tools.exec.ts:471`](src/agents/bash-tools.exec.ts:471) → `applyShellExecOverrides()` (decision-override.ts:473)
 - **What it intercepts**: All shell command execution before process spawn
 - **Why it's perfect**:
-  - Intercepts *after* LLM has decided to run a shell command
-  - Intercepts *before* process spawns (earliest possible boundary)
+  - Intercepts _after_ LLM has decided to run a shell command
+  - Intercepts _before_ process spawns (earliest possible boundary)
   - Governs highest-risk execution class (arbitrary code)
   - Fail-closed on critical contracts (HIGH/CRITICAL risk)
 - **Autonomy score**: 9/10 (preserves LLM tool planning, constrains execution only)
@@ -318,7 +319,7 @@ Rate each interception point on:
   - Fail-closed by default (router unavailable → no write)
 - **Autonomy score**: 9/10 (hook is internal housekeeping, not user-facing)
 - **Risk governance**: Unauthorized memory/context capture, data exfiltration
-- **Status**: ✅ Implemented with hook integration (memory_modify.hook_handler.*.test.ts)
+- **Status**: ✅ Implemented with hook integration (memory_modify.hook_handler.\*.test.ts)
 - **Evidence** (from test file names):
   - `memory_modify.hook_handler.pack_incomplete.fail_closed.tripwire.test.ts`
   - `memory_modify.hook_handler.empty_allowlist.fail_closed.tripwire.test.ts`
@@ -335,7 +336,7 @@ Rate each interception point on:
   - Governs who can spawn whom
 - **Autonomy score**: 9/10 (preserves agent autonomy within allowed set)
 - **Risk governance**: Unauthorized task delegation, privilege escalation, looping/runaway agents
-- **Status**: ✅ Implemented (subagent_spawn.*.test.ts files)
+- **Status**: ✅ Implemented (subagent_spawn.\*.test.ts files)
 - **Evidence**: Test files confirm fail-closed behavior on empty allowlist
 
 #### 1.4 **NODE_INVOKE Execution Boundary** ⭐⭐⭐⭐⭐
@@ -389,7 +390,7 @@ Rate each interception point on:
   - Prevents tool switching without user approval
 - **Autonomy score**: 8/10 (controls which tool executes, not whether to act)
 - **Risk governance**: Unauthorized tool use, dangerous tool selection
-- **Status**: ✅ Implemented (tool_dispatch_gate.*.test.ts)
+- **Status**: ✅ Implemented (tool_dispatch_gate.\*.test.ts)
 - **Gap**: Fail-open on router errors (mismatch acceptance)
 
 ### Tier 3: Acceptable Fit (Implemented, More Work Needed)
@@ -403,7 +404,7 @@ Rate each interception point on:
 #### 3.2 **FILE_SYSTEM_OPS Execution Boundary** ⭐⭐⭐
 
 - **Status**: Partially implemented (applyFileSystemOverrides exists)
-- **Gap**: Not wired at fs.* call sites
+- **Gap**: Not wired at fs.\* call sites
 - **Risk**: Unprotected file operations
 
 #### 3.3 **BROWSER_AUTOMATE Execution Boundary** ⭐⭐⭐
@@ -424,7 +425,7 @@ Rate each interception point on:
 
 ### How ClarityBurst Regulates Execution WITHOUT Taking Over Reasoning
 
-**Principle**: ClarityBurst governs *action*, not *intelligence*.
+**Principle**: ClarityBurst governs _action_, not _intelligence_.
 
 #### 1. **LLM Retains Full Planning Autonomy**
 
@@ -439,20 +440,20 @@ The LLM:
 **Exact boundary** (from bash-tools.exec.ts flow):
 
 ```
-Tool Selection (LLM) ──[AUTONOMOUS]─→ 
-Execute Tool Handler ──[NO GATE]─→ 
-Parameter Validation ──[NO GATE]─→ 
-ClarityBurst Gate ──[REGULATED]─→ 
+Tool Selection (LLM) ──[AUTONOMOUS]─→
+Execute Tool Handler ──[NO GATE]─→
+Parameter Validation ──[NO GATE]─→
+ClarityBurst Gate ──[REGULATED]─→
 Actual Process Spawn ──[BLOCKED IF GATE DENIES]
 ```
 
 #### 2. **Three-Phase Execution Model Preserves Reasoning**
 
-| **Phase** | **Agent** | **Control** | **Autonomy** |
-|---|---|---|---|
-| **Plan & Route** | LLM + Router | LLM chooses tool | 100% autonomous |
-| **Validate & Gate** | ClarityBurst | Policy applied | Constrained to allowed contracts |
-| **Execute** | OpenClaw Runtime | Policy enforced | Only if gate approved |
+| **Phase**           | **Agent**        | **Control**      | **Autonomy**                     |
+| ------------------- | ---------------- | ---------------- | -------------------------------- |
+| **Plan & Route**    | LLM + Router     | LLM chooses tool | 100% autonomous                  |
+| **Validate & Gate** | ClarityBurst     | Policy applied   | Constrained to allowed contracts |
+| **Execute**         | OpenClaw Runtime | Policy enforced  | Only if gate approved            |
 
 **Why this works**:
 
@@ -514,9 +515,9 @@ Allowed contracts are derived from runtime capabilities, not from agent task:
 ```typescript
 // From allowed-contracts.ts:161-172
 const allowedContractIds = deriveAllowedContracts(
-  stageId,           // ← ClarityBurst stage
-  pack,              // ← Policy pack (environment config)
-  caps               // ← Capabilities (infrastructure config)
+  stageId, // ← ClarityBurst stage
+  pack, // ← Policy pack (environment config)
+  caps, // ← Capabilities (infrastructure config)
 );
 // NOT based on: agent identity, task content, user profile
 ```
@@ -541,7 +542,7 @@ const allowedContractIds = deriveAllowedContracts(
 ```typescript
 const bypassApprovals = elevatedRequested && elevatedMode === "full";
 if (bypassApprovals) {
-  ask = "off";  // ← Approvals skipped
+  ask = "off"; // ← Approvals skipped
 }
 ```
 
@@ -592,7 +593,7 @@ const run = await runExecProcess({...});  // ← Called without gate for sandbox
 
 ### 2. **File System Operations Not Fully Wired**
 
-**Issue**: `applyFileSystemOverrides()` exists but is not integrated at fs.* call sites.
+**Issue**: `applyFileSystemOverrides()` exists but is not integrated at fs.\* call sites.
 
 **Evidence**:
 
@@ -675,7 +676,7 @@ Tool → Side Effect (Hook Trigger)
 
 **Risk**: If hook handler is not properly integrated with applyMemoryModifyOverrides(), the gate is bypassed.
 
-**Evidence**: Tests show gate is checked (memory_modify.hook_handler.*.tripwire.test.ts), but integration pattern is non-standard.
+**Evidence**: Tests show gate is checked (memory_modify.hook_handler.\*.tripwire.test.ts), but integration pattern is non-standard.
 
 ---
 
@@ -683,12 +684,12 @@ Tool → Side Effect (Hook Trigger)
 
 **Issue**: Different stages fail differently on router outage:
 
-| Stage | Fail Behavior | Code |
-|---|---|---|
-| SHELL_EXEC | Fail-open (PROCEED) | decision-override.ts:485-489 |
-| TOOL_DISPATCH_GATE | Fail-open (PROCEED) | decision-override.ts:339-343 |
-| NETWORK_IO (impl) | Fail-closed (ABSTAIN_CLARIFY) | decision-override.ts:851-858 |
-| MEMORY_MODIFY | Fail-closed (checked at commit) | decision-override.ts:~1200s |
+| Stage              | Fail Behavior                   | Code                         |
+| ------------------ | ------------------------------- | ---------------------------- |
+| SHELL_EXEC         | Fail-open (PROCEED)             | decision-override.ts:485-489 |
+| TOOL_DISPATCH_GATE | Fail-open (PROCEED)             | decision-override.ts:339-343 |
+| NETWORK_IO (impl)  | Fail-closed (ABSTAIN_CLARIFY)   | decision-override.ts:851-858 |
+| MEMORY_MODIFY      | Fail-closed (checked at commit) | decision-override.ts:~1200s  |
 
 **Risk**: Inconsistent safety posture. Some stages are permissive on router failure; others are strict.
 
@@ -731,7 +732,7 @@ The existing distributed execution-boundary model is **optimal** for preserving 
 
 1. **FILE_SYSTEM_OPS gate** (decision-override.ts:729)
    - Status: Implemented but not wired
-   - **Action**: Wire into file tool handlers before fs.* calls
+   - **Action**: Wire into file tool handlers before fs.\* calls
    - **Priority**: High (file system is critical boundary)
 
 2. **NETWORK_IO gate** (decision-override.ts:~930)
@@ -751,13 +752,13 @@ The existing distributed execution-boundary model is **optimal** for preserving 
 
 ### Why Execution-Boundary Interception Is the Right Model
 
-| Reason | Evidence from Codebase |
-|---|---|
-| **Preserves autonomy** | LLM plans freely; gate only constrains execution, not reasoning (bash-tools.exec.ts flow shows clear separation) |
-| **Fail-safe default** | If gate is missing, worst case is permissive; if added, can be progressively tightened (current: 4/12 gates hardened, 8 available) |
-| **Auditable** | Each gate is a distinct function with clear entry/exit (decision-override.ts provides 12 named functions) |
-| **Decentralized** | No single point of failure; each capability area has its own gate (robust against individual gate bypass) |
-| **Standards-aligned** | Matches Unix principle of "least privilege at execution time" (similar to SELinux, AppArmor) |
+| Reason                 | Evidence from Codebase                                                                                                             |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Preserves autonomy** | LLM plans freely; gate only constrains execution, not reasoning (bash-tools.exec.ts flow shows clear separation)                   |
+| **Fail-safe default**  | If gate is missing, worst case is permissive; if added, can be progressively tightened (current: 4/12 gates hardened, 8 available) |
+| **Auditable**          | Each gate is a distinct function with clear entry/exit (decision-override.ts provides 12 named functions)                          |
+| **Decentralized**      | No single point of failure; each capability area has its own gate (robust against individual gate bypass)                          |
+| **Standards-aligned**  | Matches Unix principle of "least privilege at execution time" (similar to SELinux, AppArmor)                                       |
 
 ### Exact Recommendation
 
@@ -778,12 +779,12 @@ The existing distributed execution-boundary model is **optimal** for preserving 
    ```typescript
    // Before any side effect:
    const gateResult = await applyXxxOverrides(context);
-   
+
    // Only proceed if PROCEED:
    if (gateResult.outcome !== "PROCEED") {
      throw new ClarityBurstAbstainError(gateResult);
    }
-   
+
    // Now execute:
    await actualSideEffectFunction(...);
    ```
@@ -795,7 +796,7 @@ The existing distributed execution-boundary model is **optimal** for preserving 
    - ✅ MEMORY_MODIFY: Done (session-memory hook handler)
    - ✅ MESSAGE_EMIT: Done (web/outbound.ts)
    - ❌ NETWORK_IO: Missing (need fetch integration)
-   - ❌ FILE_SYSTEM_OPS: Missing (need fs.* integration)
+   - ❌ FILE_SYSTEM_OPS: Missing (need fs.\* integration)
    - ❓ BROWSER_AUTOMATE: Unclear (need confirmation)
    - ❓ CRON_SCHEDULE: Partial (need verification)
    - ❓ CANVAS_UI: Unclear (need confirmation)
@@ -811,7 +812,7 @@ The existing distributed execution-boundary model is **optimal** for preserving 
 - ✅ Fails safely (fail-closed on critical paths, fail-open on non-critical)
 - ✅ Operates independently per stage (12 distributed gates, not 1 central point)
 
-**The principle**: Regulate *execution*, not *intelligence*. OpenClaw's value is in its autonomous reasoning; ClarityBurst preserves that by only governing *what happens when the agent acts*, not *what the agent thinks it should do*.
+**The principle**: Regulate _execution_, not _intelligence_. OpenClaw's value is in its autonomous reasoning; ClarityBurst preserves that by only governing _what happens when the agent acts_, not _what the agent thinks it should do_.
 
 ---
 

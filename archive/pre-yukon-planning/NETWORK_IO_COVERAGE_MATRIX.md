@@ -34,18 +34,18 @@ Authentication handshakes, token refresh, and credential exchange endpoints. The
 
 High-value model execution requests producing immediate agent outputs.
 
-| Provider | File | Line | HTTP Method | Endpoint | Status | Wrapper |
-|----------|------|------|------------|----------|--------|---------|
-| **MiniMax VLM** | `src/agents/minimax-vlm.ts` | 69 | POST | `{apiHost}/v1/coding_plan/vlm` | ✅ GATED | `applyNetworkIOGateAndFetch()` |
-| **Web Search: Perplexity** | `src/agents/tools/web-guarded-fetch.ts` | 74 | POST | `https://api.perplexity.ai/chat/completions` | ✅ GATED | `fetchWithWebToolsNetworkGuard()` |
-| **Web Search: Grok (xAI)** | `src/agents/tools/web-guarded-fetch.ts` | 74 | POST | `https://api.x.ai/v1/responses` | ✅ GATED | `fetchWithWebToolsNetworkGuard()` |
-| **Web Search: Gemini** | `src/agents/tools/web-guarded-fetch.ts` | 74 | POST | `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent` | ✅ GATED | `fetchWithWebToolsNetworkGuard()` |
-| **Web Search: Kimi (Moonshot)** | `src/agents/tools/web-guarded-fetch.ts` | 74 | POST | `https://api.moonshot.ai/v1/chat/completions` | ✅ GATED | `fetchWithWebToolsNetworkGuard()` |
-| **Generic Web Fetch** | `src/agents/tools/web-fetch.ts` | 526 | GET/POST/etc | `{agent-provided-url}` | ✅ GATED | `fetchWithWebToolsNetworkGuard()` |
-| **Ollama: Chat Completion Streaming** | `src/agents/ollama-stream.ts` | 455 | POST | `{baseUrl}/api/chat` | ✅ GATED | `applyNetworkIOGateAndFetch()` |
-| **Discord: Webhook Send** | `src/channels/discord/webhooks.ts` | ~line | POST | `https://discord.com/api/webhooks/{id}/{token}` | ✅ GATED | `applyNetworkIOGateAndFetch()` |
-| **Discord: Voice Message Upload** | `src/channels/discord/voice.ts` | ~line | POST | `https://discord.com/api/v10/channels/{id}/messages` | ✅ GATED | `applyNetworkIOGateAndFetch()` |
-| **Telegram: API Requests** | `src/channels/telegram/api.ts` | ~line | POST/GET | `https://api.telegram.org/bot{token}/{method}` | ✅ GATED | `applyNetworkIOGateAndFetch()` |
+| Provider                              | File                                    | Line  | HTTP Method  | Endpoint                                                                             | Status   | Wrapper                           |
+| ------------------------------------- | --------------------------------------- | ----- | ------------ | ------------------------------------------------------------------------------------ | -------- | --------------------------------- |
+| **MiniMax VLM**                       | `src/agents/minimax-vlm.ts`             | 69    | POST         | `{apiHost}/v1/coding_plan/vlm`                                                       | ✅ GATED | `applyNetworkIOGateAndFetch()`    |
+| **Web Search: Perplexity**            | `src/agents/tools/web-guarded-fetch.ts` | 74    | POST         | `https://api.perplexity.ai/chat/completions`                                         | ✅ GATED | `fetchWithWebToolsNetworkGuard()` |
+| **Web Search: Grok (xAI)**            | `src/agents/tools/web-guarded-fetch.ts` | 74    | POST         | `https://api.x.ai/v1/responses`                                                      | ✅ GATED | `fetchWithWebToolsNetworkGuard()` |
+| **Web Search: Gemini**                | `src/agents/tools/web-guarded-fetch.ts` | 74    | POST         | `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent` | ✅ GATED | `fetchWithWebToolsNetworkGuard()` |
+| **Web Search: Kimi (Moonshot)**       | `src/agents/tools/web-guarded-fetch.ts` | 74    | POST         | `https://api.moonshot.ai/v1/chat/completions`                                        | ✅ GATED | `fetchWithWebToolsNetworkGuard()` |
+| **Generic Web Fetch**                 | `src/agents/tools/web-fetch.ts`         | 526   | GET/POST/etc | `{agent-provided-url}`                                                               | ✅ GATED | `fetchWithWebToolsNetworkGuard()` |
+| **Ollama: Chat Completion Streaming** | `src/agents/ollama-stream.ts`           | 455   | POST         | `{baseUrl}/api/chat`                                                                 | ✅ GATED | `applyNetworkIOGateAndFetch()`    |
+| **Discord: Webhook Send**             | `src/channels/discord/webhooks.ts`      | ~line | POST         | `https://discord.com/api/webhooks/{id}/{token}`                                      | ✅ GATED | `applyNetworkIOGateAndFetch()`    |
+| **Discord: Voice Message Upload**     | `src/channels/discord/voice.ts`         | ~line | POST         | `https://discord.com/api/v10/channels/{id}/messages`                                 | ✅ GATED | `applyNetworkIOGateAndFetch()`    |
+| **Telegram: API Requests**            | `src/channels/telegram/api.ts`          | ~line | POST/GET     | `https://api.telegram.org/bot{token}/{method}`                                       | ✅ GATED | `applyNetworkIOGateAndFetch()`    |
 
 **Characteristics**:
 
@@ -60,14 +60,14 @@ High-value model execution requests producing immediate agent outputs.
 
 Model enumeration and capability discovery requests used at agent startup and configuration resolution.
 
-| Provider | File | Line | HTTP Method | Endpoint | Status | Wrapper |
-|----------|------|------|------------|----------|--------|---------|
-| **Venice Models Discovery** | `src/agents/venice-models.ts` | 348 | GET | `https://api.venice.ai/api/v1/models` | ✅ GATED | `applyNetworkIOGateAndFetch()` |
-| **Ollama: Model List** | `src/agents/models-config.providers.ts` | 283 | GET | `{apiBase}/api/tags` | ✅ GATED | `applyNetworkIOGateAndFetch()` |
-| **Ollama: Context Window Query** | `src/agents/models-config.providers.ts` | 246 | POST | `{apiBase}/api/show` | ✅ GATED | `applyNetworkIOGateAndFetch()` |
-| **vLLM: Model Detection** | `src/agents/models-config.providers.ts` | 348 | GET | `{baseUrl}/models` | ✅ GATED | `applyNetworkIOGateAndFetch()` |
-| **HuggingFace: Model Discovery** | `src/agents/huggingface-models.ts` | 165 | GET | `https://router.huggingface.co/v1/models` | ✅ GATED | `applyNetworkIOGateAndFetch()` |
-| **Brave Search: Web Discovery** | `src/agents/tools/web-search.ts` | ~1330 | GET | `https://api.search.brave.com/res/v1/web/search` | ✅ GATED | `fetchWithWebToolsNetworkGuard()` |
+| Provider                         | File                                    | Line  | HTTP Method | Endpoint                                         | Status   | Wrapper                           |
+| -------------------------------- | --------------------------------------- | ----- | ----------- | ------------------------------------------------ | -------- | --------------------------------- |
+| **Venice Models Discovery**      | `src/agents/venice-models.ts`           | 348   | GET         | `https://api.venice.ai/api/v1/models`            | ✅ GATED | `applyNetworkIOGateAndFetch()`    |
+| **Ollama: Model List**           | `src/agents/models-config.providers.ts` | 283   | GET         | `{apiBase}/api/tags`                             | ✅ GATED | `applyNetworkIOGateAndFetch()`    |
+| **Ollama: Context Window Query** | `src/agents/models-config.providers.ts` | 246   | POST        | `{apiBase}/api/show`                             | ✅ GATED | `applyNetworkIOGateAndFetch()`    |
+| **vLLM: Model Detection**        | `src/agents/models-config.providers.ts` | 348   | GET         | `{baseUrl}/models`                               | ✅ GATED | `applyNetworkIOGateAndFetch()`    |
+| **HuggingFace: Model Discovery** | `src/agents/huggingface-models.ts`      | 165   | GET         | `https://router.huggingface.co/v1/models`        | ✅ GATED | `applyNetworkIOGateAndFetch()`    |
+| **Brave Search: Web Discovery**  | `src/agents/tools/web-search.ts`        | ~1330 | GET         | `https://api.search.brave.com/res/v1/web/search` | ✅ GATED | `fetchWithWebToolsNetworkGuard()` |
 
 **Characteristics**:
 
@@ -83,10 +83,10 @@ Model enumeration and capability discovery requests used at agent startup and co
 
 Middleware layers that apply uniform NETWORK_IO governance to all downstream callers.
 
-| Component | File | Method | Purpose | Status | Gate Point |
-|-----------|------|--------|---------|--------|-----------|
-| **Web Tools Network Guard (Primary)** | `src/agents/tools/web-guarded-fetch.ts:44-72` | `applyNetworkIOGate()` | Apply NETWORK_IO gate BEFORE SSRF guard and fetch execution | ✅ GATED | Line 78: `await applyNetworkIOGate(url, init)` |
-| **Web Tools Network Guard (Secondary)** | `src/agents/tools/web-guarded-fetch.ts:74-87` | `fetchWithWebToolsNetworkGuard()` | Wrapper combining NETWORK_IO gate + SSRF guard + fetch | ✅ GATED | Line 78: `await applyNetworkIOGate()` before line 82: `fetchWithSsrFGuard()` |
+| Component                               | File                                          | Method                            | Purpose                                                     | Status   | Gate Point                                                                   |
+| --------------------------------------- | --------------------------------------------- | --------------------------------- | ----------------------------------------------------------- | -------- | ---------------------------------------------------------------------------- |
+| **Web Tools Network Guard (Primary)**   | `src/agents/tools/web-guarded-fetch.ts:44-72` | `applyNetworkIOGate()`            | Apply NETWORK_IO gate BEFORE SSRF guard and fetch execution | ✅ GATED | Line 78: `await applyNetworkIOGate(url, init)`                               |
+| **Web Tools Network Guard (Secondary)** | `src/agents/tools/web-guarded-fetch.ts:74-87` | `fetchWithWebToolsNetworkGuard()` | Wrapper combining NETWORK_IO gate + SSRF guard + fetch      | ✅ GATED | Line 78: `await applyNetworkIOGate()` before line 82: `fetchWithSsrFGuard()` |
 
 **Characteristics**:
 
@@ -112,11 +112,11 @@ const result = await fetchWithWebToolsNetworkGuard({
 
 Authentication and credential exchange endpoints controlling access to provider APIs.
 
-| Provider | File | Line | HTTP Method | Endpoint | Status | Wrapper |
-|----------|------|------|------------|----------|--------|---------|
-| **GitHub Copilot: Device Code** | `src/providers/github-copilot-auth.ts` | 46 | POST | `https://github.com/login/device/code` | ✅ GATED | `applyNetworkIOGateAndFetch()` |
-| **GitHub Copilot: Token Poll** | `src/providers/github-copilot-auth.ts` | 78 | POST | `https://github.com/login/oauth/access_token` | ✅ GATED | `applyNetworkIOGateAndFetch()` |
-| **Qwen Portal: Token Refresh** | `src/providers/qwen-portal-oauth.ts` | 16 | POST | `https://chat.qwen.ai/api/v1/oauth2/token` | ✅ GATED | `applyNetworkIOGateAndFetch()` |
+| Provider                        | File                                   | Line | HTTP Method | Endpoint                                      | Status   | Wrapper                        |
+| ------------------------------- | -------------------------------------- | ---- | ----------- | --------------------------------------------- | -------- | ------------------------------ |
+| **GitHub Copilot: Device Code** | `src/providers/github-copilot-auth.ts` | 46   | POST        | `https://github.com/login/device/code`        | ✅ GATED | `applyNetworkIOGateAndFetch()` |
+| **GitHub Copilot: Token Poll**  | `src/providers/github-copilot-auth.ts` | 78   | POST        | `https://github.com/login/oauth/access_token` | ✅ GATED | `applyNetworkIOGateAndFetch()` |
+| **Qwen Portal: Token Refresh**  | `src/providers/qwen-portal-oauth.ts`   | 16   | POST        | `https://chat.qwen.ai/api/v1/oauth2/token`    | ✅ GATED | `applyNetworkIOGateAndFetch()` |
 
 **Characteristics**:
 
@@ -172,13 +172,13 @@ Authentication and credential exchange endpoints controlling access to provider 
 
 ## Coverage Statistics
 
-| Class | Endpoints | Status | Files | Coverage |
-|-------|-----------|--------|-------|----------|
-| INFERENCE | 10 | ✅ 100% GATED | 6 | All inference paths gated (Ollama streaming, Discord webhooks, Telegram API) |
-| DISCOVERY/CONFIG | 6 | ✅ 100% GATED | 4 | All model discovery gated |
-| SHARED BOUNDARY | 2 | ✅ 100% GATED | 1 | Middleware layer complete |
-| AUTH/TOKEN | 3 | ✅ 100% GATED | 2 | All OAuth flows gated |
-| **TOTAL** | **21** | ✅ **100% GATED** | **8** | **Ollama streaming, Discord webhooks, Telegram API integrated** |
+| Class            | Endpoints | Status            | Files | Coverage                                                                     |
+| ---------------- | --------- | ----------------- | ----- | ---------------------------------------------------------------------------- |
+| INFERENCE        | 10        | ✅ 100% GATED     | 6     | All inference paths gated (Ollama streaming, Discord webhooks, Telegram API) |
+| DISCOVERY/CONFIG | 6         | ✅ 100% GATED     | 4     | All model discovery gated                                                    |
+| SHARED BOUNDARY  | 2         | ✅ 100% GATED     | 1     | Middleware layer complete                                                    |
+| AUTH/TOKEN       | 3         | ✅ 100% GATED     | 2     | All OAuth flows gated                                                        |
+| **TOTAL**        | **21**    | ✅ **100% GATED** | **8** | **Ollama streaming, Discord webhooks, Telegram API integrated**              |
 
 ---
 
@@ -188,12 +188,12 @@ Authentication and credential exchange endpoints controlling access to provider 
 
 Each gated endpoint has corresponding tripwire test coverage:
 
-| File | Test Count | Focus | Status |
-|------|-----------|-------|--------|
-| `src/clarityburst/__tests__/model_provider_discovery.network_io_gate.tripwire.test.ts` | 12 | HuggingFace, Ollama (2x), vLLM gating | ✅ PASS |
-| `src/clarityburst/__tests__/minimax_vlm_inference.network_io_gate.tripwire.test.ts` | TBD | MiniMax VLM inference gating | ✅ PASS |
-| `src/agents/tools/web-guarded-fetch.gate-integration.test.ts` | 20+ | Web search provider gating (Perplexity, Grok, Gemini, Kimi, Brave) | ✅ PASS |
-| `src/tts/tts-core.network_io_gate.tripwire.test.ts` | 5 | ElevenLabs TTS + OpenAI TTS gating | ✅ PASS |
+| File                                                                                   | Test Count | Focus                                                              | Status  |
+| -------------------------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------ | ------- |
+| `src/clarityburst/__tests__/model_provider_discovery.network_io_gate.tripwire.test.ts` | 12         | HuggingFace, Ollama (2x), vLLM gating                              | ✅ PASS |
+| `src/clarityburst/__tests__/minimax_vlm_inference.network_io_gate.tripwire.test.ts`    | TBD        | MiniMax VLM inference gating                                       | ✅ PASS |
+| `src/agents/tools/web-guarded-fetch.gate-integration.test.ts`                          | 20+        | Web search provider gating (Perplexity, Grok, Gemini, Kimi, Brave) | ✅ PASS |
+| `src/tts/tts-core.network_io_gate.tripwire.test.ts`                                    | 5          | ElevenLabs TTS + OpenAI TTS gating                                 | ✅ PASS |
 
 ### Gate Behavior Validation
 
@@ -218,7 +218,9 @@ import { applyNetworkIOGateAndFetch } from "../clarityburst/network-io-gating.js
 // Replace fetch
 const response = await applyNetworkIOGateAndFetch(url, {
   method: "POST",
-  headers: { /* ... */ },
+  headers: {
+    /* ... */
+  },
   body: JSON.stringify(payload),
 });
 
@@ -246,11 +248,13 @@ async function applyNetworkIOGate(url: string, init?: RequestInit): Promise<void
     url: extractHostname(url),
     userConfirmed: false,
   };
-  
+
   const gateResult = await applyNetworkOverrides(context);
-  
+
   if (gateResult.outcome.startsWith("ABSTAIN")) {
-    throw new ClarityBurstAbstainError({ /* ... */ });
+    throw new ClarityBurstAbstainError({
+      /* ... */
+    });
   }
 }
 
@@ -259,7 +263,7 @@ export async function fetchWithWebToolsNetworkGuard(
 ): Promise<GuardedFetchResult> {
   // Gate executes FIRST (fail-closed)
   await applyNetworkIOGate(params.url, params.init);
-  
+
   // Gate approved: proceed with SSRF guard + fetch
   return fetchWithSsrFGuard({
     /* params with gate approval */
@@ -276,7 +280,7 @@ export async function fetchWithWebToolsNetworkGuard(
 ✅ Raw fetch() bypass in model discovery  
 ✅ Raw fetch() bypass in auth flows  
 ✅ Raw fetch() bypass in web search  
-✅ Raw fetch() bypass in MiniMax VLM  
+✅ Raw fetch() bypass in MiniMax VLM
 
 ### Out-of-Scope (Documented)
 

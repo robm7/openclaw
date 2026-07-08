@@ -12,6 +12,7 @@
 The ClarityBurst Router Service is transitioning from localhost-only (localhost:3001) development deployment to a production-grade, highly available, globally distributed infrastructure. This document defines the complete architecture required to support OpenClaw's Phase 5 production rollout with strict SLO targets: **<200ms p99 latency** and **99.95% uptime**.
 
 ### Current State (Baseline)
+
 - **Location:** C:\Users\rob_m\NLP-Translation-Engine (local development)
 - **Endpoint:** http://localhost:3001
 - **Topology:** Single process, no HA
@@ -19,6 +20,7 @@ The ClarityBurst Router Service is transitioning from localhost-only (localhost:
 - **Scale:** <10 req/s (development only)
 
 ### Target State (Production)
+
 - **Topology:** Kubernetes (EKS/GKE), multi-zone HA
 - **Endpoint:** https://clarity-router.example.com
 - **Replicas:** 3+ (primary + standby + canary)
@@ -68,17 +70,17 @@ The ClarityBurst Router Service is transitioning from localhost-only (localhost:
 
 ### 1.2 Infrastructure Stack
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Compute** | Kubernetes (EKS/GKE) | Container orchestration |
-| **Networking** | Ingress NGINX + cert-manager | TLS termination, routing |
-| **Service Discovery** | Kubernetes DNS (CoreDNS) | Pod-to-pod discovery |
-| **Load Balancing** | Kubernetes Service (LoadBalancer) | External traffic distribution |
-| **Storage** | ConfigMap (ontology packs) | Persistent config |
-| **Observability** | Prometheus + Grafana + Loki | Metrics, logs, alerts |
-| **Tracing** | OpenTelemetry + Jaeger | Distributed tracing |
-| **Registry** | ECR (AWS) or GCR (GCP) | Container image storage |
-| **CI/CD** | GitHub Actions + ArgoCD | Build, test, deploy pipeline |
+| Layer                 | Technology                        | Purpose                       |
+| --------------------- | --------------------------------- | ----------------------------- |
+| **Compute**           | Kubernetes (EKS/GKE)              | Container orchestration       |
+| **Networking**        | Ingress NGINX + cert-manager      | TLS termination, routing      |
+| **Service Discovery** | Kubernetes DNS (CoreDNS)          | Pod-to-pod discovery          |
+| **Load Balancing**    | Kubernetes Service (LoadBalancer) | External traffic distribution |
+| **Storage**           | ConfigMap (ontology packs)        | Persistent config             |
+| **Observability**     | Prometheus + Grafana + Loki       | Metrics, logs, alerts         |
+| **Tracing**           | OpenTelemetry + Jaeger            | Distributed tracing           |
+| **Registry**          | ECR (AWS) or GCR (GCP)            | Container image storage       |
+| **CI/CD**             | GitHub Actions + ArgoCD           | Build, test, deploy pipeline  |
 
 ---
 
@@ -87,12 +89,14 @@ The ClarityBurst Router Service is transitioning from localhost-only (localhost:
 ### 2.1 Kubernetes Cluster Specifications
 
 #### Master Node (Managed by EKS/GKE)
+
 - **Region:** us-east-1 (primary), us-west-2 (secondary failover)
 - **Availability Zones:** Minimum 3 AZs for high availability
 - **Cluster Version:** Latest stable (1.28+ recommended)
 - **Networking:** VPC with CIDR 10.0.0.0/16
 
 #### Worker Nodes
+
 ```yaml
 Primary Cluster (Production):
   - Node Type: t3.medium (2 vCPU, 4GB RAM)
@@ -109,7 +113,8 @@ Staging Cluster (Mirror):
 ```
 
 #### Networking
-- **Ingress CIDR Blocks:** 
+
+- **Ingress CIDR Blocks:**
   - OpenClaw gateway subnet: 10.0.1.0/24
   - Admin management: 0.0.0.0/0 (restricted by firewall rules)
 - **Egress:** Unrestricted (outbound NLP-Translation-Engine access)
@@ -136,6 +141,7 @@ cert-manager (v1.12+)
 #### Implementation Details
 
 **Installation:**
+
 ```bash
 # Add cert-manager Helm chart
 helm repo add jetstack https://charts.jetstack.io
@@ -145,6 +151,7 @@ helm install cert-manager jetstack/cert-manager \
 ```
 
 **ClusterIssuer for Let's Encrypt:**
+
 ```yaml
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -157,16 +164,17 @@ spec:
     privateKeySecretRef:
       name: letsencrypt-prod-key
     solvers:
-    - dns01:
-        route53:
-          region: us-east-1
-          accessKeyID: $AWS_ACCESS_KEY
-          secretAccessRef:
-            name: route53-credentials
-            key: secret-access-key
+      - dns01:
+          route53:
+            region: us-east-1
+            accessKeyID: $AWS_ACCESS_KEY
+            secretAccessRef:
+              name: route53-credentials
+              key: secret-access-key
 ```
 
 **Certificate Resource:**
+
 ```yaml
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -179,11 +187,12 @@ spec:
     name: letsencrypt-prod
     kind: ClusterIssuer
   dnsNames:
-  - clarity-router.example.com
-  - clarity-router-staging.example.com
+    - clarity-router.example.com
+    - clarity-router-staging.example.com
 ```
 
 #### Certificate Rotation & Renewal
+
 - **Automatic:** cert-manager handles renewal 30 days before expiry
 - **Manual Override:** `kubectl rollout restart deployment/router -n clarity-router`
 - **Backup Strategy:** Certificate backups stored in encrypted S3 bucket
@@ -213,6 +222,7 @@ clarity-router-staging.example.com
 #### Kubernetes Service Discovery
 
 **Internal (Pod-to-Pod):**
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -224,15 +234,16 @@ spec:
   selector:
     app: router
   ports:
-  - port: 3001
-    targetPort: 3001
-    name: http
-  - port: 9090
-    targetPort: 9090
-    name: metrics
+    - port: 3001
+      targetPort: 3001
+      name: http
+    - port: 9090
+      targetPort: 9090
+      name: metrics
 ```
 
 **External (Load Balancer):**
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -245,13 +256,13 @@ metadata:
 spec:
   type: LoadBalancer
   loadBalancerSourceRanges:
-  - 0.0.0.0/0  # OpenClaw clients
+    - 0.0.0.0/0 # OpenClaw clients
   selector:
     app: router
   ports:
-  - port: 443
-    targetPort: 3001
-    protocol: TCP
+    - port: 443
+      targetPort: 3001
+      protocol: TCP
 ```
 
 ---
@@ -295,6 +306,7 @@ spec:
 #### Health Check Configuration
 
 **Kubernetes Liveness Probe:**
+
 ```yaml
 livenessProbe:
   httpGet:
@@ -309,6 +321,7 @@ livenessProbe:
 ```
 
 **Readiness Probe:**
+
 ```yaml
 readinessProbe:
   httpGet:
@@ -348,13 +361,13 @@ Failover Policy: PRIMARY → SECONDARY on health check failure
 
 #### Automatic Failover Timeline
 
-| Time | Event | Action |
-|------|-------|--------|
-| T+0s | Primary pod crashes | Kubernetes detects (liveness probe) |
-| T+10s | Pod not responding | Readiness probe fails, removed from LB |
-| T+30s | Route53 health check fails | Route53 initiates failover |
-| T+40s | DNS TTL expires (60s) | Clients resolve to standby IP |
-| T+60s | Standby becomes active | Requests routing to standby router |
+| Time                                            | Event                      | Action                                 |
+| ----------------------------------------------- | -------------------------- | -------------------------------------- |
+| T+0s                                            | Primary pod crashes        | Kubernetes detects (liveness probe)    |
+| T+10s                                           | Pod not responding         | Readiness probe fails, removed from LB |
+| T+30s                                           | Route53 health check fails | Route53 initiates failover             |
+| T+40s                                           | DNS TTL expires (60s)      | Clients resolve to standby IP          |
+| T+60s                                           | Standby becomes active     | Requests routing to standby router     |
 | **Total:** ~30-60 seconds failover (within SLO) |
 
 ### 3.3 Pod Anti-Affinity & Disruption Budget
@@ -370,13 +383,13 @@ spec:
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchExpressions:
-          - key: app
-            operator: In
-            values:
-            - router
-        topologyKey: kubernetes.io/hostname
+        - labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - router
+          topologyKey: kubernetes.io/hostname
   # Ensures no two router pods on same node
   # Guarantees at least 2 pods survive node failure
 
@@ -402,6 +415,7 @@ spec:
 ### 4.1 Prometheus Metrics
 
 **Router Application Metrics:**
+
 ```yaml
 # In Router application (instrumentation)
 clarityrouter_request_latency_ms{stage, outcome}
@@ -422,6 +436,7 @@ clarityrouter_router_availability{} = 1.0 | 0.5 | 0.0
 ```
 
 **Kubernetes Metrics:**
+
 ```yaml
 # Pod metrics (kubelet)
 container_cpu_usage_seconds_total{pod, namespace}
@@ -435,6 +450,7 @@ kubelet_pod_restart_total{pod, namespace}
 ```
 
 **Ingress/Load Balancer Metrics:**
+
 ```yaml
 # AWS ALB metrics (CloudWatch → Prometheus)
 aws_alb_target_response_time_seconds
@@ -450,6 +466,7 @@ aws_alb_unhealthy_host_count
 ### 4.2 Grafana Dashboards
 
 **Dashboard 1: Router Health Overview**
+
 ```
 ┌─────────────────────────────────────────┐
 │  ClarityBurst Router - Production Status │
@@ -467,6 +484,7 @@ aws_alb_unhealthy_host_count
 ```
 
 **Dashboard 2: Detailed Performance**
+
 ```
 - Request latency percentiles (p50/p95/p99/p99.9)
 - Error rate by stage (TOOL_DISPATCH_GATE, NETWORK_IO, etc.)
@@ -476,6 +494,7 @@ aws_alb_unhealthy_host_count
 ```
 
 **Dashboard 3: Infrastructure Health**
+
 ```
 - Node status (CPU, memory, disk)
 - Network I/O (ingress/egress)
@@ -506,6 +525,7 @@ labels:
 ### 4.4 Alerting Rules
 
 **Critical Alerts (Page on-call immediately):**
+
 ```yaml
 - Router Unavailable (3+ health check failures in 2 min)
   Action: Page on-call, auto-failover to standby
@@ -524,6 +544,7 @@ labels:
 ```
 
 **Warning Alerts (Slack notification):**
+
 ```yaml
 - P99 Latency > 200ms (SLO breach, over 10 min)
 - Error Rate > 0.1% (over 5 min)
@@ -538,15 +559,15 @@ labels:
 
 ### 5.1 Staging Cluster Design
 
-| Aspect | Production | Staging |
-|--------|-----------|---------|
-| **Cluster** | us-east-1 (3 AZ) | us-west-2 (2 AZ) |
-| **Node Count** | 3 | 2 |
-| **Node Type** | t3.medium | t3.small |
-| **Replicas** | 3 | 2 |
-| **Load Balancer** | ALB (prod) | ALB (staging) |
-| **Certificate** | *.example.com | *.staging.example.com |
-| **Data Sync** | N/A | Manual (packs from prod) |
+| Aspect            | Production       | Staging                  |
+| ----------------- | ---------------- | ------------------------ |
+| **Cluster**       | us-east-1 (3 AZ) | us-west-2 (2 AZ)         |
+| **Node Count**    | 3                | 2                        |
+| **Node Type**     | t3.medium        | t3.small                 |
+| **Replicas**      | 3                | 2                        |
+| **Load Balancer** | ALB (prod)       | ALB (staging)            |
+| **Certificate**   | \*.example.com   | \*.staging.example.com   |
+| **Data Sync**     | N/A              | Manual (packs from prod) |
 
 ### 5.2 Promotion Pipeline
 
@@ -669,6 +690,7 @@ CMD ["node", "dist/index.js"]
 ```
 
 **Image Tagging Strategy:**
+
 ```
 # Staging builds (pre-release)
 clarity-router:v1.2.0-rc.1.sha-a1b2c3d4
@@ -697,7 +719,7 @@ spec:
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
-      maxUnavailable: 0  # Zero downtime deployment
+      maxUnavailable: 0 # Zero downtime deployment
   selector:
     matchLabels:
       app: router
@@ -716,84 +738,84 @@ spec:
         runAsNonRoot: true
         runAsUser: 1000
         fsGroup: 1000
-      
+
       containers:
-      - name: router
-        image: clarity-router:v1.2.0.sha-abc123
-        imagePullPolicy: IfNotPresent
-        
-        ports:
-        - containerPort: 3001
-          name: http
-          protocol: TCP
-        - containerPort: 9090
-          name: metrics
-          protocol: TCP
-        
-        env:
-        - name: NODE_ENV
-          value: "production"
-        - name: LOG_LEVEL
-          value: "info"
-        - name: PORT
-          value: "3001"
-        - name: METRICS_PORT
-          value: "9090"
-        - name: NLP_ENGINE_URL
-          value: "http://nlp-engine:5000"  # Internal service discovery
-        
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 3001
-            scheme: HTTPS
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
-        
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 3001
-            scheme: HTTPS
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 2
-        
-        resources:
-          requests:
-            cpu: 100m
-            memory: 256Mi
-          limits:
-            cpu: 500m
-            memory: 1Gi
-        
-        volumeMounts:
-        - name: config
-          mountPath: /app/config
-          readOnly: true
-        - name: cache
-          mountPath: /app/cache
-      
+        - name: router
+          image: clarity-router:v1.2.0.sha-abc123
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: 3001
+              name: http
+              protocol: TCP
+            - containerPort: 9090
+              name: metrics
+              protocol: TCP
+
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: PORT
+              value: "3001"
+            - name: METRICS_PORT
+              value: "9090"
+            - name: NLP_ENGINE_URL
+              value: "http://nlp-engine:5000" # Internal service discovery
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+              scheme: HTTPS
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3001
+              scheme: HTTPS
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+              readOnly: true
+            - name: cache
+              mountPath: /app/cache
+
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - router
-            topologyKey: kubernetes.io/hostname
-      
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - router
+              topologyKey: kubernetes.io/hostname
+
       volumes:
-      - name: config
-        configMap:
-          name: router-config
-      - name: cache
-        emptyDir: {}
+        - name: config
+          configMap:
+            name: router-config
+        - name: cache
+          emptyDir: {}
 ```
 
 ---
@@ -802,13 +824,13 @@ spec:
 
 ### 7.1 Service Level Objectives (SLO)
 
-| Metric | Target | Measurement Window | Alert Threshold |
-|--------|--------|-------------------|-----------------|
-| **Latency (p99)** | <200ms | 5 minute | >250ms for 5 min |
-| **Latency (p95)** | <150ms | 5 minute | >180ms for 5 min |
-| **Availability** | 99.95% | Monthly (720 hours) | <99.9% for 1 hour |
-| **Error Rate** | <0.1% | 5 minute | >0.5% for 2 min |
-| **Throughput** | <100 req/s (sustained) | Per minute | N/A (informational) |
+| Metric            | Target                 | Measurement Window  | Alert Threshold     |
+| ----------------- | ---------------------- | ------------------- | ------------------- |
+| **Latency (p99)** | <200ms                 | 5 minute            | >250ms for 5 min    |
+| **Latency (p95)** | <150ms                 | 5 minute            | >180ms for 5 min    |
+| **Availability**  | 99.95%                 | Monthly (720 hours) | <99.9% for 1 hour   |
+| **Error Rate**    | <0.1%                  | 5 minute            | >0.5% for 2 min     |
+| **Throughput**    | <100 req/s (sustained) | Per minute          | N/A (informational) |
 
 ### 7.2 SLA Commitment
 
@@ -843,6 +865,7 @@ Service Credit (if SLA not met):
 ### 8.1 Network Security
 
 **Ingress:**
+
 ```yaml
 # Only HTTPS (443) exposed
 # HTTP (80) redirects to HTTPS
@@ -856,6 +879,7 @@ Blocked:
 ```
 
 **Pod-to-Pod:**
+
 ```yaml
 # Network Policy: only router-to-NLP-engine
 apiVersion: networking.k8s.io/v1
@@ -867,15 +891,15 @@ spec:
     matchLabels:
       app: router
   policyTypes:
-  - Egress
+    - Egress
   egress:
-  - to:
-    - podSelector:
-        matchLabels:
-          app: nlp-engine
-    ports:
-    - protocol: TCP
-      port: 5000
+    - to:
+        - podSelector:
+            matchLabels:
+              app: nlp-engine
+      ports:
+        - protocol: TCP
+          port: 5000
 ```
 
 ### 8.2 Data Encryption
@@ -893,10 +917,10 @@ metadata:
   name: router-pod-role
   namespace: clarity-router
 rules:
-- apiGroups: [""]
-  resources: ["configmaps"]
-  verbs: ["get", "list", "watch"]
-  resourceNames: ["router-config"]  # Read-only config
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+    resourceNames: ["router-config"] # Read-only config
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -909,9 +933,9 @@ roleRef:
   kind: Role
   name: router-pod-role
 subjects:
-- kind: ServiceAccount
-  name: router
-  namespace: clarity-router
+  - kind: ServiceAccount
+    name: router
+    namespace: clarity-router
 ```
 
 ---
@@ -920,24 +944,25 @@ subjects:
 
 ### 9.1 Monthly Infrastructure Costs (AWS EKS)
 
-| Component | Unit | Qty | Unit Cost | Total |
-|-----------|------|-----|-----------|-------|
-| **EKS Control Plane** | per cluster | 2 | $73.00 | $146.00 |
-| **EC2 t3.medium (primary)** | per instance-hour | 3 | $0.0416 | ~$90/month |
-| **EC2 t3.small (staging)** | per instance-hour | 2 | $0.0208 | ~$30/month |
-| **Elastic Load Balancer** | per ALB-month | 2 | $16.00 | $32.00 |
-| **Data Transfer** | per GB out | 50GB | $0.02 | $1.00 |
-| **S3 (logs, backups)** | per GB | 10GB | $0.023 | $0.23 |
-| **Monitoring (Prometheus)** | per GB ingested | 0.5GB | $0.50 | $0.25 |
-| **Certificates** | per cert | 2 | $0.00 | $0.00 (Let's Encrypt free) |
-| **Contingency (15%)** | | | | ~$35 |
-| | | | **Total:** | ~$335/month |
+| Component                   | Unit              | Qty   | Unit Cost  | Total                      |
+| --------------------------- | ----------------- | ----- | ---------- | -------------------------- |
+| **EKS Control Plane**       | per cluster       | 2     | $73.00     | $146.00                    |
+| **EC2 t3.medium (primary)** | per instance-hour | 3     | $0.0416    | ~$90/month                 |
+| **EC2 t3.small (staging)**  | per instance-hour | 2     | $0.0208    | ~$30/month                 |
+| **Elastic Load Balancer**   | per ALB-month     | 2     | $16.00     | $32.00                     |
+| **Data Transfer**           | per GB out        | 50GB  | $0.02      | $1.00                      |
+| **S3 (logs, backups)**      | per GB            | 10GB  | $0.023     | $0.23                      |
+| **Monitoring (Prometheus)** | per GB ingested   | 0.5GB | $0.50      | $0.25                      |
+| **Certificates**            | per cert          | 2     | $0.00      | $0.00 (Let's Encrypt free) |
+| **Contingency (15%)**       |                   |       |            | ~$35                       |
+|                             |                   |       | **Total:** | ~$335/month                |
 
 ---
 
 ## 10. Deployment Checklist (Phase 1 → 7)
 
 ### Pre-Deployment (Phase 1-3)
+
 - [ ] Kubernetes cluster provisioned (3 nodes, 3 AZs)
 - [ ] cert-manager installed with Let's Encrypt issuer
 - [ ] Ingress NGINX controller configured
@@ -948,6 +973,7 @@ subjects:
 - [ ] Secrets management (AWS Secrets Manager or Sealed Secrets) configured
 
 ### Staging Testing (Phase 4)
+
 - [ ] Router image built and pushed to registry
 - [ ] Deployment manifests created and tested
 - [ ] Service discovery configured for staging
@@ -958,6 +984,7 @@ subjects:
 - [ ] Grafana dashboards accessible and populated
 
 ### Production Cutover (Phase 5-7)
+
 - [ ] Production Kubernetes cluster ready
 - [ ] Production ALB and DNS entries created
 - [ ] Production cert-manager issuer configured
@@ -1060,10 +1087,10 @@ After production stabilization, consider:
 
 ## Document Control
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 1.0 | 2026-02-15 | Architecture Team | Initial creation |
-| | | | |
+| Version | Date       | Author            | Changes          |
+| ------- | ---------- | ----------------- | ---------------- |
+| 1.0     | 2026-02-15 | Architecture Team | Initial creation |
+|         |            |                   |                  |
 
 **Next Review:** After Phase 4 (Staging validation)  
 **Stakeholders:** DevOps, SRE, Product, Engineering  

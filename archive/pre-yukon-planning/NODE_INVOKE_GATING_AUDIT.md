@@ -10,12 +10,12 @@
 
 **CRITICAL FINDING:** Multiple code paths trigger `node.invoke` WITHOUT passing through ClarityBurst gating.
 
-| Category | Status | Count | Risk |
-|----------|--------|-------|------|
-| Agent Tools (Gated) | ✅ | 1 | Low |
-| Agent Tools (Ungated) | ❌ | 3 | **HIGH** |
-| Gateway RPC | ✅ | 1 | Low |
-| CLI Commands | ⚠️ | 6 | Medium |
+| Category              | Status | Count | Risk     |
+| --------------------- | ------ | ----- | -------- |
+| Agent Tools (Gated)   | ✅     | 1     | Low      |
+| Agent Tools (Ungated) | ❌     | 3     | **HIGH** |
+| Gateway RPC           | ✅     | 1     | Low      |
+| CLI Commands          | ⚠️     | 6     | Medium   |
 
 ---
 
@@ -102,7 +102,7 @@ async function invokeNodeCommandPayload(params: {
 
 ```typescript
 const payload = await callGatewayTool<{ payloadJSON?: string; payload?: string }>(
-  "node.invoke",  // ❌ NO GATE CHECK BEFORE THIS
+  "node.invoke", // ❌ NO GATE CHECK BEFORE THIS
   { timeoutMs: gatewayTimeoutMs },
   {
     nodeId: params.nodeId,

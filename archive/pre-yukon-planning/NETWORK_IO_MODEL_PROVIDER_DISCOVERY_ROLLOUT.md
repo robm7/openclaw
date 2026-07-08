@@ -141,8 +141,8 @@ const response = await applyNetworkIOGateAndFetch(url, {
 ```typescript
 export async function applyNetworkIOGateAndFetch(
   url: string,
-  init?: RequestInit
-): Promise<Response>
+  init?: RequestInit,
+): Promise<Response>;
 ```
 
 **Behavior**:
@@ -204,12 +204,12 @@ export async function applyNetworkIOGateAndFetch(
 
 ## Exact Request Paths Changed
 
-| Function | File | Line | HTTP Method | Endpoint | Gate Enforcement |
-|----------|------|------|------------|----------|------------------|
-| `discoverHuggingfaceModels()` | `src/agents/huggingface-models.ts` | 165 | GET | `https://router.huggingface.co/v1/models` | applyNetworkIOGateAndFetch ✅ |
-| `queryOllamaContextWindow()` | `src/agents/models-config.providers.ts` | 246 | POST | `{apiBase}/api/show` | applyNetworkIOGateAndFetch ✅ |
-| `discoverOllamaModels()` | `src/agents/models-config.providers.ts` | 283 | GET | `{apiBase}/api/tags` | applyNetworkIOGateAndFetch ✅ |
-| `discoverVllmModels()` | `src/agents/models-config.providers.ts` | 348 | GET | `{baseUrl}/models` | applyNetworkIOGateAndFetch ✅ |
+| Function                      | File                                    | Line | HTTP Method | Endpoint                                  | Gate Enforcement              |
+| ----------------------------- | --------------------------------------- | ---- | ----------- | ----------------------------------------- | ----------------------------- |
+| `discoverHuggingfaceModels()` | `src/agents/huggingface-models.ts`      | 165  | GET         | `https://router.huggingface.co/v1/models` | applyNetworkIOGateAndFetch ✅ |
+| `queryOllamaContextWindow()`  | `src/agents/models-config.providers.ts` | 246  | POST        | `{apiBase}/api/show`                      | applyNetworkIOGateAndFetch ✅ |
+| `discoverOllamaModels()`      | `src/agents/models-config.providers.ts` | 283  | GET         | `{apiBase}/api/tags`                      | applyNetworkIOGateAndFetch ✅ |
+| `discoverVllmModels()`        | `src/agents/models-config.providers.ts` | 348  | GET         | `{baseUrl}/models`                        | applyNetworkIOGateAndFetch ✅ |
 
 ---
 
@@ -234,7 +234,7 @@ if (gateResult.outcome.startsWith("ABSTAIN")) {
     outcome: gateResult.outcome as "ABSTAIN_CONFIRM" | "ABSTAIN_CLARIFY",
     // ...
   });
-  throw error;  // ← Execution blocked, fetch never executes
+  throw error; // ← Execution blocked, fetch never executes
 }
 ```
 
@@ -248,7 +248,7 @@ if (gateResult.outcome.startsWith("ABSTAIN")) {
 
 ```typescript
 // Gate approved: execute the fetch
-return fetch(url, init);  // ← All parameters pass through unchanged
+return fetch(url, init); // ← All parameters pass through unchanged
 ```
 
 - Headers (Authorization, Content-Type, etc.) preserved
@@ -263,14 +263,14 @@ return fetch(url, init);  // ← All parameters pass through unchanged
 
 ### Test Categories
 
-| Category | Tests | Status | Coverage |
-|----------|-------|--------|----------|
-| Gate wrapper behavior | 2 | ✅ Pass | Gate callable, blocks on abstain |
-| Discovery gating | 4 | ✅ Pass | All 4 endpoints now gated |
-| Gate context | 1 | ✅ Pass | Parameters match discovery needs |
-| Abstain blocking | 2 | ✅ Pass | Confirm + Clarify outcomes block |
-| Cluster coverage | 2 | ✅ Pass | All discovery functions identified |
-| Remaining risks | 1 | ✅ Pass | Known out-of-scope risks documented |
+| Category              | Tests | Status  | Coverage                            |
+| --------------------- | ----- | ------- | ----------------------------------- |
+| Gate wrapper behavior | 2     | ✅ Pass | Gate callable, blocks on abstain    |
+| Discovery gating      | 4     | ✅ Pass | All 4 endpoints now gated           |
+| Gate context          | 1     | ✅ Pass | Parameters match discovery needs    |
+| Abstain blocking      | 2     | ✅ Pass | Confirm + Clarify outcomes block    |
+| Cluster coverage      | 2     | ✅ Pass | All discovery functions identified  |
+| Remaining risks       | 1     | ✅ Pass | Known out-of-scope risks documented |
 
 **Total**: 12 tests, **all passing** ✅
 
@@ -280,15 +280,15 @@ return fetch(url, init);  // ← All parameters pass through unchanged
 
 ### In-Scope Risks (Successfully Addressed)
 
-✅ **Raw fetch() bypass**: FIXED  
+✅ **Raw fetch() bypass**: FIXED
 
 - All 4 discovery fetch() calls now routed through NETWORK_IO gate
 
-✅ **Gate enforcement at network boundary**: CONFIRMED  
+✅ **Gate enforcement at network boundary**: CONFIRMED
 
 - Gate executes immediately before fetch, before any network stack operations
 
-✅ **Abstain blocking**: CONFIRMED  
+✅ **Abstain blocking**: CONFIRMED
 
 - ABSTAIN_CONFIRM and ABSTAIN_CLARIFY outcomes throw errors that block execution
 
@@ -298,35 +298,35 @@ return fetch(url, init);  // ← All parameters pass through unchanged
 
 #### 1. Bearer Token in Authorization Header
 
-- **Severity**: Medium  
+- **Severity**: Medium
 - **Note**: Header-based auth is standard HTTP practice; gate does not redact credentials in transit
 - **Mitigation**: Gate logs redact sensitive headers at logging layer (separate concern)
 - **Status**: Out-of-scope for this rollout
 
 #### 2. Concurrent Discovery Requests
 
-- **Severity**: Low  
+- **Severity**: Low
 - **Note**: Multiple calls to discovery functions execute in parallel; gate applies per-call independently
 - **Behavior**: Each concurrent request gets its own gate evaluation
 - **Status**: Out-of-scope for this rollout (covered by general concurrency safety of gating layer)
 
 #### 3. Model List Response Parsing
 
-- **Severity**: Low  
+- **Severity**: Low
 - **Note**: Response body is processed after gate approval; malformed responses handled by discovery logic (existing error handling)
 - **Behavior**: Gate only governs network request execution; response parsing is post-gate
 - **Status**: Out-of-scope for this rollout (separate input validation concern)
 
 #### 4. Internal vs. External Model APIs
 
-- **Severity**: Medium  
+- **Severity**: Medium
 - **Note**: Ollama/vLLM discovery targets potentially private/internal model servers; gate does not distinguish
 - **Behavior**: Gate policy determines whether internal APIs are allowed (via contract allowlist)
 - **Status**: Out-of-scope for this rollout (policy configuration at runtime)
 
 #### 5. API Token Exposure in Logs
 
-- **Severity**: Medium  
+- **Severity**: Medium
 - **Note**: API keys passed in `Authorization` headers may appear in error logs if gate rejects request
 - **Behavior**: Error instructions may reference hostname/operation but not token value
 - **Status**: Out-of-scope (addressed at logging layer via credential redaction)
@@ -335,16 +335,16 @@ return fetch(url, init);  // ← All parameters pass through unchanged
 
 ## Success Metrics
 
-| Metric | Status | Evidence |
-|--------|--------|----------|
-| **One high-risk cluster identified** | ✅ | Model provider discovery (HF, Ollama, vLLM) |
-| **All raw fetch() sites in cluster wrapped** | ✅ | 4 call sites at lines 165, 246, 283, 348 |
-| **Gate executes before request** | ✅ | applyNetworkIOGateAndFetch() called at each site |
-| **Abstain blocks execution** | ✅ | ClarityBurstAbstainError thrown on ABSTAIN_* |
-| **Semantics preserved on PROCEED** | ✅ | fetch(url, init) called unchanged |
-| **Focused tests added** | ✅ | 12 tests validating gate behavior |
-| **Test coverage complete** | ✅ | All 12 tests passing |
-| **No unrelated regressions** | ✅ | Existing tests verify behavior unchanged |
+| Metric                                       | Status | Evidence                                         |
+| -------------------------------------------- | ------ | ------------------------------------------------ |
+| **One high-risk cluster identified**         | ✅     | Model provider discovery (HF, Ollama, vLLM)      |
+| **All raw fetch() sites in cluster wrapped** | ✅     | 4 call sites at lines 165, 246, 283, 348         |
+| **Gate executes before request**             | ✅     | applyNetworkIOGateAndFetch() called at each site |
+| **Abstain blocks execution**                 | ✅     | ClarityBurstAbstainError thrown on ABSTAIN\_\*   |
+| **Semantics preserved on PROCEED**           | ✅     | fetch(url, init) called unchanged                |
+| **Focused tests added**                      | ✅     | 12 tests validating gate behavior                |
+| **Test coverage complete**                   | ✅     | All 12 tests passing                             |
+| **No unrelated regressions**                 | ✅     | Existing tests verify behavior unchanged         |
 
 ---
 

@@ -502,12 +502,14 @@ Structure:
 # ClarityBurst Documentation Hub
 
 Quick links by audience:
+
 - **For Operators:** [Quick Start](operations/QUICK_START.md), [Operator Guide](operations/OPERATOR_GUIDE.md)
 - **For Architects:** [Architecture Overview](architecture/OVERVIEW.md), [Design Patterns](architecture/CONTROL_PLANE_ANALOGY.md)
 - **For Security Teams:** [Security Audit](security/SECURITY_AUDIT_REPORT.md), [Threat Intelligence](security/THREAT_INTELLIGENCE.md)
 - **For Compliance:** [Coverage Summary](compliance/COVERAGE_SUMMARY.md), [Manifest](compliance/MANIFEST.json)
 
 Directory Structure:
+
 - `architecture/` – Design, boundaries, wiring plans
 - `validation/` – Testing, chaos injection, security
 - `ontology/` – Contracts, stages, pack definitions
@@ -553,15 +555,15 @@ See [File Map](#file-mapping) for complete inventory.
 
 ## Part 6: Benefits of Proposed Structure
 
-| Aspect | Current | Proposed |
-|--------|---------|----------|
-| **Discovery** | Scattered; 40+ root files | Organized by purpose; 8 main folders |
-| **Navigation** | No clear hierarchy | Semantic grouping; README hub |
-| **Audience-Driven** | Mixed docs for all audiences | Separate paths for operators/architects/security |
-| **Artifact Organization** | `compliance-artifacts/` separate | Consolidated in `compliance/` subfolder |
-| **Script Docs** | In `scripts/` directory | In `validation/` with test runners referenced |
-| **Maintenance** | Hard to track related docs | Clear relationships; easier to update |
-| **Onboarding** | No central entry point | README hub provides landing page |
+| Aspect                    | Current                          | Proposed                                         |
+| ------------------------- | -------------------------------- | ------------------------------------------------ |
+| **Discovery**             | Scattered; 40+ root files        | Organized by purpose; 8 main folders             |
+| **Navigation**            | No clear hierarchy               | Semantic grouping; README hub                    |
+| **Audience-Driven**       | Mixed docs for all audiences     | Separate paths for operators/architects/security |
+| **Artifact Organization** | `compliance-artifacts/` separate | Consolidated in `compliance/` subfolder          |
+| **Script Docs**           | In `scripts/` directory          | In `validation/` with test runners referenced    |
+| **Maintenance**           | Hard to track related docs       | Clear relationships; easier to update            |
+| **Onboarding**            | No central entry point           | README hub provides landing page                 |
 
 ---
 
@@ -593,14 +595,14 @@ See [File Map](#file-mapping) for complete inventory.
 
 ## Summary Table: File Movement
 
-| Current Location | New Location | File Count | Notes |
-|---|---|---|---|
-| `root/` | `clarityburst-docs/` | 40+ | Scatter consolidated; 15-20 merged |
-| `docs/clarityburst/` | `clarityburst-docs/` | 4 | Moved and reorganized |
-| `docs/` (CLARITYBURST_*) | `clarityburst-docs/` | 10+ | Distributed by purpose |
-| `scripts/` (*.md) | `clarityburst-docs/validation/` | 7 | Test docs only; runners stay in `scripts/` |
-| `compliance-artifacts/` | `clarityburst-docs/compliance/` | 6 | Artifacts consolidated |
-| `ontology-packs/` | Reference from `clarityburst-docs/ontology/` | 13 | JSON files stay in place; docs reference them |
+| Current Location           | New Location                                 | File Count | Notes                                         |
+| -------------------------- | -------------------------------------------- | ---------- | --------------------------------------------- |
+| `root/`                    | `clarityburst-docs/`                         | 40+        | Scatter consolidated; 15-20 merged            |
+| `docs/clarityburst/`       | `clarityburst-docs/`                         | 4          | Moved and reorganized                         |
+| `docs/` (CLARITYBURST\_\*) | `clarityburst-docs/`                         | 10+        | Distributed by purpose                        |
+| `scripts/` (\*.md)         | `clarityburst-docs/validation/`              | 7          | Test docs only; runners stay in `scripts/`    |
+| `compliance-artifacts/`    | `clarityburst-docs/compliance/`              | 6          | Artifacts consolidated                        |
+| `ontology-packs/`          | Reference from `clarityburst-docs/ontology/` | 13         | JSON files stay in place; docs reference them |
 
 ---
 

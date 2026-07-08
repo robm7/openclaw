@@ -58,10 +58,10 @@ Already exists in codebase: [`src/clarityburst/errors.ts`](src/clarityburst/erro
 
 **Call Sites Wrapped**: 2
 
-| Line | Function | Method | Target | Status |
-|------|----------|--------|--------|--------|
-| 46 | `requestDeviceCode()` | POST | <https://github.com/login/device/code> | ✅ Wrapped |
-| 78 | `pollForAccessToken()` | POST | <https://github.com/login/oauth/access_token> | ✅ Wrapped |
+| Line | Function               | Method | Target                                        | Status     |
+| ---- | ---------------------- | ------ | --------------------------------------------- | ---------- |
+| 46   | `requestDeviceCode()`  | POST   | <https://github.com/login/device/code>        | ✅ Wrapped |
+| 78   | `pollForAccessToken()` | POST   | <https://github.com/login/oauth/access_token> | ✅ Wrapped |
 
 **Implementation Pattern**:
 
@@ -88,9 +88,9 @@ const res = await applyNetworkIOGateAndFetch(ACCESS_TOKEN_URL, {
 
 **Call Sites Wrapped**: 1
 
-| Line | Function | Method | Target | Status |
-|------|----------|--------|--------|--------|
-| 16 | `refreshQwenPortalCredentials()` | POST | <https://chat.qwen.ai/api/v1/oauth2/token> | ✅ Wrapped |
+| Line | Function                         | Method | Target                                     | Status     |
+| ---- | -------------------------------- | ------ | ------------------------------------------ | ---------- |
+| 16   | `refreshQwenPortalCredentials()` | POST   | <https://chat.qwen.ai/api/v1/oauth2/token> | ✅ Wrapped |
 
 **Implementation Pattern**:
 
@@ -111,70 +111,70 @@ Below is the comprehensive list of all identified HTTP request execution paths (
 
 These requests control authentication flows and core system operations.
 
-| File | Line | HTTP Method | Target URL | Call Site | Priority |
-|------|------|-------------|------------|-----------|----------|
-| src/clarityburst/router-client.ts | 187 | POST | ClarityBurst Router | routeClarityBurst() - main gate routing | CRITICAL |
-| src/providers/github-copilot-auth.ts | 46 | POST | github.com | requestDeviceCode() | ✅ DONE |
-| src/providers/github-copilot-auth.ts | 78 | POST | github.com | pollForAccessToken() | ✅ DONE |
-| src/providers/qwen-portal-oauth.ts | 16 | POST | qwen-portal | refreshQwenPortalCredentials() | ✅ DONE |
-| src/channels/telegram/api.ts | 8 | GET/POST | Telegram API | telegram API wrapper | HIGH |
-| src/discord/send.outbound.ts | 347 | POST | Discord Webhook | webhook execution | HIGH |
-| src/discord/send.shared.ts | 234-450 | POST/GET | Discord API | rest.post/rest.get calls | HIGH |
+| File                                 | Line    | HTTP Method | Target URL          | Call Site                               | Priority |
+| ------------------------------------ | ------- | ----------- | ------------------- | --------------------------------------- | -------- |
+| src/clarityburst/router-client.ts    | 187     | POST        | ClarityBurst Router | routeClarityBurst() - main gate routing | CRITICAL |
+| src/providers/github-copilot-auth.ts | 46      | POST        | github.com          | requestDeviceCode()                     | ✅ DONE  |
+| src/providers/github-copilot-auth.ts | 78      | POST        | github.com          | pollForAccessToken()                    | ✅ DONE  |
+| src/providers/qwen-portal-oauth.ts   | 16      | POST        | qwen-portal         | refreshQwenPortalCredentials()          | ✅ DONE  |
+| src/channels/telegram/api.ts         | 8       | GET/POST    | Telegram API        | telegram API wrapper                    | HIGH     |
+| src/discord/send.outbound.ts         | 347     | POST        | Discord Webhook     | webhook execution                       | HIGH     |
+| src/discord/send.shared.ts           | 234-450 | POST/GET    | Discord API         | rest.post/rest.get calls                | HIGH     |
 
 ### HIGH TIER (External API Integrations)
 
 These requests interact with external AI/ML and data services.
 
-| File | Line | HTTP Method | Target URL | Call Site | Priority |
-|------|------|-------------|------------|-----------|----------|
-| src/agents/huggingface-models.ts | 165 | GET | HuggingFace | model discovery | HIGH |
-| src/agents/minimax-vlm.ts | 68 | POST | MiniMax API | VLM inference | HIGH |
-| src/agents/models-config.providers.ts | 246 | POST | Ollama | model info query | HIGH |
-| src/agents/models-config.providers.ts | 283 | GET | Ollama | model list | HIGH |
-| src/agents/models-config.providers.ts | 348 | GET | Custom model endpoint | model detection | HIGH |
-| src/agents/ollama-stream.ts | 455 | POST | Ollama | chat completion stream | HIGH |
-| src/agents/opencode-zen-models.ts | 285 | GET | OpenCode Zen | model list | HIGH |
-| src/agents/venice-models.ts | 346 | GET | Venice API | model discovery | HIGH |
-| src/agents/tools/web-fetch.ts | 379 | POST | Agent tool endpoint | web fetch routing | HIGH |
-| src/browser/cdp.helpers.ts | 125 | POST/GET | Chrome DevTools | CDP protocol | HIGH |
-| src/browser/chrome.ts | 86 | GET | Chrome DevTools | version query | HIGH |
-| src/browser/client-fetch.ts | 149 | GET/POST/etc | Various | generic browser fetch | HIGH |
-| src/browser/extension-relay.ts | 58 | GET | CDP relay | CDP version check | HIGH |
-| src/browser/extension-relay.test.ts | 185+ | GET/POST | CDP relay | relay auth headers | HIGH |
+| File                                  | Line | HTTP Method  | Target URL            | Call Site              | Priority |
+| ------------------------------------- | ---- | ------------ | --------------------- | ---------------------- | -------- |
+| src/agents/huggingface-models.ts      | 165  | GET          | HuggingFace           | model discovery        | HIGH     |
+| src/agents/minimax-vlm.ts             | 68   | POST         | MiniMax API           | VLM inference          | HIGH     |
+| src/agents/models-config.providers.ts | 246  | POST         | Ollama                | model info query       | HIGH     |
+| src/agents/models-config.providers.ts | 283  | GET          | Ollama                | model list             | HIGH     |
+| src/agents/models-config.providers.ts | 348  | GET          | Custom model endpoint | model detection        | HIGH     |
+| src/agents/ollama-stream.ts           | 455  | POST         | Ollama                | chat completion stream | HIGH     |
+| src/agents/opencode-zen-models.ts     | 285  | GET          | OpenCode Zen          | model list             | HIGH     |
+| src/agents/venice-models.ts           | 346  | GET          | Venice API            | model discovery        | HIGH     |
+| src/agents/tools/web-fetch.ts         | 379  | POST         | Agent tool endpoint   | web fetch routing      | HIGH     |
+| src/browser/cdp.helpers.ts            | 125  | POST/GET     | Chrome DevTools       | CDP protocol           | HIGH     |
+| src/browser/chrome.ts                 | 86   | GET          | Chrome DevTools       | version query          | HIGH     |
+| src/browser/client-fetch.ts           | 149  | GET/POST/etc | Various               | generic browser fetch  | HIGH     |
+| src/browser/extension-relay.ts        | 58   | GET          | CDP relay             | CDP version check      | HIGH     |
+| src/browser/extension-relay.test.ts   | 185+ | GET/POST     | CDP relay             | relay auth headers     | HIGH     |
 
 ### MEDIUM TIER (OAuth, Authentication Secondary Flows)
 
 These requests handle secondary authentication and authorization flows.
 
-| File | Line | HTTP Method | Target URL | Call Site | Priority |
-|------|------|-------------|------------|-----------|----------|
-| src/commands/signal-install.ts | 219 | GET | GitHub API | release download | MEDIUM |
-| src/commands/chutes-oauth.test.ts | 82 | GET | OAuth redirect | test flow | MEDIUM |
-| src/media/server.test.ts | 62+ | GET | Local media | test fetch | MEDIUM |
-| src/slack/monitor/media.ts | 82 | GET | Slack CDN | file download | MEDIUM |
-| src/tts/tts-core.ts | 557 | POST | TTS provider | speech synthesis | MEDIUM |
-| src/tts/tts-core.ts | 612 | POST | OpenAI TTS | speech synthesis | MEDIUM |
-| src/gateway/openai-http.test.ts | 49+ | POST | Local OpenAI API | test inference | MEDIUM |
-| src/cli/nodes-camera.ts | 81 | GET | Node camera | device fetch | MEDIUM |
-| src/agents/sandbox/browser.ts | 52 | GET | Sandbox browser | page fetch | MEDIUM |
-| src/telegram/webhook.test.ts | 46 | GET/POST | Local server | test webhook | MEDIUM |
+| File                              | Line | HTTP Method | Target URL       | Call Site        | Priority |
+| --------------------------------- | ---- | ----------- | ---------------- | ---------------- | -------- |
+| src/commands/signal-install.ts    | 219  | GET         | GitHub API       | release download | MEDIUM   |
+| src/commands/chutes-oauth.test.ts | 82   | GET         | OAuth redirect   | test flow        | MEDIUM   |
+| src/media/server.test.ts          | 62+  | GET         | Local media      | test fetch       | MEDIUM   |
+| src/slack/monitor/media.ts        | 82   | GET         | Slack CDN        | file download    | MEDIUM   |
+| src/tts/tts-core.ts               | 557  | POST        | TTS provider     | speech synthesis | MEDIUM   |
+| src/tts/tts-core.ts               | 612  | POST        | OpenAI TTS       | speech synthesis | MEDIUM   |
+| src/gateway/openai-http.test.ts   | 49+  | POST        | Local OpenAI API | test inference   | MEDIUM   |
+| src/cli/nodes-camera.ts           | 81   | GET         | Node camera      | device fetch     | MEDIUM   |
+| src/agents/sandbox/browser.ts     | 52   | GET         | Sandbox browser  | page fetch       | MEDIUM   |
+| src/telegram/webhook.test.ts      | 46   | GET/POST    | Local server     | test webhook     | MEDIUM   |
 
 ### LOW TIER (Testing, Development Only)
 
 These calls are test-only or development utilities that may not need production gating.
 
-| File | Line | HTTP Method | Target URL | Call Site | Priority |
-|------|------|-------------|------------|-----------|----------|
-| src/canvas-host/server.test.ts | 96+ | GET | Local canvas | test navigation | LOW |
-| src/browser/extension-relay.test.ts | 185+ | GET | CDP relay test | test operations | LOW |
-| src/browser/server.test.ts | Multiple | GET/POST | Local server | test requests | LOW |
-| src/gateway/server.test.ts | Multiple | GET/POST | Local gateway | test operations | LOW |
-| src/gateway/tools-invoke-http.test.ts | 217 | POST | Local gateway | test invocation | LOW |
-| src/security/skill-scanner.test.ts | 95, 147 | GET/POST | Test URLs | security scan test | LOW |
-| src/media-understanding/providers/deepgram/audio.live.test.ts | 22 | GET | Deepgram API | test audio stream | LOW |
-| src/media/server.test.ts | Multiple | GET | Local media | test fetch | LOW |
-| src/browser/pw-session.ts | 421 | GET | Browser CDP | page list fetch | LOW |
-| src/gateway/server.canvas-auth.test.ts | 209+ | GET | Local canvas | canvas auth test | LOW |
+| File                                                          | Line     | HTTP Method | Target URL     | Call Site          | Priority |
+| ------------------------------------------------------------- | -------- | ----------- | -------------- | ------------------ | -------- |
+| src/canvas-host/server.test.ts                                | 96+      | GET         | Local canvas   | test navigation    | LOW      |
+| src/browser/extension-relay.test.ts                           | 185+     | GET         | CDP relay test | test operations    | LOW      |
+| src/browser/server.test.ts                                    | Multiple | GET/POST    | Local server   | test requests      | LOW      |
+| src/gateway/server.test.ts                                    | Multiple | GET/POST    | Local gateway  | test operations    | LOW      |
+| src/gateway/tools-invoke-http.test.ts                         | 217      | POST        | Local gateway  | test invocation    | LOW      |
+| src/security/skill-scanner.test.ts                            | 95, 147  | GET/POST    | Test URLs      | security scan test | LOW      |
+| src/media-understanding/providers/deepgram/audio.live.test.ts | 22       | GET         | Deepgram API   | test audio stream  | LOW      |
+| src/media/server.test.ts                                      | Multiple | GET         | Local media    | test fetch         | LOW      |
+| src/browser/pw-session.ts                                     | 421      | GET         | Browser CDP    | page list fetch    | LOW      |
+| src/gateway/server.canvas-auth.test.ts                        | 209+     | GET         | Local canvas   | canvas auth test   | LOW      |
 
 ## Implementation Roadmap
 
@@ -328,14 +328,11 @@ const response = await fetch("https://api.example.com/endpoint", {
 });
 
 // After:
-const response = await applyNetworkIOGateAndFetch(
-  "https://api.example.com/endpoint",
-  {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  }
-);
+const response = await applyNetworkIOGateAndFetch("https://api.example.com/endpoint", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(payload),
+});
 
 // Handle gate abstention:
 try {

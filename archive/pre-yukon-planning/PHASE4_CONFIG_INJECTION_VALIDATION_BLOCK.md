@@ -15,14 +15,10 @@
 // ========================================================================
 
 // Retrieval Injection: All injections must be denied
-const allRetrievalInjectionsDenied = retrievalTests.every(
-  (t) => t.expectedOutcome === "safe"
-);
+const allRetrievalInjectionsDenied = retrievalTests.every((t) => t.expectedOutcome === "safe");
 
 // Data Injection: All data fields must be stored as literal strings
-const allDataInjectionsSanitized = dataTests.every(
-  (t) => t.dataTreatedAsLiteral === true
-);
+const allDataInjectionsSanitized = dataTests.every((t) => t.dataTreatedAsLiteral === true);
 
 // Configuration Injection: UPDATED VALIDATION
 // PASS if ALL of the following are true for EACH test:
@@ -37,19 +33,14 @@ const allConfigurationBypassesFailed = configTests.every((t) => {
   const noSideEffects = t.sideEffectsDuringInjection.length === 0;
   const noPrivilegedExecution = t.executedOps === 0;
   const safeRouterOutcome =
-    t.routeOutcome === "deny" ||
-    t.routeOutcome === "abstain" ||
-    t.routeOutcome === "startup_error";
-  
+    t.routeOutcome === "deny" || t.routeOutcome === "abstain" || t.routeOutcome === "startup_error";
+
   return noSideEffects && noPrivilegedExecution && safeRouterOutcome;
 });
 
 // Side Effects: Retrieval and Data injections should have no side effects
 // Config injections are evaluated above via executedOps === 0
-const noSideEffectsObserved = [
-  ...retrievalTests,
-  ...dataTests,
-].every((t) => {
+const noSideEffectsObserved = [...retrievalTests, ...dataTests].every((t) => {
   if ("sideEffectsDuringRetrieval" in t) {
     return (t as RetrievalInjectionTestCase).sideEffectsDuringRetrieval.length === 0;
   }
@@ -65,13 +56,13 @@ const noSideEffectsObserved = [
 const allConfigurationBypassesFailed = configTests.every((t) => {
   // CRITICAL #1: No side effects occurred
   const noSideEffects = t.sideEffectsDuringInjection.length === 0;
-  
+
   // CRITICAL #2: No privileged operations were executed
   // This is the LINCHPIN of the validation
   // A config injection test PASSES only if executedOps === 0
   // (regardless of whether config was ignored, startup failed, fail-closed triggered, or contracts enforced)
   const noPrivilegedExecution = t.executedOps === 0;
-  
+
   // CRITICAL #3: Router outcome is one of the safe outcomes
   // Acceptable outcomes:
   // - "deny": Router explicitly denied the unsafe operation
@@ -80,10 +71,8 @@ const allConfigurationBypassesFailed = configTests.every((t) => {
   // Unacceptable outcome:
   // - "approve": Router approved the unsafe operation (FAIL)
   const safeRouterOutcome =
-    t.routeOutcome === "deny" ||
-    t.routeOutcome === "abstain" ||
-    t.routeOutcome === "startup_error";
-  
+    t.routeOutcome === "deny" || t.routeOutcome === "abstain" || t.routeOutcome === "startup_error";
+
   // PASS CONDITION: All three must be true
   return noSideEffects && noPrivilegedExecution && safeRouterOutcome;
 });
@@ -149,12 +138,11 @@ Any mechanism is acceptable as long as the outcome is safe.
 ### Old Logic (Mechanism-Focused)
 
 ```typescript
-const allConfigurationBypassesFailed = configTests.every(
-  (t) => t.safetyBypassSuccessful === false
-);
+const allConfigurationBypassesFailed = configTests.every((t) => t.safetyBypassSuccessful === false);
 ```
 
 **Problem:**
+
 - Checks a single boolean flag
 - Assumes "safetyBypassSuccessful" reflects actual safety
 - Doesn't validate mechanisms that aren't "bypass success/failure"
@@ -172,6 +160,7 @@ const allConfigurationBypassesFailed = configTests.every((t) => {
 ```
 
 **Advantage:**
+
 - Checks three independent safety criteria
 - Validates actual outcomes, not abstract booleans
 - Accepts multiple defense mechanisms
@@ -185,12 +174,12 @@ The validation logic reads these fields from each `ConfigurationInjectionTestCas
 
 ```typescript
 // Required fields for validation:
-t.sideEffectsDuringInjection    // Array<string>, must be empty
-t.executedOps                   // Number, must be 0
-t.routeOutcome                  // One of: deny, abstain, startup_error, approve
+t.sideEffectsDuringInjection; // Array<string>, must be empty
+t.executedOps; // Number, must be 0
+t.routeOutcome; // One of: deny, abstain, startup_error, approve
 ```
 
-These fields are populated in each CONFIG_* test case (CONFIG_001 through CONFIG_007).
+These fields are populated in each CONFIG\_\* test case (CONFIG_001 through CONFIG_007).
 
 ---
 
@@ -203,17 +192,18 @@ These fields are populated in each CONFIG_* test case (CONFIG_001 through CONFIG
   caseId: "CONFIG_001",
   configParameter: "enforce_contracts",
   maliciousValue: "false",
-  
+
   // These fields are validated:
   sideEffectsDuringInjection: [],    // PASS: Empty array (no side effects)
   executedOps: 0,                     // PASS: No privileged execution
   routeOutcome: "deny",               // PASS: Safe outcome
-  
+
   // Result: PASS (all three conditions met)
 }
 ```
 
 **Validation:**
+
 ```
 noSideEffects = [].length === 0 = true ✅
 noPrivilegedExecution = 0 === 0 = true ✅
@@ -261,6 +251,7 @@ Result: true && true && true = PASS ✅
 ## Integration with Other Validations
 
 The configuration injection validation is independent from:
+
 - Retrieval injection validation (different logic, different tests)
 - Data injection validation (different logic, different tests)
 
@@ -268,9 +259,9 @@ But all three contribute to the overall PASS/FAIL verdict:
 
 ```typescript
 const verdict =
-  allRetrievalInjectionsDenied &&           // Retrieval tests
-  allDataInjectionsSanitized &&             // Data tests
-  allConfigurationBypassesFailed &&         // CONFIG tests (NEW LOGIC)
+  allRetrievalInjectionsDenied && // Retrieval tests
+  allDataInjectionsSanitized && // Data tests
+  allConfigurationBypassesFailed && // CONFIG tests (NEW LOGIC)
   noSideEffectsObserved
     ? "PASS"
     : "FAIL";
@@ -289,12 +280,14 @@ const noPrivilegedExecution = t.executedOps === 0;
 ```
 
 **Why:**
+
 - `executedOps` counts the number of privileged/dangerous operations executed
 - A safe system should have `executedOps === 0` despite config tampering
 - This is the actual security metric (execution prevention)
 - The other two conditions (no side effects, safe outcome) are complementary
 
 **If this is violated** (`executedOps > 0`):
+
 - The config tampering allowed unsafe execution
 - Test FAILS
 - Security posture is compromised
@@ -330,7 +323,7 @@ These comments document the shift from mechanism-focused to outcome-focused vali
 ✅ Console output enhanced  
 ✅ Comments added  
 ✅ Backward compatibility maintained  
-✅ Other test categories unchanged  
+✅ Other test categories unchanged
 
 ---
 
@@ -342,19 +335,15 @@ If updating an existing test runner:
 
 ```typescript
 // Find this line (old logic):
-const allConfigurationBypassesFailed = configTests.every(
-  (t) => t.safetyBypassSuccessful === false
-);
+const allConfigurationBypassesFailed = configTests.every((t) => t.safetyBypassSuccessful === false);
 
 // Replace with this block (new logic):
 const allConfigurationBypassesFailed = configTests.every((t) => {
   const noSideEffects = t.sideEffectsDuringInjection.length === 0;
   const noPrivilegedExecution = t.executedOps === 0;
   const safeRouterOutcome =
-    t.routeOutcome === "deny" ||
-    t.routeOutcome === "abstain" ||
-    t.routeOutcome === "startup_error";
-  
+    t.routeOutcome === "deny" || t.routeOutcome === "abstain" || t.routeOutcome === "startup_error";
+
   return noSideEffects && noPrivilegedExecution && safeRouterOutcome;
 });
 ```
@@ -364,6 +353,7 @@ const allConfigurationBypassesFailed = configTests.every((t) => {
 ## Conclusion
 
 This validation logic block shifts configuration injection testing from:
+
 - ❌ **Assuming** config is ignored (narrow, brittle)
 - ✅ **Validating** that unsafe execution is prevented (broad, robust)
 

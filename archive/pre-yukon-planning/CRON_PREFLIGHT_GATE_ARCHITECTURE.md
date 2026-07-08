@@ -8,6 +8,7 @@ The **CronPreflightGate** is a new ClarityBurst contract point that runs at the 
 2. **Commit to a specific cron task** from a closed enum before proceeding with execution
 
 This design ensures that every cron-driven execution:
+
 - Operates on a verified, consistent ledger state
 - Has an immutable, pre-determined task identity attached to its run
 - Cannot proceed if either validation fails or task selection is ambiguous
@@ -17,21 +18,25 @@ This design ensures that every cron-driven execution:
 ## 2. Core Design Principles
 
 ### 2.1 Closure Over Ambiguity
+
 - **Closed enum** of allowed cron tasks prevents dynamic, runtime task creation
 - Tasks are declared upfront; no guessing or late-binding allowed
 - Failure mode: missing task → ESCALATE_CRON_STATE_INVALID (operator intervention)
 
 ### 2.2 Fail-Closed Ledger Semantics
+
 - Invalid ledger state → immediate ESCALATE, no retry
 - Read-only verification (no mutations during validation)
 - Invariants checked are non-negotiable; no fallback logic
 
 ### 2.3 Mandatory Decision Record Attachment
+
 - Every cron run must have an immutable `nextCronTask` field in its decision record
 - No run proceeds without this field being set
 - Once set, immutable for the lifetime of the run
 
 ### 2.4 Separation of Concerns
+
 - **Gate responsibility**: Validation + task selection
 - **Tool dispatch**: Uses the pre-selected task as context
 - **Downstream logic**: Reads task from decision record; cannot override
@@ -63,12 +68,14 @@ Outcome recorded in ledger
 ```
 
 ### 3.2 Key Insight: Preflight Positioning
+
 - Runs **before** any router invocation
 - Runs **before** any tool dispatch decision
 - Establishes system preconditions (ledger valid + task committed)
 - Subsequent stages can assume valid preconditions
 
 ### 3.3 Integration with Existing Stages
+
 - Does NOT replace TOOL_DISPATCH_GATE or other stages
 - Complements them by ensuring preconditions
 - Downstream stages query `decision_record.nextCronTask` if needed
@@ -86,19 +93,19 @@ Outcome recorded in ledger
  * Must be declared upfront; no runtime additions.
  */
 export type CronTaskId =
-  | "HEARTBEAT_CHECK"       // System health monitoring
-  | "MEMORY_MAINTENANCE"    // Garbage collection, cache cleanup
-  | "CACHE_REFRESH"         // Update cached data from sources
-  | "LOG_ROTATION"          // Archive and compress old logs
-  | "BACKUP_EXECUTION"      // Incremental backup operations
-  | "SCHEDULED_REPORT"      // Generate and deliver reports
-  | "CREDENTIAL_ROTATION"   // Refresh auth tokens, keys
-  | "HEALTH_PROBE"          // External service availability checks
-  | "INDEX_REBUILD"         // Database/search index maintenance
-  | "STATE_SYNC"            // Synchronize distributed state
-  | "METRICS_AGGREGATION"   // Collect and summarize metrics
-  | "CLEANUP_TEMP_DATA"     // Remove temporary files/records
-  | "UPDATE_CONFIG_CACHE"   // Refresh cached configuration;
+  | "HEARTBEAT_CHECK" // System health monitoring
+  | "MEMORY_MAINTENANCE" // Garbage collection, cache cleanup
+  | "CACHE_REFRESH" // Update cached data from sources
+  | "LOG_ROTATION" // Archive and compress old logs
+  | "BACKUP_EXECUTION" // Incremental backup operations
+  | "SCHEDULED_REPORT" // Generate and deliver reports
+  | "CREDENTIAL_ROTATION" // Refresh auth tokens, keys
+  | "HEALTH_PROBE" // External service availability checks
+  | "INDEX_REBUILD" // Database/search index maintenance
+  | "STATE_SYNC" // Synchronize distributed state
+  | "METRICS_AGGREGATION" // Collect and summarize metrics
+  | "CLEANUP_TEMP_DATA" // Remove temporary files/records
+  | "UPDATE_CONFIG_CACHE"; // Refresh cached configuration;
 
 export const CRON_TASK_IDS = [
   "HEARTBEAT_CHECK",
@@ -186,11 +193,13 @@ export const CRON_TASK_DECLARATIONS: Record<CronTaskId, CronTaskDeclaration> = {
 ### 5.1 Refactored from CLI Subprocess
 
 **Current state** (in `scripts/verify-usage-ledger-invariants.ts`):
+
 - CLI-only tool
 - Returns exit code
 - No programmatic API
 
 **New state** (in `src/clarityburst/ledger-verification.ts`):
+
 - Programmatic function-based API
 - Returns structured `LedgerVerificationResult`
 - Can be called from gating logic, not just CLI
@@ -218,7 +227,7 @@ export interface LedgerVerificationResult {
 
 /**
  * Load and verify the clarityburst usage ledger.
- * 
+ *
  * Checks:
  * 1. File exists and is readable
  * 2. All entries are valid JSONL
@@ -227,15 +236,15 @@ export interface LedgerVerificationResult {
  *    - No duplicate runIds in the window
  *    - If a workloadId appears in both "baseline" and "gated" modes,
  *      they must have different runIds (not the same run)
- * 
+ *
  * @param ledgerPath Path to the ledger file (defaults to docs/internal/clarityburst-usage-ledger.jsonl)
  * @param windowSize Number of recent entries to check (defaults to 50)
  * @returns LedgerVerificationResult with detailed status
  */
 export async function verifyLedgerInvariants(
   ledgerPath?: string,
-  windowSize?: number
-): Promise<LedgerVerificationResult>
+  windowSize?: number,
+): Promise<LedgerVerificationResult>;
 ```
 
 ### 5.3 Verification Invariants
@@ -255,7 +264,7 @@ export type LedgerVerificationFailureReason =
   | "INVALID_JSONL_FORMAT"
   | "EMPTY_LEDGER"
   | "DUPLICATE_RUN_IDS"
-  | "BASELINE_GATED_MISMATCH"  // Same runId in both baseline and gated for same workloadId
+  | "BASELINE_GATED_MISMATCH" // Same runId in both baseline and gated for same workloadId
   | "MISSING_REQUIRED_FIELD"
   | "UNKNOWN_ERROR";
 ```
@@ -267,11 +276,9 @@ export type LedgerVerificationFailureReason =
 ### 6.1 Decision Record Structure Enhancement
 
 Current `OverrideOutcome` (from `decision-override.ts`):
+
 ```typescript
-export type OverrideOutcome = 
-  | AbstainConfirmOutcome 
-  | AbstainClarifyOutcome 
-  | ProceedOutcome;
+export type OverrideOutcome = AbstainConfirmOutcome | AbstainClarifyOutcome | ProceedOutcome;
 ```
 
 **Proposed enhancement** for cron-specific tracking:
@@ -284,23 +291,23 @@ export type OverrideOutcome =
 export interface CronDecisionRecord {
   /** Unique run identifier */
   runId: string;
-  
+
   /** Cron task selected during preflight gate (MANDATORY) */
   nextCronTask: CronTaskId;
-  
+
   /** When the task was committed */
   task_committed_at: string;
-  
+
   /** Ledger verification result */
   ledger_verification: {
     valid: boolean;
     entries_checked: number;
     verified_at: string;
   };
-  
+
   /** Override outcomes for each stage (populated downstream) */
   stage_outcomes: Record<string, OverrideOutcome>;
-  
+
   /** Final execution outcome */
   execution_outcome?: {
     success: boolean;
@@ -323,13 +330,10 @@ export interface CronDecisionRecord {
  * Lock the cron task selection for this run.
  * Once locked, cannot be changed.
  */
-export function lockCronTask(
-  decisionRecord: CronDecisionRecord,
-  taskId: CronTaskId
-): void {
+export function lockCronTask(decisionRecord: CronDecisionRecord, taskId: CronTaskId): void {
   if (decisionRecord.nextCronTask !== undefined) {
     throw new Error(
-      `CronTask already locked to ${decisionRecord.nextCronTask}; cannot change to ${taskId}`
+      `CronTask already locked to ${decisionRecord.nextCronTask}; cannot change to ${taskId}`,
     );
   }
   decisionRecord.nextCronTask = taskId;
@@ -341,9 +345,7 @@ export function lockCronTask(
  */
 export function assertCronTaskLocked(decisionRecord: CronDecisionRecord): CronTaskId {
   if (!decisionRecord.nextCronTask) {
-    throw new Error(
-      "CronTask not selected; preflight gate must run before tool dispatch"
-    );
+    throw new Error("CronTask not selected; preflight gate must run before tool dispatch");
   }
   return decisionRecord.nextCronTask;
 }
@@ -361,7 +363,7 @@ export function assertCronTaskLocked(decisionRecord: CronDecisionRecord): CronTa
  */
 export interface EscalateOutcome {
   outcome: "ESCALATE_CRON_STATE_INVALID";
-  reason: 
+  reason:
     | "LEDGER_VERIFICATION_FAILED"
     | "LEDGER_FILE_NOT_FOUND"
     | "LEDGER_READ_ERROR"
@@ -373,13 +375,13 @@ export interface EscalateOutcome {
     | "TASK_SELECTION_AMBIGUOUS"
     | "TASK_ENUM_MISMATCH"
     | "UNKNOWN_LEDGER_ERROR";
-  
+
   /** Detailed error message for operator */
   details: string;
-  
+
   /** Suggested remediation */
   remediation: string;
-  
+
   /** Timestamp of escalation */
   escalated_at: string;
 }
@@ -465,7 +467,20 @@ On any ESCALATE:
   "description": "Pre-flight validation gate that runs before any tool dispatch. Verifies ledger health and commits to a specific cron task.",
   "execution_order": "FIRST",
   "precondition_stages": [],
-  "blocks_on_failure": ["TOOL_DISPATCH_GATE", "SHELL_EXEC", "FILE_SYSTEM_OPS", "NETWORK_IO", "BROWSER_AUTOMATE", "MEMORY_MODIFY", "CRON_SCHEDULE", "MESSAGE_EMIT", "MEDIA_GENERATE", "NODE_INVOKE", "CANVAS_UI", "SUBAGENT_SPAWN"],
+  "blocks_on_failure": [
+    "TOOL_DISPATCH_GATE",
+    "SHELL_EXEC",
+    "FILE_SYSTEM_OPS",
+    "NETWORK_IO",
+    "BROWSER_AUTOMATE",
+    "MEMORY_MODIFY",
+    "CRON_SCHEDULE",
+    "MESSAGE_EMIT",
+    "MEDIA_GENERATE",
+    "NODE_INVOKE",
+    "CANVAS_UI",
+    "SUBAGENT_SPAWN"
+  ],
   "ledger_verification_config": {
     "ledger_path": "docs/internal/clarityburst-usage-ledger.jsonl",
     "window_size": 50,
@@ -549,7 +564,7 @@ Update [`src/clarityburst/stages.ts`](src/clarityburst/stages.ts):
 
 ```typescript
 export type ClarityBurstStageId =
-  | "CRON_PREFLIGHT_GATE"  // NEW: runs first
+  | "CRON_PREFLIGHT_GATE" // NEW: runs first
   | "BROWSER_AUTOMATE"
   | "CANVAS_UI"
   | "CRON_SCHEDULE"
@@ -564,7 +579,7 @@ export type ClarityBurstStageId =
   | "TOOL_DISPATCH_GATE";
 
 export const ALL_STAGE_IDS: readonly ClarityBurstStageId[] = [
-  "CRON_PREFLIGHT_GATE",  // NEW
+  "CRON_PREFLIGHT_GATE", // NEW
   "BROWSER_AUTOMATE",
   // ... rest
 ] as const;
@@ -666,6 +681,7 @@ export const ALL_STAGE_IDS: readonly ClarityBurstStageId[] = [
 ### 10.2 Integration with Other Stages
 
 All downstream stages can:
+
 - **Query** the task from decision record
 - **Use** it for context-aware routing
 - **Enforce** task-specific capability requirements
@@ -674,6 +690,7 @@ All downstream stages can:
 ### 10.3 Ledger Recording
 
 After execution:
+
 1. Create entry in ledger with runId, workloadId, mode, metrics
 2. Ledger entry includes reference to nextCronTask
 3. Next preflight run will verify this entry as part of invariant check
@@ -684,13 +701,15 @@ After execution:
 
 ### 11.1 Closed Universe Benefit
 
-**Problem (dynamic tasks)**: 
+**Problem (dynamic tasks)**:
+
 - At runtime, new task types can be created
 - Router or late-binding logic picks one
 - No way to know if "right" task was picked
 - Escalation path unclear
 
 **Solution (closed enum)**:
+
 - All tasks declared upfront in code
 - Type-safe; cannot add at runtime
 - Every valid task is known and declared
@@ -700,18 +719,19 @@ After execution:
 
 ```typescript
 // This is impossible (compile-time error):
-const task: CronTaskId = "UNKNOWN_TASK";  // ❌ Type error
+const task: CronTaskId = "UNKNOWN_TASK"; // ❌ Type error
 
 // This is guaranteed valid:
-const task: CronTaskId = "HEARTBEAT_CHECK";  // ✓ Type-safe
+const task: CronTaskId = "HEARTBEAT_CHECK"; // ✓ Type-safe
 
 // No way to create invalid task at runtime:
-const dynamicTask = userInput as CronTaskId;  // ⚠️ Type-safe but runtime risk → catch and escalate
+const dynamicTask = userInput as CronTaskId; // ⚠️ Type-safe but runtime risk → catch and escalate
 ```
 
 ### 11.3 Decision Record Immutability
 
 Once `nextCronTask` is set:
+
 - Cannot be changed (enforced by lock)
 - Cannot be null/undefined (enforced by assertion)
 - Provides single source of truth for task identity
