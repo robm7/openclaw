@@ -43,6 +43,40 @@ function extractHostname(url: string): string {
 }
 
 /**
+ * Validate an outbound URL for safe dispatch (standalone helper).
+ *
+ * Performs defense-in-depth checks on the LITERAL url string, independent of
+ * the NETWORK_IO gate decision path.
+ *
+ * Checks performed:
+ *   1. The URL must parse via new URL(url); malformed URLs are rejected.
+ *   2. The scheme must be http: or https:.
+ *   3. The URL must NOT contain userinfo (non-empty username or password).
+ *
+ * @param url - The target URL string to validate.
+ * @returns A human-readable rejection reason string if the URL is invalid,
+ *          or null if the URL passes all checks.
+ */
+export function validateOutboundUrl(url: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return `URL "${url}" could not be parsed.`;
+  }
+
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    return `Scheme "${parsed.protocol}" is not permitted. Only http and https URLs are allowed.`;
+  }
+
+  if (parsed.username !== "" || parsed.password !== "") {
+    return `URL contains embedded credentials (userinfo). Remove the "user:pass@" component and supply credentials via headers instead.`;
+  }
+
+  return null;
+}
+
+/**
  * Apply NETWORK_IO gate and execute fetch
  *
  * This is the primary wrapper for all fetch calls that should be gated.
@@ -106,14 +140,34 @@ export async function applyNetworkIOGateAndFetch(
     throw error;
   }
 
-  // Gate approved: execute the fetch
+  // Gate approved and URL validated: execute the fetch
   gatingLog.debug("NETWORK_IO gate approved request", {
     contractId: gateResult.contractId,
     hostname,
   });
 
+  // Final defense-in-depth validation of the original url argument on the
+  // PROCEED path, immediately before dispatch.
+  const outboundRejection = validateOutboundUrl(url);
+  if (outboundRejection !== null) {
+    const error = new ClarityBurstAbstainError({
+      stageId: "NETWORK_IO",
+      outcome: "ABSTAIN_CLARIFY",
+      reason: "PACK_POLICY_INCOMPLETE",
+      contractId: gateResult.contractId,
+      instructions: `Network request blocked: ${outboundRejection}`,
+    });
+    gatingLog.warn("NETWORK_IO outbound URL validation blocked request", {
+      contractId: gateResult.contractId,
+      reason: outboundRejection,
+      hostname,
+    });
+    throw error;
+  }
+
   return fetch(url, init);
 }
+
 
 /**
  * Type-safe wrapper for fetch that ensures gating
