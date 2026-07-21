@@ -45,7 +45,15 @@ async function loadOntologyPacks(): Promise<OntologyPack[]> {
 
   for (const file of packFiles) {
     try {
-      const packPath = resolve(__dirname, "..", "..", "ontology-packs", file);
+      // Source of truth: the calibrated pack set shipped with the ClarityBurst plugin.
+      const packPath = resolve(
+        __dirname,
+        "..",
+        "..",
+        "clarityburst-plugin",
+        "ontology-packs",
+        file,
+      );
       const content = readFileSync(packPath, "utf-8");
       const pack = JSON.parse(content) as OntologyPack;
       packs.push(pack);

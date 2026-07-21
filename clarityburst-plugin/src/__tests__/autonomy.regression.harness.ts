@@ -428,7 +428,7 @@ export function generateRegressionReport(
   findings: RegressionFinding[],
   allMetrics: WorkflowRunMetrics[]
 ): RegressionReport {
-  const sortedFindings = [...findings].sort((a, b) => {
+  const sortedFindings = [...findings].toSorted((a, b) => {
     const severityOrder = {
       [RegressionSeverity.CRITICAL]: 0,
       [RegressionSeverity.WARNING]: 1,

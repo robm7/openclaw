@@ -1,0 +1,26 @@
+{
+  "name": "@clarityburst/openclaw-plugin",
+  "version": "0.1.0",
+  "description": "ClarityBurst intent-routing / execution-boundary gating engine for OpenClaw (stage 1: pure router logic, no hooks registered yet).",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "engines": {
+    "node": ">=22"
+  },
+  "openclaw": {
+    "extensions": ["./dist/index.js"]
+  },
+  "files": ["dist", "ontology-packs", "openclaw.plugin.json"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run -c vitest.config.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vitest": "^3.0.0",
+    "@types/node": "^22.0.0"
+  }
+}

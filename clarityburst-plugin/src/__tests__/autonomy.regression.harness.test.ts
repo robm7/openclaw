@@ -131,7 +131,7 @@ async function runFileSystemOpsWorkflow(): Promise<WorkflowRunMetrics> {
     // Step 5: Transform deterministically
     const recordLines = parsedData.records
       .map((r: { id: string; value: number }) => `- ${r.id}: ${r.value}`)
-      .sort();
+      .toSorted();
     const markdown =
       "# Data Report\n" + recordLines.join("\n") + "\n";
 

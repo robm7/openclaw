@@ -24,8 +24,8 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import crypto from "node:crypto";
-import { ClarityBurstAbstainError } from "../errors";
-import { createRunMetrics, endRunMetrics, incOutcome, type RunMetrics } from "../run-metrics";
+import { ClarityBurstAbstainError } from "../errors.js";
+import { createRunMetrics, endRunMetrics, incOutcome, type RunMetrics } from "../run-metrics.js";
 
 /**
  * Computes deterministic SHA-1 checksum of input string
@@ -374,7 +374,10 @@ describe("ClarityBurst Multi-Step Autonomy E2E Test", () => {
       const finalFile1 = path.join(workspaceDir, "output", "final.txt");
       const finalContent1 = fs.readFileSync(finalFile1, "utf-8");
 
-      // Cleanup output for second run (keep input)
+      // Cleanup BOTH input and output for the second run so the two runs start
+      // from identical workspace state — otherwise step 1's mkdir PROCEED count
+      // differs (input/ pre-existing → mkdir skipped → 6 vs 7 proceeds).
+      fs.rmSync(path.join(workspaceDir, "input"), { recursive: true, force: true });
       fs.rmSync(path.join(workspaceDir, "output"), { recursive: true, force: true });
 
       // Act: Second run in same workspace

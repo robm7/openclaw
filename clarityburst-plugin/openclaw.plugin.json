@@ -1,0 +1,19 @@
+{
+  "id": "clarityburst",
+  "name": "ClarityBurst Gating",
+  "version": "0.1.0",
+  "description": "ClarityBurst intent-routing and execution-boundary gating engine (router logic only; hook registration lands in the next migration stage).",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": { "type": "boolean" },
+      "routerUrl": { "type": "string" },
+      "timeoutMs": { "type": "number" },
+      "apiKey": { "type": "string" }
+    }
+  },
+  "uiHints": {
+    "apiKey": { "label": "Router API Key", "sensitive": true }
+  }
+}

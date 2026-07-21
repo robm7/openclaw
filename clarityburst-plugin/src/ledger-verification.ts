@@ -129,7 +129,7 @@ export async function verifyLedgerInvariants(
   const runIdSet = new Set<string>();
   for (const entry of lastN) {
     const runId = entry.runId;
-    if (!runId || typeof runId !== "string" || (runId as string).trim() === "") {
+    if (!runId || typeof runId !== "string" || (runId).trim() === "") {
       return {
         valid: false,
         entries_checked: lastN.length,
@@ -139,7 +139,7 @@ export async function verifyLedgerInvariants(
         verified_at: verifiedAt,
       };
     }
-    runIdSet.add(runId as string);
+    runIdSet.add(runId);
   }
 
   // Check 2: no duplicate runIds exist within the window

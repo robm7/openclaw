@@ -2,13 +2,16 @@
 /**
  * Copy ontology packs from source to dist directory
  * Ensures dist/ontology-packs/ exists and is up-to-date after TypeScript build
+ *
+ * Source of truth: clarityburst-plugin/ontology-packs/ (the calibrated pack set).
+ * The former src/ontology-packs/ location no longer exists post plugin migration.
  */
 
 import { promises as fs } from "fs";
 import { join } from "path";
 
 async function copyOntologyPacks() {
-  const srcDir = "ontology-packs";
+  const srcDir = "clarityburst-plugin/ontology-packs";
   const destDir = "dist/ontology-packs";
 
   try {

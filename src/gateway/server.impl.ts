@@ -56,6 +56,7 @@ import {
 } from "../secrets/runtime.js";
 import { runOnboardingWizard } from "../wizard/onboarding.js";
 import { createAuthRateLimiter, type AuthRateLimiter } from "./auth-rate-limit.js";
+import { assertClarityBurstPluginActive } from "./clarityburst-boot-tripwire.js";
 import { startChannelHealthMonitor } from "./channel-health-monitor.js";
 import { startGatewayConfigReloader } from "./config-reload.js";
 import type { ControlUiRootState } from "./control-ui.js";
@@ -391,6 +392,13 @@ export async function startGatewayServer(
         coreGatewayHandlers,
         baseMethods,
       });
+  // ClarityBurst fail-closed tripwire: refuse to boot without active gating
+  // plugin (see src/gateway/clarityburst-boot-tripwire.ts). The tripwire
+  // itself owns the (narrow, logged) test bypass; the only call-site skip is
+  // minimalTestGateway, whose registry is a deliberately empty stub above.
+  if (!minimalTestGateway) {
+    assertClarityBurstPluginActive(pluginRegistry);
+  }
   const channelLogs = Object.fromEntries(
     listChannelPlugins().map((plugin) => [plugin.id, logChannels.child(plugin.id)]),
   ) as Record<ChannelId, ReturnType<typeof createSubsystemLogger>>;

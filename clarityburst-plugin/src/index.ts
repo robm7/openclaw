@@ -47,9 +47,12 @@ export {
   checkCronDispatchCapability,
 } from "./cron-dispatch-checker.js";
 
-// CRON_SCHEDULE execution-boundary gating wrapper
+// CRON_SCHEDULE gate — routing half only. The execution-half wrappers
+// (applyCronScheduleGateAndAdd/Update/SetEnabled) remain in the OpenClaw fork
+// (src/clarityburst/cron-schedule-gating.ts) per the NEEDS_SPLIT plan.
 export {
-  applyCronScheduleGateAndAdd,
-  applyCronScheduleGateAndUpdate,
-  applyCronScheduleGateAndSetEnabled,
-} from "./cron-schedule-gating.js";
+  gateCronSchedule,
+  extractScheduleSummary,
+  type CronScheduleGateDecision,
+  type CronScheduleTaskType,
+} from "./gates/cron-schedule-gate.js";

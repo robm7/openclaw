@@ -174,7 +174,8 @@ function buildManifest(stages: ManifestStageEntry[]): CoverageManifest {
 }
 
 async function generateManifest() {
-  const packsDir = path.join(__dirname, '..', 'ontology-packs');
+  // Source of truth: the calibrated pack set shipped with the ClarityBurst plugin.
+  const packsDir = path.join(__dirname, '..', 'clarityburst-plugin', 'ontology-packs');
   const stageFiles = [
     'TOOL_DISPATCH_GATE.json',
     'NETWORK_IO.json',

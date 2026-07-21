@@ -10,8 +10,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { ClarityBurstAbstainError } from "./errors";
-import { routeClarityBurst, type RouterInput } from "./router-client";
+import { ClarityBurstAbstainError } from "./errors.js";
+import { routeClarityBurst, type RouterInput } from "./router-client.js";
 
 describe("routeClarityBurst allowedContractIds validation", () => {
   beforeEach(() => {
@@ -56,11 +56,11 @@ describe("routeClarityBurst allowedContractIds validation", () => {
 
       // Assert: ClarityBurstAbstainError with exact fields
       expect(caughtError).toBeInstanceOf(ClarityBurstAbstainError);
-      expect(caughtError!.outcome).toBe("ABSTAIN_CLARIFY");
-      expect(caughtError!.reason).toBe("PACK_POLICY_INCOMPLETE");
-      expect(caughtError!.contractId).toBeNull();
-      expect(caughtError!.instructions).toContain("duplicate");
-      expect(caughtError!.instructions).toContain('"A"');
+      expect(caughtError.outcome).toBe("ABSTAIN_CLARIFY");
+      expect(caughtError.reason).toBe("PACK_POLICY_INCOMPLETE");
+      expect(caughtError.contractId).toBeNull();
+      expect(caughtError.instructions).toContain("duplicate");
+      expect(caughtError.instructions).toContain('"A"');
     });
 
     it("throws ClarityBurstAbstainError when allowedContractIds contains multiple duplicates", async () => {
@@ -88,10 +88,10 @@ describe("routeClarityBurst allowedContractIds validation", () => {
 
       // Assert: Reports the first duplicate found
       expect(caughtError).toBeInstanceOf(ClarityBurstAbstainError);
-      expect(caughtError!.outcome).toBe("ABSTAIN_CLARIFY");
-      expect(caughtError!.reason).toBe("PACK_POLICY_INCOMPLETE");
-      expect(caughtError!.contractId).toBeNull();
-      expect(caughtError!.instructions).toContain('"B"');
+      expect(caughtError.outcome).toBe("ABSTAIN_CLARIFY");
+      expect(caughtError.reason).toBe("PACK_POLICY_INCOMPLETE");
+      expect(caughtError.contractId).toBeNull();
+      expect(caughtError.instructions).toContain('"B"');
     });
   });
 
@@ -121,11 +121,11 @@ describe("routeClarityBurst allowedContractIds validation", () => {
 
       // Assert
       expect(caughtError).toBeInstanceOf(ClarityBurstAbstainError);
-      expect(caughtError!.outcome).toBe("ABSTAIN_CLARIFY");
-      expect(caughtError!.reason).toBe("PACK_POLICY_INCOMPLETE");
-      expect(caughtError!.contractId).toBeNull();
-      expect(caughtError!.instructions).toContain("must be a string");
-      expect(caughtError!.instructions).toContain("number");
+      expect(caughtError.outcome).toBe("ABSTAIN_CLARIFY");
+      expect(caughtError.reason).toBe("PACK_POLICY_INCOMPLETE");
+      expect(caughtError.contractId).toBeNull();
+      expect(caughtError.instructions).toContain("must be a string");
+      expect(caughtError.instructions).toContain("number");
     });
 
     it("throws ClarityBurstAbstainError when allowedContractIds contains empty strings", async () => {
@@ -153,10 +153,10 @@ describe("routeClarityBurst allowedContractIds validation", () => {
 
       // Assert
       expect(caughtError).toBeInstanceOf(ClarityBurstAbstainError);
-      expect(caughtError!.outcome).toBe("ABSTAIN_CLARIFY");
-      expect(caughtError!.reason).toBe("PACK_POLICY_INCOMPLETE");
-      expect(caughtError!.contractId).toBeNull();
-      expect(caughtError!.instructions).toContain("non-empty string");
+      expect(caughtError.outcome).toBe("ABSTAIN_CLARIFY");
+      expect(caughtError.reason).toBe("PACK_POLICY_INCOMPLETE");
+      expect(caughtError.contractId).toBeNull();
+      expect(caughtError.instructions).toContain("non-empty string");
     });
 
     it("throws ClarityBurstAbstainError when allowedContractIds is not an array", async () => {
@@ -184,10 +184,10 @@ describe("routeClarityBurst allowedContractIds validation", () => {
 
       // Assert
       expect(caughtError).toBeInstanceOf(ClarityBurstAbstainError);
-      expect(caughtError!.outcome).toBe("ABSTAIN_CLARIFY");
-      expect(caughtError!.reason).toBe("PACK_POLICY_INCOMPLETE");
-      expect(caughtError!.contractId).toBeNull();
-      expect(caughtError!.instructions).toContain("must be an array");
+      expect(caughtError.outcome).toBe("ABSTAIN_CLARIFY");
+      expect(caughtError.reason).toBe("PACK_POLICY_INCOMPLETE");
+      expect(caughtError.contractId).toBeNull();
+      expect(caughtError.instructions).toContain("must be an array");
     });
   });
 

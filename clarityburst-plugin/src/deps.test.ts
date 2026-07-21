@@ -66,7 +66,7 @@ function collectSourceFiles(dir: string): string[] {
  * Returns an array of { line: number, content: string } for violations.
  *
  * Only detects actual import statements, not commented-out imports.
- * Also detects multi-line imports where `from "../agents/..."` is on a separate line.
+ * Also detects multi-line imports where `from "../agents/....js"` is on a separate line.
  */
 function findForbiddenImports(
   filePath: string
@@ -78,11 +78,11 @@ function findForbiddenImports(
   // Patterns that indicate imports from agents directory.
   // Note: These patterns are anchored to detect actual code, not comments.
   const forbiddenPatterns = [
-    // Single-line imports: import ... from "../agents/..."
+    // Single-line imports: import ... from "../agents/....js"
     /^\s*(?:import|export)\s+.*\s+from\s+['"]\.\.\/agents\//,
     /^\s*(?:import|export)\s+.*\s+from\s+['"]\.\.\/\.\.\/agents\//,
     /^\s*(?:import|export)\s+.*\s+from\s+['"]\.\.\/\.\.\/\.\.\/agents\//,
-    // Multi-line imports: } from "../agents/..." (the closing line of a multi-line import)
+    // Multi-line imports: } from "../agents/....js" (the closing line of a multi-line import)
     /^\s*\}\s*from\s+['"]\.\.\/agents\//,
     /^\s*\}\s*from\s+['"]\.\.\/\.\.\/agents\//,
     /^\s*\}\s*from\s+['"]\.\.\/\.\.\/\.\.\/agents\//,

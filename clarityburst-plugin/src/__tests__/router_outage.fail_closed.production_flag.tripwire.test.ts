@@ -19,8 +19,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { applyFileSystemOverrides, type FileSystemContext } from "../decision-override";
-import * as routerClient from "../router-client";
+import { applyFileSystemOverrides, type FileSystemContext } from "../decision-override.js";
+import * as routerClient from "../router-client.js";
 
 describe("Router outage fail-closed DEFAULT behavior (Phase 0.1)", () => {
   beforeEach(() => {

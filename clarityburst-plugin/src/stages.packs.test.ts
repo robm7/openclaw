@@ -18,8 +18,8 @@ import {
   validatePackObject,
   PackPolicyIncompleteError,
   PACK_POLICY_INCOMPLETE,
-} from "./pack-registry";
-import { ALL_STAGE_IDS, type ClarityBurstStageId } from "./stages";
+} from "./pack-registry.js";
+import { ALL_STAGE_IDS, type ClarityBurstStageId } from "./stages.js";
 
 // ESM-compatible way to get __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -116,7 +116,7 @@ describe("Stage ID ↔ Ontology Pack Consistency", () => {
           throw new Error(
             `Failed to read pack file for stage "${stageId}": ${
               err instanceof Error ? err.message : String(err)
-            }`,
+            }`, { cause: err },
           );
         }
 
@@ -128,7 +128,7 @@ describe("Stage ID ↔ Ontology Pack Consistency", () => {
           throw new Error(
             `Invalid JSON in pack file for stage "${stageId}": ${
               err instanceof Error ? err.message : String(err)
-            }`,
+            }`, { cause: err },
           );
         }
 
@@ -153,7 +153,7 @@ describe("Stage ID ↔ Ontology Pack Consistency", () => {
 describe("Stage ID snapshot", () => {
   it("should match the expected list of stage IDs", () => {
     // Sort for deterministic comparison
-    const sortedStageIds = [...ALL_STAGE_IDS].sort();
+    const sortedStageIds = [...ALL_STAGE_IDS].toSorted();
     expect(sortedStageIds).toMatchInlineSnapshot(`
       [
         "BROWSER_AUTOMATE",

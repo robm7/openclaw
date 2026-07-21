@@ -325,7 +325,7 @@ describe("NETWORK_IO allowlist derivation from pack schema", () => {
 
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
-      const packPath = path.resolve(__dirname, "../../ontology-packs/NETWORK_IO.json");
+      const packPath = path.resolve(__dirname, "../../clarityburst-plugin/ontology-packs/NETWORK_IO.json");
       const realPackContent = JSON.parse(fs.readFileSync(packPath, "utf-8"));
 
       // Extract the real enum from the pack
@@ -364,7 +364,7 @@ describe("NETWORK_IO allowlist derivation from pack schema", () => {
 
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
-      const packPath = path.resolve(__dirname, "../../ontology-packs/NETWORK_IO.json");
+      const packPath = path.resolve(__dirname, "../../clarityburst-plugin/ontology-packs/NETWORK_IO.json");
       const realPackContent = JSON.parse(fs.readFileSync(packPath, "utf-8"));
 
       const realEnum = extractMethodEnumFromPack(realPackContent);

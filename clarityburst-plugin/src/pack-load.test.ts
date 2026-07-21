@@ -12,29 +12,33 @@ import { ClarityBurstAbstainError } from "./errors.js";
 // Mock the pack-registry module to control getPackForStage behavior using hoisted mock
 const mockGetPackForStage = vi.hoisted(() => vi.fn());
 
-// Import after mocking
+// Hoisted module mock — MUST be vi.mock (not vi.doMock) so that the static
+// import of pack-load.js below binds against the mocked pack-registry.
+// (The previous vi.doMock-in-beforeEach pattern never took effect because
+// pack-load.js was already statically imported with the real registry.)
+vi.mock("./pack-registry.js", () => {
+  console.log("Mock factory executing");
+  return {
+    getPackForStage: mockGetPackForStage,
+    PackPolicyIncompleteError: class PackPolicyIncompleteError extends Error {
+      missingFields: string[];
+      constructor(stageId: string, missingFields: string[]) {
+        super(
+          `PACK_POLICY_INCOMPLETE: Stage "${stageId}" failed validation. ` +
+            `Missing or invalid fields: [${missingFields.join(", ")}].`,
+        );
+        this.name = "PackPolicyIncompleteError";
+        this.missingFields = missingFields;
+      }
+    },
+  };
+});
+
+// These imports resolve against the mocked pack-registry (vi.mock is hoisted).
 import { loadPackOrAbstain } from "./pack-load.js";
 import { PackPolicyIncompleteError } from "./pack-registry.js";
 
 const mockedGetPackForStage = mockGetPackForStage;
-
-// Set up the mock before each test
-beforeEach(() => {
-  vi.doMock("./pack-registry.js", () => {
-    console.log("Mock factory executing");
-    return {
-      getPackForStage: mockGetPackForStage,
-      PackPolicyIncompleteError: class PackPolicyIncompleteError extends Error {
-        missingFields: string[];
-        constructor(message: string, missingFields: string[]) {
-          super(message);
-          this.name = "PackPolicyIncompleteError";
-          this.missingFields = missingFields;
-        }
-      },
-    };
-  });
-});
 
 describe("loadPackOrAbstain - stage_id mismatch detection", () => {
   beforeEach(() => {

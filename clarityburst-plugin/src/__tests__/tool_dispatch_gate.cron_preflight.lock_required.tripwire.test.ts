@@ -13,10 +13,10 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { applyToolDispatchOverrides } from "../decision-override";
+import { applyToolDispatchOverrides } from "../decision-override.js";
 import { createCronDecisionRecord, lockCronTask } from "../decision-cron.js";
-import type { OntologyPack } from "../pack-registry";
-import type { DispatchContext } from "../decision-override";
+import type { OntologyPack } from "../pack-registry.js";
+import type { DispatchContext } from "../decision-override.js";
 
 /**
  * Creates a minimal but valid LedgerVerificationResult for testing
