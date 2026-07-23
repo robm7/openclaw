@@ -369,11 +369,12 @@ function getPacksDirectory(): string {
   // ESM-compatible way to get __dirname
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
-  return path.resolve(__dirname, "../ontology-packs");
+  return path.resolve(__dirname, "./ontology-packs");
 }
 
 function loadAllPacks(): void {
   const packsDir = getPacksDirectory();
+  console.error(`[CB PACK SOURCE] ${packsDir}`);
 
   if (!fs.existsSync(packsDir)) {
     throw new Error(
