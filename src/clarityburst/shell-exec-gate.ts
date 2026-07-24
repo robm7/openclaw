@@ -9,6 +9,7 @@ import {
   type RuntimeCapabilities,
 } from "./allowed-contracts.js";
 import type { OntologyPack } from "./pack-registry.js";
+import { applyShellExecOverrides } from "./decision-override.js";
 
 /**
  * Shell Execution Gate
@@ -147,7 +148,22 @@ export async function gateShellExec(command: string): Promise<{
   }
 
   // ──────────────────────────────────────────────────────────────────────────
-  // SUCCESS: Router returned valid contract → PROCEED
+  // PHASE 6: Arbitration (confidence/dominance thresholds + contract policy)
   // ──────────────────────────────────────────────────────────────────────────
+  const outcome = applyShellExecOverrides(pack, routeResult, {
+    stageId: "SHELL_EXEC",
+    command,
+    userConfirmed: false,
+  });
+
+  if (outcome.outcome.startsWith("ABSTAIN")) {
+    return {
+      allowed: false,
+      reason:
+        ("instructions" in outcome && outcome.instructions) ||
+        `ClarityBurst ${outcome.outcome}: ${"reason" in outcome ? outcome.reason : "arbitration declined"} (contract: ${contractId})`,
+    };
+  }
+
   return { allowed: true };
 }
