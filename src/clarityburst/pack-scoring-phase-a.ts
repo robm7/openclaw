@@ -167,8 +167,15 @@ export function scorePackPhaseA(
   const top1 = scored[0] ?? { contract_id: "", score: 0 };
   const top2 = scored[1] ?? { contract_id: "", score: 0 };
 
-  const meetsThreshold = top1.score >= pack.thresholds.min_confidence_T;
-  const isDominant = top1.score - top2.score >= pack.thresholds.dominance_margin_Delta;
+  const T = pack.thresholds?.min_confidence_T;
+  const D = pack.thresholds?.dominance_margin_Delta;
+  if (typeof T !== "number" || typeof D !== "number" || T <= 0) {
+    throw new Error(
+      `ClarityBurst fail-closed: pack "${pack.pack_id}" has invalid thresholds (min_confidence_T=${T}, dominance_margin_Delta=${D}). A pack without a positive confidence threshold cannot gate.`
+    );
+  }
+  const meetsThreshold = top1.score >= T;
+  const isDominant = top1.score - top2.score >= D;
 
   return {
     top1: { contract_id: top1.contract_id, score: top1.score },
